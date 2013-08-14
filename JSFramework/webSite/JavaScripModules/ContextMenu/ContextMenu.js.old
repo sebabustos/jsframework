@@ -1,0 +1,130 @@
+﻿////////////////////////////////////////////////////////////////////////////////////////////////////
+var _replaceContext = true;          // replace the system context menu?
+var _showOnEmptyContext = false;      // Establece si debe mostrar o no el menu, si el innerText del div est vaco.
+var _mouseOverContext = false;       // is the mouse over the context menu?
+var _noContext = false;              // disable the context menu?
+var _divContextId = 'divContext';    // makes my life easier
+var _divContext;                     // makes my life easier
+var _closeOnMouseDown = true;        // oculta el menu si se hace click sobre el body.
+var _offsetLeft = -210;
+var _offsetTop = 17;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+InitContext()
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function InitContext() {
+    _divContext = document.getElementById(_divContextId); 
+    if (_divContext != null) {
+        _divContext.onmouseover = function() { _mouseOverContext = true; };
+        _divContext.onmouseout = function() { _mouseOverContext = false; };
+
+        if (_closeOnMouseDown)
+            document.body.onmousedown = CloseContext;
+
+        document.body.oncontextmenu = ContextShow;
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//OffsetLeft,OffsetTop: permiten definir un offset para la posicin del menu
+function ShowMenu() {
+    ContextShow(null,_offsetLeft,_offsetTop);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// call from the onContextMenu event, passing the event
+// if this function returns false, the browser's context menu will not show up
+function ContextShow(event, OffsetLeft, OffsetTop) {
+    var bCancelShow = false;
+    if ((!_showOnEmptyContext)&&(_divContext.innerText == ""))
+        bCancelShow = true;
+    
+    if ((_noContext)||(bCancelShow))
+        return !_replaceContext;
+
+    // IE is evil and doesn't pass the event object
+    if (event == null)
+        event = window.event;
+        
+    // we assume we have a standards compliant browser, but check if we have IE
+    var target;
+    if (event != null) {
+        target = event.target != null ? event.target : event.srcElement;
+    
+        if (_replaceContext) {
+            // document.body.scrollTop does not work in IE
+            var scrollTop = document.body.scrollTop ? document.body.scrollTop : 
+                document.documentElement.scrollTop;
+            var scrollLeft = document.body.scrollLeft ? document.body.scrollLeft : 
+                document.documentElement.scrollLeft;
+                
+            // hide the menu first to avoid an "up-then-over" visual effect
+            _divContext.style.display = 'none';
+            _divContext.style.left = event.clientX + scrollLeft + ((OffsetLeft!=null)?OffsetLeft:0) + 'px';
+            _divContext.style.top = event.clientY + scrollTop + ((OffsetTop!=null)?OffsetTop:0) + 'px';
+            _divContext.style.display = 'block';
+            _divContext.style.filter = 'progid:DXImageTransform.Microsoft.Gradient(startColorStr=\'#FFFFFF\', endColorStr=\'#cccccc\', gradientType=\'1\')';
+            hideSelects();
+
+            return false;
+        }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function CloseContext() {
+
+    if (!_mouseOverContext) {
+        //verifico que el click no se hizo dentro del div.
+        var scrollTop = document.body.scrollTop ? document.body.scrollTop : document.documentElement.scrollTop;
+        var scrollLeft = document.body.scrollLeft ? document.body.scrollLeft : document.documentElement.scrollLeft;
+            
+        if(_divContext.style.left == event.clientX + scrollLeft + _offsetLeft + 'px')
+            if(_divContext.style.top == event.clientY + scrollTop + _offsetTop + 'px')
+                return;
+
+
+        _mouseOverContext = false;
+        _divContext.style.display = 'none';
+        showSelects();
+    }
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function DisableContext() {
+    _noContext = true;
+    CloseContext();
+
+    return false;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+function EnableContext() {
+    _noContext = false;
+    _mouseOverContext = false; // this gets left enabled when "disable menus" is chosen
+    
+    return false;
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+* Hides all drop down form select boxes on the screen so they do not appear above the mask layer.
+* IE has a problem with wanted select form tags to always be the topmost z-index or layer
+*
+* Thanks for the code Scott!
+*/
+function hideSelects() {
+    try {
+        OcultarControles(_divContext, true)
+    }
+    catch (e) {
+	for(var i = 0; i < document.forms.length; i++) {
+		for(var e = 0; e < document.forms[i].length; e++){
+                if (document.forms[i].elements[e].tagName == "SELECT")
+				document.forms[i].elements[e].style.visibility="hidden";
+			}
+		}
+	}
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+/**
+* Makes all drop down form select boxes on the screen visible so they do not reappear after the dialog is closed.
+* IE has a problem with wanted select form tags to always be the topmost z-index or layer
+*/
+function showSelects() {
+    MostrarControles(_divContext);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,0 +1,747 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery.json.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <script src="gridView.js" type="text/javascript"></script>
+    <link href="../../css/general.css" rel="stylesheet" type="text/css" />
+<!--<link href="../../css/jqueryUI_custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css" />-->
+    <link href="../../css/jqueryUI_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <link href="css/gridView.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+        })
+
+        function btnDoExec_OnClick(src, evt) {
+            $("[name='tblGrid']").gridView(
+            {
+                dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                allowSelection: false,
+                refreshImage: "images/refresh-icon.png",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    description: "Controls",
+                    visible: true,
+                    Controls: [{
+                        label: "OK",
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if (rowType != "header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        label: "images/Apply.gif",
+                        type: 'image',
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if (rowType != "header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        template: "#TemplateControl"
+                    }]
+                },
+                {
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: false,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onCleanSearch: function () {
+                    return window.confirm("cleanSearch");
+                },
+                onBeforeSearch: function () {
+                    return window.confirm("Before Search");
+                },
+                onBeforeDraw: function () {
+                    return window.confirm("Before Draw");
+                },
+                onError: function (a, b, c) {
+
+                },
+                onGridDrawed: function () {
+                    alert("Grid Drawed");
+                }
+            });
+        }
+        function btnShowGVWithJsonDataStatic_OnClick() {
+            $("#tblGridViewWithJsonDataSourceStatic").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                             ],
+                //dataSource: "[{ Id: 1, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                onPaggingIndexChange: function () {
+                    alert("pageChange");
+                },
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () { }
+            });
+        }
+        function btnShowGVWithJsonDataDynamic_OnClick(type) {
+
+            var dsObj = null;
+            var ds = null;
+            if (type === 1)
+                dsObj = "#txtGridData"
+            else if (type === 2)
+                ds = function () {
+                    return [
+                        { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                        { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                        { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                        { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                        { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                        { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                        { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                        { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                        { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                        { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                    ]
+                };
+
+            $("#tblGridViewWithJsonDataSourceDynamic").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: ds,
+                dataSourceObject: dsObj,
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () {}
+            });
+        }
+        function btnShowGVWithChild_OnClick() {
+            $("#tblGridViewWithChild").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                             ],
+                childGrid: {
+                    showAllExpanded: false,
+                    allowExpandAll: true,
+                    dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                    getFilterData: function () { return { filterData: $("#txtFilterDataWithChild").val()/*, pageSize:40, pageIndex:0*/ }; },
+                    columns: [{
+                        dataFieldName: "Id", /*=> req.*/
+                        description: "Código",
+                        visible: true,
+                        includeInResult: true
+                    },
+                    {
+                        dataFieldName: "Description", /*=> req.*/
+                        description: "Descripción",
+                        visible: true,
+                        includeInResult: false
+                    }],
+                    childGrid: {
+                        dataSourceType: 'json',
+                        dataSource: [
+                                    { Id: "x.1", Description: "Sub 1" },
+                                    { Id: "x.2", Description: "Sub 2" },
+                                    { Id: "x.3", Description: "Sub 3" },
+                                    { Id: "x.4", Description: "Sub 4" },
+                                    { Id: "x.5", Description: "Sub 5" },
+                                    { Id: "x.6", Description: "Sub 6" },
+                                    { Id: "x.7", Description: "Sub 7" },
+                                    { Id: "x.8", Description: "Sub 8" },
+                                    { Id: "x.9", Description: "Sub 9" },
+                                    { Id: "x.10", Description: "Sub 10" }
+                        ],
+                        columns: [{
+                            dataFieldName: "Id", /*=> req.*/
+                            description: "Código",
+                            visible: true,
+                            includeInResult: true
+                        },
+                        {
+                            dataFieldName: "Description", /*=> req.*/
+                            description: "Descripción",
+                            visible: true,
+                            includeInResult: false
+                        }]
+                    }
+                },
+                //dataSource: "[{ Id: 1, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () { }
+            });
+        }
+    </script>
+</head>
+<body>
+<fieldset>
+    <legend>Grid View c/ WS data source</legend>
+    Ingrese una condición de filtro:
+    <input id="txtFilterData" value="" type="text" />
+    <input id="btnDoExec" onclick="btnDoExec_OnClick(this, event)" value="Ejecutar" type="button" />
+    <br/>
+    template control: <a href="www.tribunales.gov.ar" id="TemplateControl">Link Me</a>
+    <br />
+    <table>
+        <tr>
+            <td>
+                <table id="tblGrid" name="tblGrid" class="ui-widget">
+                </table>        
+            </td>
+            <td>
+                <table id="tblGridRight" name="tblGrid" class="ui-widget">
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            
+            </td>
+        </tr>
+    </table>
+    <textarea class="code">
+            $("[name='tblGrid']").gridView(
+            {
+                dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                allowSelection: false,
+                refreshImage: "images/refresh-icon.png",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    description: "Controls",
+                    visible: true,
+                    Controls: [{
+                        label: "OK",
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if(rowType!="header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        label: "images/Apply.gif",
+                        type: 'image',
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if (rowType != "header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        template: "#TemplateControl"
+                    }]
+                },
+                {
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: false,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () {
+                    
+                }
+            });
+    </textarea>
+</fieldset>
+    <br>
+<fieldset>
+    <legend>Grid View c/ JSon data source estático</legend>
+    <input id="btnShowGVWithJsonDataStatic" onclick="btnShowGVWithJsonDataStatic_OnClick(this, event)" value="Ejecutar" type="button" />
+    <table id="tblGridViewWithJsonDataSourceStatic" class="ui-widget">
+    </table>
+    <br />
+    <textarea class="code">
+            $("#tblGridViewWithJsonDataSourceStatic").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                             ],
+                //dataSource: "[{ Id: 1, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                ,
+                onGridDrawed: function () {
+                }
+            });
+    </textarea>        
+</fieldset>
+<br />
+<fieldset>
+    <legend>Grid View c/ JSon data source dinámicos</legend>
+        <table width="70%" style="height:150px;" >
+            <tr>
+                <td style="width:20%">Asociado a un control: <br /><textarea id="txtGridData">[{ Id: 987, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]</textarea></td>
+                <td style="width:10%" align="left"><input id="btnShowGVWithJsonDataDynamic" onclick="btnShowGVWithJsonDataDynamic_OnClick(1)" value="Ejecutar" type="button" /></td>
+                <td rowspan="2" align="center">
+                    <table id="tblGridViewWithJsonDataSourceDynamic" class="ui-widget">
+                    </table>     
+                </td>
+            </tr>
+            <tr>
+                <td style="width:20%" >
+                    Asociado a una función:
+                </td>
+                 <td style="width:10%" align="left">
+                    <input id="Button1" onclick="btnShowGVWithJsonDataDynamic_OnClick(2)" value="Ejecutar" type="button" />
+                </td>
+            </tr>
+        </table>
+        <br />
+        <textarea class="code">
+            var dsObj = null;
+            var ds = null;
+            if (type === 1)
+                dsObj = "#txtGridData"
+            else if (type === 2)
+                ds = function () {
+                    return [
+                        { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                        { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                        { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                        { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                        { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                        { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                        { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                        { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                        { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                        { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                    ]
+                };
+
+            $("#tblGridViewWithJsonDataSourceDynamic").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: ds,
+                dataSourceObject: dsObj,
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () {
+                }
+            });
+        </textarea>
+</fieldset>
+<br />
+<fieldset>
+    <legend>Grid Views Anidados (con gridView hijas)</legend>
+    <input id="Button2" onclick="btnShowGVWithChild_OnClick()" value="Ejecutar" type="button" />
+    <br />
+    <input type="text" value="" id="txtFilterDataWithChild"/>
+    <table id="tblGridViewWithChild" class="ui-widget">
+    </table>     
+
+        <textarea class="code">
+            $("#tblGridViewWithChild").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                             ],
+                childGrid:{
+                    dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                    getFilterData: function () { return { filterData: $("#txtFilterDataWithChild").val()/*, pageSize:40, pageIndex:0*/ }; },
+                    columns: [{
+                        dataFieldName: "Id", /*=> req.*/
+                        description: "Código",
+                        visible: true,
+                        includeInResult: true
+                    },
+                    {
+                        dataFieldName: "Description", /*=> req.*/
+                        description: "Descripción",
+                        visible: true,
+                        includeInResult: false
+                    }],
+                    childGrid:{
+                    dataSourceType: 'json',
+                    dataSource: [
+                                { Id: "x.1", Description: "Sub 1"},
+                                { Id: "x.2", Description: "Sub 2"},
+                                { Id: "x.3", Description: "Sub 3"},
+                                { Id: "x.4", Description: "Sub 4"},
+                                { Id: "x.5", Description: "Sub 5"},
+                                { Id: "x.6", Description: "Sub 6"},
+                                { Id: "x.7", Description: "Sub 7"},
+                                { Id: "x.8", Description: "Sub 8"},
+                                { Id: "x.9", Description: "Sub 9" },
+                                { Id: "x.10", Description: "Sub 10"}
+                             ],
+                    columns: [{
+                        dataFieldName: "Id", /*=> req.*/
+                        description: "Código",
+                        visible: true,
+                        includeInResult: true
+                    },
+                    {
+                        dataFieldName: "Description", /*=> req.*/
+                        description: "Descripción",
+                        visible: true,
+                        includeInResult: false
+                    }]
+                },
+                },
+                //dataSource: "[{ Id: 1, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [{
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () { }
+            });
+        </textarea>
+</fieldset>
+
+    <script type="text/javascript" language="javascript">
+        function btnTestABMGrid_OnClick() {
+            $("#tblTestABMGrid").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" }
+                             ],
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val()/*, pageSize:40, pageIndex:0*/ }; },
+                columns: [
+                {
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    description: "Controls",
+                    visible: true,
+                    Controls: [
+                    {
+                        label: "Editar",
+                        type: 'button',
+                        onClick: function (row, id, rowType, data) {
+                            if (rowType != "header") {
+                                $("input", row).removeAttr("disabled");
+                            }
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        label: "images/Apply.gif",
+                        type: 'image',
+                        onClick: function (row, id, rowType, data) {
+                            if (rowType != "header") {
+                                var nombre = $("input[type='text']", row)[0].value;
+                                var apellido = $("input[type='text']", row)[1].value
+                                alert("Id: " + data.Id + " - Nombre: " + apellido + ", " + nombre );
+                            }
+                        },
+                        showInHeader: true
+                    }]
+                },
+                {
+                    description: "FirstName",
+                    visible: true,
+                    Controls: [{ template: "#txtFirstName"}]
+                },
+                {
+                    description: "LastName",
+                    visible: true,
+                    Controls: [{ template: "#divTemplate"}]
+                }
+                ],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onGridDrawed: function () { }
+            });
+        }
+    </script>
+    <div style="display:none">
+        <div id="divTemplate">
+            <div>Nombre: <input type="text" id="txtFirstName" value="" disabled="disabled"/></div>
+            <div>Apellido: <input type="text" id="txtLastName" value="" disabled="disabled"/></div>
+            <div>Foto: <img src="../../Images/indicator.gif" /></div>
+        </div>
+    </div>
+<br />
+<fieldset>
+    <legend>Prueba</legend>
+    <input id="Button3" onclick="btnTestABMGrid_OnClick()" value="Ejecutar" type="button" />
+    <table id="tblTestABMGrid" class="ui-widget">
+    </table>     
+
+    <textarea class="code">
+    </textarea>
+</fieldset>
+</body>
+</html>

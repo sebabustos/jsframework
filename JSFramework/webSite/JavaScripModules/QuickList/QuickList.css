@@ -1,0 +1,319 @@
+/* 
+================================================
+QuickList, inquisitor style
+================================================
+*/
+
+body
+{
+	position: relative;
+	z-index:16;
+}
+
+
+/* 
+================================================
+REGULAR QuickList
+================================================
+*/
+
+div.QuickList
+{
+	position: absolute;
+	padding: 0px 0 0 0;
+	z-index:18;
+	list-style: none;
+	margin: 0 0 0px 0;
+	overflow: hidden;
+	background-color: white;
+	border: solid 1px #baddee;
+	/*-moz-border-radius-topleft: 2px; 
+    -webkit-border-top-left-radius: 2px; 
+    border-top-left-radius: 2px;*/
+    -moz-border-radius: 7px; 
+    -webkit-border-radius: 7px; 
+    border-radius: 7px;
+
+}
+div.QuickList .QuickListItem
+{
+	/*cada item*/
+	color: #666666;
+	display: block;
+	background-color: transparent;
+	width: 99%;
+	position: relative;
+	padding: 0;
+	margin: 0 0px 0px;
+	text-align: left;
+	list-style: solid;
+	border-top: solid 1px #baddee;
+	border-bottom: none;
+	border-left: none;
+	border-right: none;
+    font-family: arial,helvetica,verdana,sans-serif;
+	font-size:small;
+	font-style:normal;
+	font-weight: normal;
+	cursor:pointer;
+	
+    -moz-border-radius: 4px; 
+    -webkit-border-radius: 4px; 
+    border-radius: 4px;
+}
+div.QuickList .QuickListItem:hover
+{
+	/*On Mouse Over de cada item*/
+	background-color: #ddf0f8;
+	cursor:pointer;
+}
+div.QuickList .QuickListItem .QuickListItemInfo
+{
+	font-weight: normal;
+	color: #666666;
+}
+div.QuickList .QuickListItem .firstitem
+{
+}
+div.QuickList .QuickListItem.midtitem
+{
+}
+div.QuickList .QuickListItem.lastitem
+{
+	font-style:italic;
+	font-weight:bold;
+}
+div.QuickList .QuickListItemSelected
+{
+    width: 99%;
+    background-color: #ddf0f8;
+    border: 1px solid #4FAFD9;
+}
+div.QuickList .QuickListItemSelected .QuickListItemInfo small
+{
+	color: #666666;
+}
+
+div.QuickList em
+{
+	font-style: normal;
+	font-weight:600;
+	color: black;
+}
+
+
+/* 
+================================================
+COMPOSITE QuickList
+================================================
+*/
+
+div.QuickListComposite
+{
+	position: absolute;
+	/*
+	background-image: url(img_inquisitor/White/as_pointer.gif);
+	background-position: top;
+	background-repeat: no-repeat;
+	*/
+	padding: 0px 0 0 0;
+	z-index:18;
+}
+
+div.QuickListComposite div.as_header,
+div.QuickListComposite div.as_footer
+{
+	position: relative;
+	height: 1px;
+	padding: 0 0px;
+	/*
+	background-color:#ccffff;
+	background-image: url(img_inquisitor/White/ul_corner_tr.gif);
+	background-position: top right;
+	background-repeat: no-repeat;
+	*/
+	overflow: hidden;
+}
+div.QuickListComposite div.as_footer
+{
+	background-color:#ccffff;
+	/*background-image: url(img_inquisitor/White/ul_corner_br.gif);*/
+}
+
+div.QuickListComposite div.as_header div.as_corner,
+div.QuickListComposite div.as_footer div.as_corner
+{
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: 1px;
+	width: 1px;
+	/*background-image: url(img_inquisitor/White/ul_corner_tl.gif);
+	background-position: top left;
+	background-repeat: no-repeat;
+	*/
+}
+div.QuickListComposite div.as_footer div.as_corner
+{
+	/*background-image: url(img_inquisitor/White/ul_corner_bl.gif);*/
+}
+div.QuickListComposite div.as_header div.as_bar,
+div.QuickListComposite div.as_footer div.as_bar
+{
+	/*Líneas Horizontales de arriba y abajo del div*/
+	height: 1px;
+	overflow: hidden;
+	/*background-color: #21ebe8;*/
+
+}
+
+div.QuickListComposite ul
+{
+	/*Recuadro exterior del div*/
+	list-style: none;
+	margin: 0 0 0px 0;
+	padding: 0;
+	overflow: hidden;
+	background-color: white;
+	border: solid 1px #8dc194
+	
+}
+
+div.QuickListComposite ul li
+{
+	/*cada item*/
+	color: #666666;
+	padding: 0;
+	margin: 0 0px 0px;
+	text-align: left;
+	list-style: solid;
+	border-top: solid 1px #8dc194;
+	border-bottom: none;
+	border-left: none;
+	border-right: none;
+
+}
+
+div.QuickListComposite ul li a
+{
+	color: #666666;
+	display: block;
+	text-decoration: none;
+	background-color: transparent;
+	/*text-shadow: #000 0px 0px 5px;*/
+	position: relative;
+	padding: 0;
+	width: 100%;
+	font-family: arial,helvetica,verdana,sans-serif;
+	font-size:small;
+	font-style:normal;
+	font-weight: normal;
+}
+div.QuickListComposite ul li a:hover
+{
+	/*background-color: blue;*/
+}
+div.QuickListComposite ul li.as_highlight a:hover
+{
+	/*On Mouse Over de cada item*/
+	background-color: #eefcf0;
+}
+
+div.QuickListComposite ul li a span
+{
+	display: block;
+	padding: 3px 6px;
+	font-weight: inherit;
+}
+
+div.QuickListComposite ul li a span small
+{
+	font-weight: normal;
+	color: #666666;
+}
+div.QuickListComposite ul li a span.firstitem
+{
+}
+div.QuickListComposite ul li a span.midtitem
+{
+}
+div.QuickListComposite ul li a span.lastitem
+{
+	font-style:italic;
+	font-weight:bold;
+}
+
+div.QuickListComposite ul li.as_highlight a span small
+{
+	color: #666666;
+}
+
+div.QuickListComposite ul li.as_highlight a
+{
+	
+	background-color: #eefcf0;
+/*
+	color: #fff;
+	background-color: white;
+	background-image: url(img_inquisitor/White/hl_corner_br.gif);
+	background-position: bottom right;
+	background-repeat: no-repeat;
+*/
+}
+
+div.QuickListComposite ul li.as_highlight a span
+{
+/*
+	background-image: url(img_inquisitor/White/hl_corner_bl.gif);
+	background-position: bottom left;
+	background-repeat: no-repeat;
+*/
+}
+
+/*div.QuickListComposite ul li a .tl,
+div.QuickListComposite ul li a .tr
+{
+	background-image: transparent;
+	background-repeat: no-repeat;
+	width: 6px;
+	height: 6px;
+	position: absolute;
+	top: 0;
+	padding: 0;
+	margin: 0;
+}
+div.QuickListComposite ul li a .tr
+{
+	right: 0;
+}
+*/
+/*
+div.QuickListComposite ul li.as_highlight a .tl
+{
+
+	left: 0;
+	background-image: url(img_inquisitor/White/hl_corner_tl.gif);
+	background-position: bottom left;
+}
+
+div.QuickListComposite ul li.as_highlight a .tr
+{
+	right: 0;
+	background-image: url(img_inquisitor/White/hl_corner_tr.gif);
+	background-position: bottom right;
+}
+*/
+
+
+div.QuickListComposite ul li.as_warning
+{
+	font-weight: bold;
+	text-align: center;
+}
+
+div.QuickListComposite ul em
+{
+	font-style: normal;
+	font-weight:600;
+	color: black;
+}

@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+
+    <script src="wsAjax.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+        })
+
+        //Código de Ejemplo:
+        var oContext = {contexto:'contexto'};
+        function btnDoExec_OnClick(src, evt) {
+            PJJS.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
+            function (result, context) {
+                alert(result.response);
+                alert(context.contexto);
+            },
+            function (a) {
+                alert(a.responseText);
+            },
+            { name: $("#txtName").val() }, 
+            {async:false});
+        }
+    </script>
+</head>
+<body>
+    Ingrese su nombre: <input type="text" value="Pepe" id="txtName" />
+    <input type="button" value="Ejecutar" id="btnDoExec" onclick="btnDoExec_OnClick(this, event)"/>
+    <br /><br />
+    <textarea class="code">
+        var oContext = {contexto:'contexto'};
+        function btnDoExec_OnClick(src, evt) {
+            PJJS.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
+            function (result, context) {
+                alert(result.response);
+                alert(context.contexto);
+            },
+            function (a) {
+                alert(a.responseText);
+            },
+            { name: $("#txtName").val() }, 
+            {async:false});
+        }
+    </textarea>
+</body>
+</html>

@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery.json.min.js" type="text/javascript"></script>
+    <script src="gridView.js" type="text/javascript"></script>
+    <!--<link href="../../css/jqueryUI_custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css" />-->
+    <link href="../../css/jqueryUI_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <link href="css/gridView.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" language="javascript">
+        var iLogLine = 1;
+        $(window).ready(function () {
+        })
+        var doConfirm = false;
+        function btnDoExec_OnClick(src, evt) {
+            $("#tblGrid").gridView(
+            {
+                dataSourceType: 'json',
+                dataSource: [
+                                { Id: 1, Description: " 1", HiddenValue: " hidden 1" },
+                                { Id: 2, Description: " 2", HiddenValue: " hidden 2" },
+                                { Id: 3, Description: " 3", HiddenValue: " hidden 3" },
+                                { Id: 4, Description: " 4", HiddenValue: " hidden 4" },
+                                { Id: 5, Description: " 5", HiddenValue: " hidden 5" },
+                                { Id: 6, Description: " 6", HiddenValue: " hidden 6" },
+                                { Id: 7, Description: " 7", HiddenValue: " hidden 7" },
+                                { Id: 8, Description: " 8", HiddenValue: " hidden 8" },
+                                { Id: 9, Description: " 9", HiddenValue: " hidden 9" },
+                                { Id: 10, Description: " 10", HiddenValue: " hidden 10" },
+                                { Id: 11, Description: " 11", HiddenValue: " hidden 11" },
+                                { Id: 12, Description: " 12", HiddenValue: " hidden 12" },
+                                { Id: 13, Description: " 13", HiddenValue: " hidden 13" },
+                                { Id: 14, Description: " 14", HiddenValue: " hidden 14" },
+                                { Id: 15, Description: " 15", HiddenValue: " hidden 15" },
+                                { Id: 16, Description: " 16", HiddenValue: " hidden 16" },
+                                { Id: 17, Description: " 17", HiddenValue: " hidden 17" },
+                                { Id: 18, Description: " 18", HiddenValue: " hidden 18" },
+                                { Id: 19, Description: " 19", HiddenValue: " hidden 19" },
+                                { Id: 20, Description: " 20", HiddenValue: " hidden 20" }
+                ],
+                allowSelection: true,
+                selectionMode:'row',
+                refreshImage: "images/refresh-icon.png",
+                usePagging: true,
+                pagerPosition: "up",
+                pageSize: 5,
+                pagesShown: 2,
+                getFilterData: function () { return { filterData: $("#txtFilterData").val() }; },
+                onPaggingIndexChange: function () {
+                    doConfirm = true;
+                    return doConfirm;
+                },
+                columns: [{
+                    description: "Controls",
+                    visible: true,
+                    Controls: [{
+                        label: "OK",
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if (rowType != "header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        label: "images/Apply.gif",
+                        type: 'image',
+                        onClick: function (row, id, rowType, data) {
+                            alert("entró");
+                            alert(rowType);
+                            if (rowType != "header")
+                                alert(data.Id)
+                        },
+                        showInHeader: true
+                    },
+                    {
+                        template: "#TemplateControl"
+                    }]
+                },
+                {
+                    dataFieldName: "Id", /*=> req.*/
+                    description: "Código",
+                    visible: true,
+                    includeInResult: true
+                    //,width:
+                },
+                {
+                    dataFieldName: "Description", /*=> req.*/
+                    description: "Descripción",
+                    visible: true,
+                    includeInResult: false
+                    //,width:
+                },
+                {
+                    dataFieldName: "HiddenValue", /*=> req.*/
+                    //description: "Descripción",
+                    visible: false,
+                    includeInResult: true
+                    //,width:
+                }],
+                onRowSelect: function (row, gridViewId, selItem) {
+                    alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
+
+                },
+                onCleanSearch: function () {
+                    AddEventLog("onCleanSearch fired");
+                },
+                onBeforeSearch: function () {
+                    AddEventLog("onBeforeSearch fired");
+                },
+                onBeforeDraw: function () {
+                    AddEventLog("onBeforeDraw fired");
+                },
+                onError: function (a, b, c) {
+
+                },
+                onGridDrawed: function () {
+                    AddEventLog("onGridDrawed fired");
+                }
+            });
+        }
+
+        function AddEventLog(message) {
+            $("#divEventLog").html(
+                iLogLine + " - " + message + "<br/>" + $("#divEventLog").html()
+                );
+            iLogLine++;
+        }
+        function btnNextPage_OnClick(src, evt) {
+            doConfirm = window.confirm("¿desea cambiar el indice de la página?");
+            $("#tblGrid").gridView().pager.moveNextPage();
+        }
+        function btnToPage_OnClick(src, evt) {
+            doConfirm = window.confirm("¿desea cambiar el indice de la página?");
+            $("#tblGrid").gridView().pager.moveToPage($("#txtToPageIndex").val());
+        }
+        var index=90;
+        function btnAddRow_OnClick(src, evt) {
+            $("#tblGrid").gridView().addRow({ Id: index, Description: " Nuevo " + index, HiddenValue: " hidden Nuevo" });
+            $("#tblGrid").gridView().insertRow({ Id: index, Description: " Nuevo " + index, HiddenValue: " hidden Nuevo" }, 2);
+            index++
+        }
+    </script>
+</head>
+<body>
+    <div style="width:400px;display:inline-block;">
+        <div style="width:160px;float:left;">
+            <input type="text" id="txtFilterData"/></div>
+        <div style="width:200px;float:left;">
+            <input type="button" id="btnDoExec" value="Buscar" onclick="btnDoExec_OnClick(this, event);"/>
+            <input type="button" id="btnNextPage" value="Next Page" onclick="btnNextPage_OnClick(this, event);"/></div>
+        <div>
+            <input type="text" id="txtToPageIndex" value="" />
+            <input type="button" id="btnToPage" value="To Page" onclick="btnToPage_OnClick(this, event);"/>
+        </div>
+        <div>
+            <input type="button" id="btnAddRow" value="Add Row" onclick="btnAddRow_OnClick(this, event);"/>
+        </div>
+    </div>
+    <div style="width:100%;height:400px;border:1px solid #cccccc">
+        <table id="tblGrid"></table>
+    </div>
+    <style>
+        #divEventLog
+        {
+            height:350px;
+            overflow:auto;
+        }
+    </style>
+
+    <input type="button" value="limpiar Log" onclick="$('#divEventLog').empty(); iLogLine = 1;"/>
+    <div id="divEventLog">
+    </div>
+</body>
+</html>

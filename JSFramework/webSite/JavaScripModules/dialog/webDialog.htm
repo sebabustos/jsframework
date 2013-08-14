@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/general.css" rel="stylesheet" type="text/css" />
+
+    <!--<link href="../../css/jqueryUI_custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css" />-->
+    <link href="../../css/jqueryui_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <script src="webDialog.js" type="text/javascript"></script>
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+        })
+
+        function btnDoExec_OnClick(src, evt) {
+            $.webDialog.show("Esto es una prueba");
+        }
+    </script>
+</head>
+<body>
+<fieldset>
+    <legend>Dialog w/ Text</legend>
+    <input id="btnDoExec" onclick="btnDoExec_OnClick(this, event)" value="Mostrar dialogo" type="button" />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <table id="tblGrid" name="tblGrid" class="ui-widget">
+                </table>        
+            </td>
+            <td>
+                <table id="tblGridRight" name="tblGrid" class="ui-widget">
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            
+            </td>
+        </tr>
+    </table>
+    <textarea class="code">
+        $.webDialog.show("Esto es una prueba");
+    </textarea>
+</fieldset>
+<br />
+<script type="text/javascript" language="javascript">
+    function btnShowDialogWithDynamicControl() {
+        $.webDialog.show({
+            content: $("<div style='background-color:yellow;border:1px solid #999999'><input type='textbox' /><input type='button' onclick='alert();' value='Botón'/></div>"),
+            type: "control",
+            modal:false,
+            buttons: { "Aceptar": function (src, evt, dialogUI) {
+                alert("Ok");
+                dialogUI.webDialog("close");
+            }, "Cancelar": function () { alert("Cancelar"); } 
+            }
+        });
+    }
+</script>
+<fieldset>
+    <legend>Dialog w/ Dynamic Control</legend>
+    <input id="Button1" onclick="btnShowDialogWithDynamicControl();" value="Mostrar dialogo" type="button" />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <table id="Table1" name="tblGrid" class="ui-widget">
+                </table>        
+            </td>
+            <td>
+                <table id="Table2" name="tblGrid" class="ui-widget">
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            
+            </td>
+        </tr>
+    </table>
+    <textarea class="code">
+     
+        $.webDialog.show({
+            content: $("<div style='background-color:yellow;border:1px solid #999999'><input type='textbox' /><input type='button' onclick='alert();' value='Botón'/></div>"),
+            type: "control"
+        });
+    </textarea>
+</fieldset>
+<br />
+<script type="text/javascript" language="javascript">
+    function btnShowDialogWithControl() {
+        $.webDialog.show({
+            content: "#divTemplate",
+            type: "control",
+            onCloseFunction : function(){alert("on Close");}
+        });
+    }
+</script>
+<fieldset>
+    <legend>Dialog w/ Control</legend>
+    <div id='divTemplate' style='background-color:brown;border:1px solid #CCCCCC'>
+        <input type='textbox' />
+        <input type='button' onclick='alert();' value='Botón'/>
+    </div>
+    <input id="Button2" onclick="btnShowDialogWithControl();" value="Mostrar dialogo" type="button" />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <table id="Table3" name="tblGrid" class="ui-widget">
+                </table>        
+            </td>
+            <td>
+                <table id="Table4" name="tblGrid" class="ui-widget">
+                </table>
+            </td>
+        </tr>
+    </table>
+    <textarea class="code">
+        $.webDialog.show({
+            content: "#divTemplate",
+            type: "control"
+        });
+    </textarea>
+</fieldset>
+<br />
+<script type="text/javascript" language="javascript">
+    function btnShowDialogWithIFrame() {
+        $.webDialog.show({
+            content: "framedDialog.htm",
+            type: "url",
+            onCloseFunction: function () { alert(1); }
+        });
+    }
+</script>
+<fieldset>
+    <legend>Dialog w/ Frame</legend>
+    <input id="Button3" onclick="btnShowDialogWithIFrame();" value="Mostrar dialogo" type="button" />
+    <br />
+    <table>
+        <tr>
+            <td>
+                <table id="Table5" name="tblGrid" class="ui-widget">
+                </table>        
+            </td>
+            <td>
+                <table id="Table6" name="tblGrid" class="ui-widget">
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>
+            
+            </td>
+        </tr>
+    </table>
+    <textarea class="code">
+     
+        $.webDialog.show({
+            content: $("<div style='background-color:yellow;border:1px solid #999999'><input type='textbox' /><input type='button' onclick='alert();' text='Botón'/></div>"),
+            type: "control"
+        });
+    </textarea>
+</fieldset>
+
+<br />
+<script type="text/javascript" language="javascript">
+    function btnShowPluginDialog() {
+        $("#divPluggedIn").webDialog();
+    }
+</script>
+<fieldset>
+    <legend>Dialog Plugin</legend>
+    <input id="Button4" onclick="btnShowPluginDialog();" value="Mostrar dialogo" type="button" />
+    <div id="divPluggedIn">
+        Este es el contenido del div que será mostrado en el dialog usando el plugin
+    </div>
+    <br />
+    <textarea class="code">
+        $.webDialog.show({
+            content: $("<div style='background-color:yellow;border:1px solid #999999'><input type='textbox' /><input type='button' onclick='alert();' text='Botón'/></div>"),
+            type: "control"
+        });
+    </textarea>
+</fieldset>
+</body>
+</html>

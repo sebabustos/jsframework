@@ -1,0 +1,51 @@
+﻿.code
+{
+	border:1px solid black;
+	background-color:#dee8f1;
+	/* for IE */
+	  filter:alpha(opacity=80);
+	/* CSS3 standard */
+	  opacity:0.8;
+	padding:15px;
+}
+.code p
+{
+	font-family:Sans-Serif, Verdana;
+	font-size:10pt;
+	color:black;
+	padding-top:2px;
+	margin:0px;
+}
+.blue
+{
+	color:Blue;
+}
+.red
+{
+	color:red;
+}
+.darkred
+{
+	color:darkred;
+	}
+.green
+{
+	color:darkgreen;
+}
+
+.CodeBody
+{
+	
+}
+.CodeContainer
+{
+	width: 125px;
+	cursor: pointer;
+	background-color: #BAD1D1; /* for IE */
+	filter: alpha(opacity=70); /* CSS3 standard */
+	opacity: 0.7;
+	font-weight: bold;
+	border: 1px solid black;
+	margin: 0px 0px 1px 0px;
+	padding: 0px 0px 0px 5px;
+}

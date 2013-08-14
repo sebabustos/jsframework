@@ -1,0 +1,115 @@
+/* ----------PREVIEW---------------------------------------------------------------*/
+.Top
+{
+	/*background-image: url(../images/PrevArriba.gif);*/
+	background-position: center top;
+	text-indent:10px;
+}
+.Top_Left
+{
+	/*background-image: url(../images/PrevArriba_izq.gif);*/
+	background-repeat:no-repeat;
+	background-position: left top;
+	text-align:right;
+	text-indent:10px;
+	width:20px;
+	height:20px;
+}
+.Top_Right
+{
+	/*background-image: url(../images/PrevArriba_der.gif);*/
+	background-repeat:no-repeat;
+	background-position: right top;
+	width:20px;
+	height:20px;
+
+}
+.Bottom
+{
+	/*background-image: url(../images/PrevAbajo.gif);*/
+	background-position: center bottom;
+}
+.Bottom_Left
+{
+	/*background-image: url(../images/PrevAbajo_izq.gif);*/
+	background-repeat:no-repeat;
+	background-position: left bottom;
+	width:20px;
+	height:20px;
+
+}
+.Bottom_Right
+{
+	/*background-image: url(../images/PrevAbajo_der.gif);*/
+	background-repeat:no-repeat;
+	background-position: right bottom;
+	width:20px;
+	height:20px;
+}
+.Left
+{
+	/*background-image: url(../images/PrevIzquierda.gif);*/
+	background-position: left middle;
+	width:20px;
+}
+.Right
+{
+	/*background-image: url(../images/PrevDerecha.gif);*/
+	background-position: right middle;
+	width:20px;
+}
+.Middle
+{
+	/*background-image: url(../images/PrevMedio.gif);*/
+	background-position: center middle;
+}
+.PinUnlock
+{
+	height:7px;
+	width:10px;
+}
+.PinLock
+{
+	height:10px;
+	width:7px;
+}
+.Flecha
+{
+	position: absolute;
+	z-index:101;
+	left:3px;
+    top:-24px;
+}
+.FlechaDragable
+{
+	position: absolute;
+	z-index:101;
+	left:12px;
+    top:-15px;
+}
+/* ---------->>> jtip <<<---------------------------------------------------------------*/
+#JT {
+	position: absolute;
+	z-index:100;
+	margin-left:15px;
+	margin-top:10px;
+	cursor:move;
+}
+
+#JT_copy
+{
+
+}
+
+.JT_loader{
+	background-repeat: no-repeat;
+	background-position: center center;
+	width:100%;
+	height:10px;
+}
+.jTip
+{
+	cursor:help;
+
+}
+/* ---------->>> jtip <<<---------------------------------------------------------------*/

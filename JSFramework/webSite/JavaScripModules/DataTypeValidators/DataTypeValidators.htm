@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/jqueryUI_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" />
+    
+    <script src="DataTypeValidators.js" type="text/javascript"></script>
+    
+    <link href="css/gridView.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" >
+        $(window).ready(function () {
+            $(".code").formatCode();
+        })
+
+        function btnDoExec_OnClick(src, evt) {
+            $("#txtManualDate").DataTypeValidator({dataType:"date"});
+        }
+    </script>
+</head>
+<body>
+    <style>
+        input.invalidData
+        {
+            background-color: #FF8C8C;
+        }
+
+        .invalidMessage
+        {
+            border: 1px solid #CCCCCC;
+            border-radius: 5px 5px;
+            background-color: #FF8C8C;
+            color: #FFFFFF;
+        }
+    </style>
+    <input type="button" value="Validar" id="btnDoExec" onclick="btnDoExec_OnClick(this, event)" />
+    <br />
+    <br />
+    <div>
+        Sólo Número
+        <input type="text" id="txtNumeric" datatype="numeric" />
+    </div>
+    <div>
+        Letras y Número (sin caracteres especiales)
+        <input type="text" id="txtAlphabetic" datatype="alphabetic" />
+    </div>
+    <div>
+        Moneda
+        <input type="text" id="txtCurrency" datatype="currency" />
+    </div>
+    <div>
+        Fecha
+        <input type="text" id="txtDate" datatype="date" />
+    </div>
+    <br />
+    <br />
+    <div>
+        Fecha Manual
+        <input type="text" id="txtManualDate" />
+    </div>
+
+    <textarea class="code">
+        < script type="text/javascript" language="javascript">
+            var oContext = {contexto:'contexto'};
+            function btnDoExec_OnClick(src, evt) {
+                PJJS.Commons.wsAjax.doCallWS("../webServices/wsAjax.asmx", "DoSomething", oContext,
+                function (result, context) {
+                    alert(result.response);
+                    alert(context.contexto);
+                },
+                function (a) {
+                    alert(a.responseText);
+                },
+                { name: $("#txtName").val() });
+            }
+        < /script>
+    </textarea>
+</body>
+</html>

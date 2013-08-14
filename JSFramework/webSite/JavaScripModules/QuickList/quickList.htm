@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/general.css" rel="stylesheet" type="text/css" />
+
+    <!--<link href="../../css/jqueryUI_custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css" />-->
+    <link href="../../css/jqueryui_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <script src="QuickList.js" type="text/javascript"></script>
+    <link href="QuickList.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+
+            var dataSource = [{ id: 1, value: 'Tabarelli', info: 'Andrés Tabarelli' },
+            { id: 2, value: 'Bustos', info: 'Sebastián Bustos' },
+            { id: 3, value: 'Decima', info: 'Mauro Decima' },
+            { id: 4, value: 'Cresto', info: 'Mariano Cresto' },
+            { id: 5, value: 'Mansur', info: 'Manuel Mansur' },
+            { id: 6, value: 'Bornancini', info: 'Ignacio Bornancini' },
+            { id: 7, value: 'Casas', info: 'Jorge Casas' },
+            { id: 8, value: 'Aldorino', info: 'Sergio Aldorino' },
+            { id: 9, value: 'Abatidaga', info: 'Lorena Abatidaga' },
+            { id: 10, value: 'Esteban', info: 'Claudia Esteban'}]
+
+            $("#txtTextFilter").quickList({
+                "dataSource": dataSource,
+                itemsShown: 5,
+                showOn: "#btnDoExec",
+                onShowMoreSelected: function () { alert("more"); }
+            });
+        })
+    </script>
+</head>
+<body>
+<fieldset>
+    <legend>QuickText w/ textbox and button</legend>
+    Filtro: &nbsp;<input id="txtTextFilter" type="text" value="" />
+    <input id="btnDoExec" value="Show" type="button" />
+    <br />
+    <textarea class="code">
+        var dataSource = [{ id: 1, value: 'Tabarelli', info: 'Andrés Tabarelli' },
+        { id: 2, value: 'Bustos', info: 'Sebastián Bustos' },
+        { id: 3, value: 'Decima', info: 'Mauro Decima' },
+        { id: 4, value: 'Cresto', info: 'Mariano Cresto' },
+        { id: 5, value: 'Mansur', info: 'Manuel Mansur' },
+        { id: 6, value: 'Bornancini', info: 'Ignacio Bornancini' },
+        { id: 7, value: 'Casas', info: 'Jorge Casas' },
+        { id: 8, value: 'Aldorino', info: 'Sergio Aldorino' },
+        { id: 9, value: 'Abatidaga', info: 'Lorena Abatidaga' },
+        { id: 10, value: 'Esteban', info: 'Claudia Esteban'}]
+
+        $("#txtTextFilter").quickList({
+            "dataSource": dataSource,
+            itemsShown: 5,
+            showOn: "#btnDoExec"
+        });
+    </textarea>
+</fieldset>
+<fieldset>
+ <script type="text/javascript" language="javascript">
+     $(window).ready(function () {
+         $(".code").formatCode();
+         $("#txtTextFilter_wWS").quickList({
+             "dataSource": "../../webServices/QuickList.asmx/SearchValues",
+             itemsShown: 5,
+             showOn: "#btnDoExec",
+             /*onSelect: function (src, index, elem) {
+                 alert("Id:" + elem.id + "\nValue: " + elem.value + "\nInfo: " + elem.info)
+             },*/
+             onError:function(a, b, c){
+                alert(a.responseText);
+             }
+         });
+     })
+     
+    </script>
+    <legend>QuickText w/ ws</legend>
+    Filtro: &nbsp;<input id="txtTextFilter_wWS" type="text" value="" />
+    <br />
+    <textarea class="code">
+        $("#txtTextFilter_wWS").quickList({
+            "dataSource": "../../webServices/QuickList.asmx/SearchValues",
+            itemsShown: 5,
+            showOn: "#btnDoExec",
+            /*onSelect: function (src, index, elem) {
+                alert("Id:" + elem.id + "\nValue: " + elem.value + "\nInfo: " + elem.info)
+            },*/
+            onError:function(a, b, c){
+            alert(a.responseText);
+            }
+        });
+    </textarea>
+</fieldset>
+</body>
+</html>
