@@ -47,6 +47,8 @@ Cambios de la Versión:
 	
         ID = idPrefix + "_column" + col + "_controlHeaderIncluded_" + ctrl.attr("id") + "_" + index
 
+- Se corrigió un error en un selector de la grilla hija, que no estaba
+trayendo la misma.
 
 Nuevos Eventos:
  - onPageIndexChanged
@@ -92,6 +94,9 @@ grilla agregada es una gridView en sí misma.
 ================================================================
 - Al agregar controles no está agregando un ID, o bien, si se 
 trata de un template siempre pega el mismo ID. (Gon Oviedo)
+- Dibujar la grilla hija, la segunda vez que ingresa (cuando ya 
+  detectá que está creada), el selector de la grilla hija
+  no estaba devolviendo correctamente la misma. (Emi Giraudo)
 ================================================================
                         POSIBLES MEJORAS
 ================================================================
@@ -207,7 +212,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 else
                     row.addClass("row");
 
-                if (settings.childGrid != null) {
+                if (settings.childGrid !== null) {
                     var childGridExpandCell;
 
                     if (settings.useJQueryUI)
@@ -218,7 +223,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     childGridExpandCell.click(function (evt) {
                         var index = $(this).parent().attr("gridView_rowIndex");
-                        drawChildGrid(gridViewId, index);
+                        this.drawChildGrid(gridViewId, index);
                     });
 
                     row.append(childGridExpandCell);
@@ -229,7 +234,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     row.append($("<td id='" + idPrefix + "_rowNumber' gridview_cellType='rowNumber' class='rowNumber' >" + (rowIndex + 1) + "</td>"));
                 }
                 //Celda de selección
-                if (settings.allowSelection && settings.selectionMode != "row") {
+                if (settings.allowSelection && settings.selectionMode !== "row") {
                     if (settings.useJQueryUI)
                         row.append($("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='selectionCell' style='cursor:pointer;'><div class='ui-icon ui-icon-carat-1-e'>&nbsp;</div></td>"));
                     else
@@ -260,30 +265,30 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     if (data.hasOwnProperty(dataField)) {
                         var colValue = data[dataField];
-                        if (!settings.columns[col].hasOwnProperty("includeInResult") || settings.columns[col].includeInResult == true)
+                        if (!settings.columns[col].hasOwnProperty("includeInResult") || settings.columns[col].includeInResult === true)
                             itemData[dataField] = colValue;
 
 
                         if (settings.columns[col].hasOwnProperty("visible") && !settings.columns[col].visible)
                             cell.hide();
 
-                        if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval != null)
+                        if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
                             colValue = settings.columns[col].dataEval(colValue);
 
                         if (settings.columns[col].hasOwnProperty("showPreview") && settings.columns[col].showPreview) {
                             var css = '';
-                            if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass != null && settings.columns[col].previewCellClass != "")
+                            if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass !== null && settings.columns[col].previewCellClass !== "")
                                 css = ' ' + settings.columns[col].previewCellClass;
 
-                            cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue != null) ? colValue : "&nbsp;") + "</div>"));
+                            cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
                         }
                         else
-                            cell.html("<div class='divCellData'>" + ((colValue != null) ? colValue : "&nbsp;") + "</div>");
+                            cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
                     }
                     else {
                         //Dibuja los controles configurados como columnas.
-                        if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls != null && settings.columns[col].Controls.length > 0) {
-                            var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false);
+                        if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls !== null && settings.columns[col].Controls.length > 0) {
+                            var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false, idPrefix);
                             $.each(ctrls, function (index, item) {
                                 item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
                                 cell.addClass("controls_container").append(item);
@@ -319,42 +324,83 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 }
                 return row;
             },
-            GetControls: function (controls, gridViewId, isHeader) {
+            GetControls: function (controls, gridViewId, isHeader, rowId) {
                 var result = [];
                 $.each(controls, function (index) {
                     if (!isHeader || (controls[index].hasOwnProperty("showInHeader") && controls[index].showInHeader)) {
-                        result.push(privateMethods.CreateControl(controls[index], gridViewId));
+                        result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId));
                     }
                 });
                 return result;
             },
-            CreateControl: function (control, gridViewId) {
+            CreateControl: function (control, gridViewId, rowId) {
                 var ctrlType = 'button';
                 var label = "";
+                var name = "";
                 var ctrl = null;
                 var ctrlsTemplate = null;
                 var css = null;
-                if (control.hasOwnProperty("type") && control.type != null)
+                if (control.hasOwnProperty("type") && control.type !== null)
                     ctrlType = control.type.toLowerCase();
-                if (control.hasOwnProperty("label") && control.label != null)
+                if (control.hasOwnProperty("label") && control.label !== null)
                     label = control.label;
-                if (control.hasOwnProperty("template") && control.template != null && (ctrlsTemplate = $(control.template)).length > 0)
+                if (control.hasOwnProperty("name") && control.name !== null)
+                    name = control.name;
+                if (control.hasOwnProperty("template") && control.template !== null && (ctrlsTemplate = $(control.template)).length > 0)
                     ctrlType = "template";
-                if (control.hasOwnProperty("cssClass") && control.cssClass != null)
+                if (control.hasOwnProperty("cssClass") && control.cssClass !== null)
                     css = "class='" + control.cssClass + "'";
 
+                var controlTypes ={
+                    template:'template',
+                    image:'image',
+                    button:'button',
+                    checkbox:'checkbox',
+                    radio: 'radio',
+                    textbox: 'textbox',
+                    select:'select'
+                };
 
-                if (ctrlType === 'template')
-                    ctrl = ctrlsTemplate.clone();
-                if (ctrlType === 'image') {
-                    var alt = "";
-                    if (control.hasOwnProperty("alt") && control.alt != null)
-                        alt = control.alt;
+                //TODO: ¿eventos onBeforeCreatingControl o algo así?
+                switch(ctrlType)
+                {
+                    case controlTypes.template:
+                        ctrl = ctrlsTemplate.clone();
+                        break;
+                    case controlTypes.image:
+                        var alt = "";
+                        if (control.hasOwnProperty("alt") && control.alt !== null)
+                            alt = control.alt;
 
-                    ctrl = $("<img src='" + label + "' alt='" + alt + "' " + css + "/>");
+                        ctrl = $("<img src='" + label + "' alt='" + alt + "' " + css + "/>");
+                        break;
+                    case controlTypes.button:
+                        ctrl = $("<input type='button' value='" + label + "' " + css + " />");
+                        break;
+                    case controlTypes.checkbox:
+                        ctrl = $("<input type='checkbox' value='" + label + "' " + css + " />");
+                        break;
+                    case controlTypes.radio:
+                        ctrl = $("<input type='radio' value='" + label + "' " + css + " />");
+                        break;
+                    case controlTypes.textbox:
+                        break;
+                    case controlTypes.select:
+                        break;
                 }
-                else if (ctrlType === 'button')
-                    ctrl = $("<input type='button' value='" + label + "' " + css + " />");
+
+                if (name !== null)
+                {
+                    //Si es un radio button, se usa el mismo ID para todos los radio, ya que es lo que agrupa los mismos.
+                    if (ctrlType !== controlTypes.radio)
+                        //se actualiza el name, para que no todos los controles, de todas las filas, tengan el mismo name.
+                        //Se le agrega el prefijo del id de la fila.
+                        name = rowId + "_" + name;
+
+                    ctrl.attr("name", name);
+                }
+
+                    
 
                 if (typeof control.onClick === "function") {
                     ctrl.click(function () {
@@ -365,7 +411,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     });
                 }
 
-                if (control.hasOwnProperty("style") && control.style != null) {
+                if (control.hasOwnProperty("style") && control.style !== null) {
                     var style = "";
                     if (ctrl.attr("style") !== "undefined" && ctrl.attr("style") !== "")
                         style = ctrl.attr("style");
@@ -376,12 +422,98 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 }
 
                 return ctrl;
+            },
+            drawChildGrid: function (gridViewId, rowIndex, forcedState) {
+                var settings;
+                //se obtiene la referencia a la grilla hija
+                var parentGrid = $("[gridViewId=" + gridViewId + "]");
+                //fila a la que pertence la grilla hija
+                var sourceRow = $("[gridViewId=" + gridViewId + "]>TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='row']");
+
+                //se busca si ya existe la grilla hija.
+                var childGridRow = $("[gridViewId=" + gridViewId + "]>TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='childGrid']");
+
+                if (childGridRow.length > 0) {
+                    var childGrid = $("[gridViewId=" + gridViewId + "_ChildGrid" + rowIndex + "]");
+                    settings = $.extend({}, $default, childGrid.data("gridviewconfig"));
+                }
+                    //si no existe se crea.
+                else {
+                    //se obtiene la configuración de grilla hija.
+                    settings = $.extend({}, $default, parentGrid.data("gridviewconfig").childGrid);
+                    //TODO_SEBA: en el DataSource de la grilla hija se debe poder parsear info. Ej: mandar el itemData de la fila.
+
+                    var cellsCount = sourceRow.children("td[gridview_cellType]").length - 1;
+                    //Se crea la fila que va a contener la grilla hija.
+                    childGridRow = $("<tr id='" + gridViewId + "_Row_" + rowIndex + "_ChildGrid' gridView_rowIndex='" + rowIndex + "' gridview_rowType='childGrid'>" +
+                                "<td gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
+                                "<td gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
+                                "</tr>").hide();
+
+
+                    //se crea la tabla que será la grilla hija.
+                    var elem = $("<table id='" + gridViewId + "_ChildGrid" + rowIndex + "' gridViewType='childGridView'></table>");
+                    $("TD[gridview_cellType='childGridCell']", childGridRow).append(elem);
+                    //Se agrega la fila a la tabla para poder inicializar la grilla a través del plugin (siguiendo el camino normal de cualquier grilla).
+                    //esto es necesario, ya que de lo contrario el plugin no va a funcionar, ya que dentro realiza obtención de elementos que asume en el DOM.
+                    sourceRow.after(childGridRow);
+
+                    //settings.dataSource
+
+                    //Se inicializa la grilla hija. Siempre que se crea por primera vez se ejecuta la búsqueda.
+                    elem.gridView(settings, true);
+                }
+                var childExpandCell;
+                //Se cambia el estado, la visibilidad, en función del estado actual (se hace un toggle)
+                if (typeof forcedState === "undefined" || forcedState === null) {
+                    //se cambia la clase de la celda
+                    childExpandCell = $("TD[gridview_cellType='childExpand']", sourceRow).toggleClass("childExpanded childColapsed");
+
+                    if (settings.useJQueryUI) {
+                        var expandButton = $("#divExpandButton", childExpandCell);
+                        expandButton.toggleClass("ui-icon-plus ui-icon-minus");
+                    }
+                    else {
+                        if (childExpandCell.hasClass("childColapsed"))
+                            childExpandCell.text("+");
+                        else
+                            childExpandCell.text("-");
+                    }
+                    //Si ya existe oculta y muestra la fila de la grilla.
+                    childGridRow.toggle();
+                }
+                else {
+                    //se cambia la clase de la celda
+                    childExpandCell = $("TD[gridview_cellType='childExpand']", sourceRow);
+                    if (forcedState === "show") {
+
+                        childExpandCell.removeClass("childColapsed").addClass("childExpanded");
+
+                        if (settings.useJQueryUI)
+                            $("#divExpandButton", childExpandCell).removeClass("ui-icon-plus").addClass("ui-icon-minus");
+                        else
+                            childExpandCell.text("-");
+
+                        childGridRow.show();
+                    }
+                    else if (forcedState === "hide") {
+
+                        childExpandCell.removeClass("childExpanded").addClass("childColapsed");
+
+                        if (settings.useJQueryUI)
+                            $("#divExpandButton", childExpandCell).removeClass("ui-icon-minus").addClass("ui-icon-plus");
+                        else
+                            childExpandCell.text("+");
+
+                        childGridRow.hide();
+                    }
+                }
             }
         };
     var methods = {
         cleanSearch: function () {
             var gridViewId;
-            if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                 gridViewId = $tempthis.attr("gridViewId");
             else
                 gridViewId = arguments[0];
@@ -392,7 +524,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                 if (settings.onCleanSearch instanceof Function) {
                     var response = settings.onCleanSearch(elem, settings, paggingData);
-                    if (typeof response != "undefined" && !response)
+                    if (typeof response !== "undefined" && !response)
                         return;
                 }
 
@@ -401,14 +533,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 paggingData.pageAmm = 0;
                 paggingData.currIndex = 0;
                 paggingData.currPageGroupNum = 0;
-                elem.data("gridView:gagging", paggingData)
+                elem.data("gridView:gagging", paggingData);
                 $("[gridViewId=" + gridViewId + "]").gridView("drawPager");
             }
         },
         pager: {
             movePrevPage: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -439,7 +571,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             moveNextPage: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -453,7 +585,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     //Si está definido el evento de cambio de página, ejecuta el mismo
                     if (settings.onPaggingIndexChange instanceof Function) {
-                        var isLastPage = (toIndex == (paggingData.pageAmm - 1));
+                        var isLastPage = (toIndex === (paggingData.pageAmm - 1));
 
                         if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
                             return;
@@ -472,7 +604,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             moveToPage: function (pageIndex) {
                 var gridViewId;
-                if (arguments.length == 0)
+                if (arguments.length === 0)
                     return;
 
                 //Si se recibe más de un argumento, el primero es siempre el GridViewId.
@@ -482,7 +614,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     pageIndex = arguments[1];
                 }
                     //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
-                else if ($tempthis != null && $tempthis.length > 0)
+                else if ($tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     throw new Error("No se ha indicado el control de grilla sobre el cual operar");
@@ -517,7 +649,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             movePrevPageGroup: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -531,7 +663,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             moveNextPageGroup: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -546,7 +678,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             moveFirstPageGroup: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -560,7 +692,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             },
             moveLastPageGroup: function () {
                 var gridViewId;
-                if (arguments.length == 0 && $tempthis != null && $tempthis.length > 0)
+                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
                     gridViewId = $tempthis.attr("gridViewId");
                 else
                     gridViewId = arguments[0];
@@ -569,7 +701,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var paggingData = $.extend({}, elem.data("gridView:gagging"));
 
                 var rest = (paggingData.pageAmm % settings.pagesShown);
-                paggingData.currPageGroupNum = ((paggingData.pageAmm - rest) / settings.pagesShown) - (rest == 0 ? 1 : 0);
+                paggingData.currPageGroupNum = ((paggingData.pageAmm - rest) / settings.pagesShown) - (rest === 0 ? 1 : 0);
                 elem.data("gridView:gagging", paggingData);
                 $(elem).gridView("drawPager");
             }
@@ -580,10 +712,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         insertRow: function (rowData, atPosition) {
             var gridViewId;
             var elem;
-            if (arguments.length == 0)
+            if (arguments.length === 0)
                 return;
 
-            if (arguments.length == 2 && $tempthis != null && $tempthis.length > 0) {
+            if (arguments.length === 2 && $tempthis !== null && $tempthis.length > 0) {
                 gridViewId = $tempthis.attr("gridViewId");
                 elem = $tempthis;
             }
@@ -604,7 +736,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             if (settings.onRowSelect instanceof Function && settings.allowSelection) {
 
                 //En selectionMode=='cell' la fila sólo selecciona presionando sobre el botón de selección, por lo que s registra el evento en el mismo.
-                if (typeof settings.selectionMode != "undefined" && settings.selectionMode != null && settings.selectionMode.toLowerCase() == 'cell') {
+                if (typeof settings.selectionMode !== "undefined" && settings.selectionMode !== null && settings.selectionMode.toLowerCase() === 'cell') {
                     $(".selectionCell", $row).click(function (evt) {
                         settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
                     });
@@ -632,12 +764,12 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
     var guiid = 0;
     $.fn.gridView = function (options, executeSearch) {
-        if (typeof options == "undefined") {
+        if (typeof options === "undefined") {
             $tempthis = this;
             return methods;
         }
 
-        if (typeof options === "string" && options != "") {
+        if (typeof options === "string" && options !== "") {
             if (this.length <= 0)
                 return this;
             var pageIndex = 0;
@@ -647,13 +779,13 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             $.each(this, function (index, item) {
                 var gridViewId = $(item).attr("gridViewId");
                 var settings = $.extend({}, $default, $(item).data("gridviewconfig"));
-                if ((options.toLowerCase() == "dosearch") || (options.toLowerCase() == "search")) {
+                if ((options.toLowerCase() === "dosearch") || (options.toLowerCase() === "search")) {
                     doSearch(gridViewId, pageIndex);
                 }
-                else if (options.toLowerCase() == "drawpager") {
+                else if (options.toLowerCase() === "drawpager") {
                     drawPager(gridViewId);
                 }
-                else if ((options.toLowerCase() == "dorefresh") || (options.toLowerCase() == "refresh")) {
+                else if ((options.toLowerCase() === "dorefresh") || (options.toLowerCase() === "refresh")) {
                     doRefresh(gridViewId);
                 }
                 else {
@@ -678,7 +810,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         }
 
         function configGridView(target) {
-            var gridViewId = (typeof target[0].id != "undefined") ? target[0].id : guiid++;
+            var gridViewId = (typeof target[0].id !== "undefined") ? target[0].id : guiid++;
             var itemOptions = $.extend({}, options);
 
             if (typeof itemOptions.useJQueryUI === "undefined" || itemOptions.useJQueryUI === null)
@@ -691,16 +823,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 .append("<thead id='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "header'></thead>") /*inserta el header*/
                 .append("<tbody id='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "body'></tbody>") /*inserta el body*/;
 
-            if (typeof itemOptions.pagerPosition == "undefined" || itemOptions.pagerPosition == null)
+            if (typeof itemOptions.pagerPosition === "undefined" || itemOptions.pagerPosition === null)
                 itemOptions.pagerPosition = $default.pagerPosition;
 
-            if (typeof itemOptions.tableGridPager == "undefined" || itemOptions.tableGridPager == null) {
+            if (typeof itemOptions.tableGridPager === "undefined" || itemOptions.tableGridPager === null) {
                 itemOptions.tableGridPager = "#tblFooter" + gridViewId;
                 /*Si no se configuro un selector en el pager, se inserta el pager por defecto*/
                 if ($(itemOptions.tableGridPager).length <= 0) {
-                    if (itemOptions.pagerPosition.toLowerCase() == "down")
+                    if (itemOptions.pagerPosition.toLowerCase() === "down")
                         target.after("<div id='divFooter" + gridViewId + "' class='divFooterContainer'><table id='tblFooter" + gridViewId + "' class='footer' cellspacing='0' cellpadding='0'></table></div>");
-                    else if (itemOptions.pagerPosition.toLowerCase() == "up")
+                    else if (itemOptions.pagerPosition.toLowerCase() === "up")
                         target.before("<div id='divFooter" + gridViewId + "' class='divFooterContainer'><table id='tblFooter" + gridViewId + "' class='footer' cellspacing='0' cellpadding='0'></table><div>");
                 }
             }
@@ -734,14 +866,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var eventResult;
             if (settings.onBeforeSearch instanceof Function) {
                 eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize);
-                if (typeof eventResult != "undefined" && !eventResult) {
+                if (typeof eventResult !== "undefined" && !eventResult) {
                     return;
                 }
             }
 
             //obtiene la información de la fila padre.
             var parentRowData;
-            if (elem.attr("gridViewType") == "childGridView") {
+            if (elem.attr("gridViewType") === "childGridView") {
                 var gridTR = elem.parents("TR:first");
                 var rowIndex = gridTR.attr("gridView_rowIndex");
                 var parentRow = $("TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='row']", gridTR.parents("table"));
@@ -750,7 +882,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
 
             var dataFilter;
-            if (typeof parentRowData != "undefined")
+            if (typeof parentRowData !== "undefined")
                 dataFilter = settings.getFilterData(parentRowData);
             else
                 dataFilter = settings.getFilterData();
@@ -765,10 +897,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
             drawProcessingIcon(gridViewId);
 
-            if (settings.dataSourceType.toLowerCase() == "ws") {
+            if (settings.dataSourceType.toLowerCase() === "ws") {
                 loadDataSourceWS(gridViewId, settings, dataFilter, paggingData, parentRowData);
             }
-            else if (settings.dataSourceType.toLowerCase() == "json") {
+            else if (settings.dataSourceType.toLowerCase() === "json") {
                 loadDataSourceJSon(gridViewId, settings, paggingData, parentRowData);
             }
 
@@ -789,7 +921,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var prod = paggingData.currPageGroupNum * settings.pagesShown;
             for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
                 var css = "";
-                if (paggingData.currIndex == icount)
+                if (paggingData.currIndex === icount)
                     css = " selected";
                 var spaces = "";
                 for (var amm = icount.toString().length; amm < 3; amm++)
@@ -842,7 +974,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function drawMessage(gridViewId, msg, cssClass) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            if (typeof cssClass == "undefined" || cssClass == null)
+            if (typeof cssClass === "undefined" || cssClass === null)
                 cssClass = "tdMessage";
             $(settings.tableGridBody, elem).empty().append($("<tr><td colspan='9' class='" + cssClass + "'>" + msg + "</td></tr>"));
         }
@@ -863,96 +995,9 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 forcedState = "hide";
 
             $("[gridViewId=" + gridViewId + "]>TBODY>TR[gridview_rowType='row']").each(function (index, item) {
-                drawChildGrid(gridViewId, index, forcedState);
+                privateMethods.drawChildGrid(gridViewId, index, forcedState);
             });
 
-        }
-
-        function drawChildGrid(gridViewId, rowIndex, forcedState) {
-            var settings;
-            //se obtiene la referencia a la grilla hija
-            var parentGrid = $("[gridViewId=" + gridViewId + "]");
-            //fila a la que pertence la grilla hija
-            var sourceRow = $("[gridViewId=" + gridViewId + "]>TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='row']");
-
-            //se busca si ya existe la grilla hija.
-            var childGridRow = $("[gridViewId=" + gridViewId + "]>TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='childGrid']");
-
-            if (childGridRow.length > 0) {
-                var childGrid = $(gridViewId + "_ChildGrid" + rowIndex);
-                settings = $.extend({}, $default, childGrid.data("gridviewconfig"));
-            }
-                //si no existe se crea.
-            else {
-                //se obtiene la configuración de grilla hija.
-                settings = $.extend({}, $default, parentGrid.data("gridviewconfig").childGrid);
-                //TODO_SEBA: en el DataSource de la grilla hija se debe poder parsear info. Ej: mandar el itemData de la fila.
-
-                var cellsCount = sourceRow.children("td[gridview_cellType]").length - 1;
-                //Se crea la fila que va a contener la grilla hija.
-                childGridRow = $("<tr id='" + gridViewId + "_Row_" + rowIndex + "_ChildGrid' gridView_rowIndex='" + rowIndex + "' gridview_rowType='childGrid'>" +
-                            "<td gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
-                            "<td gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
-                            "</tr>").hide();
-
-
-                //se crea la tabla que será la grilla hija.
-                var elem = $("<table id='" + gridViewId + "_ChildGrid" + rowIndex + "' gridViewType='childGridView'></table>");
-                $("TD[gridview_cellType='childGridCell']", childGridRow).append(elem);
-                //Se agrega la fila a la tabla para poder inicializar la grilla a través del plugin (siguiendo el camino normal de cualquier grilla).
-                //esto es necesario, ya que de lo contrario el plugin no va a funcionar, ya que dentro realiza obtención de elementos que asume en el DOM.
-                sourceRow.after(childGridRow);
-
-                settings.dataSource
-
-                //Se inicializa la grilla hija. Siempre que se crea por primera vez se ejecuta la búsqueda.
-                elem.gridView(settings, true);
-            }
-
-            //Se cambia el estado, la visibilidad, en función del estado actual (se hace un toggle)
-            if (typeof forcedState == "undefined" || forcedState == null) {
-                //se cambia la clase de la celda
-                var childExpandCell = $("TD[gridview_cellType='childExpand']", sourceRow).toggleClass("childExpanded childColapsed");
-
-                if (settings.useJQueryUI) {
-                    var expandButton = $("#divExpandButton", childExpandCell);
-                    expandButton.toggleClass("ui-icon-plus ui-icon-minus");
-                }
-                else {
-                    if (childExpandCell.hasClass("childColapsed"))
-                        childExpandCell.text("+");
-                    else
-                        childExpandCell.text("-");
-                }
-                //Si ya existe oculta y muestra la fila de la grilla.
-                childGridRow.toggle();
-            }
-            else {
-                //se cambia la clase de la celda
-                var childExpandCell = $("TD[gridview_cellType='childExpand']", sourceRow);
-                if (forcedState === "show") {
-
-                    childExpandCell.removeClass("childColapsed").addClass("childExpanded");
-
-                    if (settings.useJQueryUI)
-                        $("#divExpandButton", childExpandCell).removeClass("ui-icon-plus").addClass("ui-icon-minus");
-                    else
-                        childExpandCell.text("-");
-
-                    childGridRow.show();
-                }
-                else if (forcedState === "hide") {
-
-                    childExpandCell.removeClass("childExpanded").addClass("childColapsed");
-
-                    if (settings.useJQueryUI)
-                        $("#divExpandButton", childExpandCell).removeClass("ui-icon-minus").addClass("ui-icon-plus");
-                    else
-                        childExpandCell.text("+");
-
-                    childGridRow.hide();
-                }
-            }
         }
 
         function drawResults(gridViewId, data) {
@@ -966,7 +1011,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var rows = [];
             var rowIndex = 0;
 
-            if (data != null && data.length > 0) {
+            if (data !== null && data.length > 0) {
                 //Dibuja las filas
                 for (var item in data) {
                     //agrega cada file en el array
@@ -981,7 +1026,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (settings.onRowSelect instanceof Function && settings.allowSelection) {
 
                     //En selectionMode=='cell' la fila sólo selecciona presionando sobre el botón de selección, por lo que s registra el evento en el mismo.
-                    if (typeof settings.selectionMode != "undefined" && settings.selectionMode != null && settings.selectionMode.toLowerCase() == 'cell') {
+                    if (typeof settings.selectionMode !== "undefined" && settings.selectionMode !== null && settings.selectionMode.toLowerCase() === 'cell') {
                         $(".selectionCell", $(settings.tableGridBody, elem)).click(function (evt) {
                             settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
                         });
@@ -1005,7 +1050,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (settings.onGridDrawed instanceof Function)
                     settings.onGridDrawed(gridViewId);
 
-                if (settings.childGrid != null && settings.childGrid.showAllExpanded) {
+                if (settings.childGrid !== null && settings.childGrid.showAllExpanded) {
                     if (settings.childGrid.allowExpandAll) {
                         var childGridCell = $("[gridViewId=" + gridViewId + "]>THEAD>TR>TD[gridview_cellType='expandAll']");
                         //se cambia la clase de la celda
@@ -1035,7 +1080,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var rowHeader = $("<tr id='" + idPrefix + "' gridview_rowType='header'></tr>");
             var showRefresh = (typeof settings.showRefresh === "undefined" || settings.showRefresh === null || settings.showRefresh === true);
 
-            if (settings.childGrid != null) {
+            if (settings.childGrid !== null) {
                 //Se agrega la celda para el botón de expansión de las grillas anidadas.
                 var childGridCell = $("<td class='gridViewCellHeader childColapsedHeader' gridview_cellType='expandAll'></td>");
                 //Si se habilita la posibilidad de abrir todas las grillas hijas simultáneamente se dibuja el botón para ello.
@@ -1081,13 +1126,13 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             if (showRefresh) {
                 var cornerCellHeader = $("<td class='gridViewCellHeader'></td>");
-                if (settings.useJQueryUI && (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage == "")) {
+                if (settings.useJQueryUI && (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")) {
                     //se configura una imagen de refrezco usando los íconos de jQueryUI
                     cornerCellHeader.append($("<div onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' class='ui-icon ui-icon-refresh'>&nbsp;</div>"));
                 }
                 else {
                     //se configura una imagen de refrezco con la configurada o la imagen por defecto
-                    if (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage == "")
+                    if (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")
                         settings.refreshImage = "images/refresh-icon.png";
 
                     cornerCellHeader.append($("<img src='" + settings.refreshImage + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' />"));
@@ -1108,15 +1153,15 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
 
             for (var col in settings.columns) {
-                if (!settings.columns[col].hasOwnProperty("visible") || settings.columns[col].visible == true) {
+                if (!settings.columns[col].hasOwnProperty("visible") || settings.columns[col].visible === true) {
                     var cell = $("<td class='gridViewCellHeader'></td>");
-                    if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width != "");
+                    if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width !== "");
                     cell.width(settings.columns[col].width);
 
-                    var colheader = (typeof settings.columns[col].description != "undefined") ? settings.columns[col].description : ((typeof settings.columns[col].dataFieldName !== "undefined") ? settings.columns[col].dataFieldName : "&nbsp;");
+                    var colheader = (typeof settings.columns[col].description !== "undefined") ? settings.columns[col].description : ((typeof settings.columns[col].dataFieldName !== "undefined") ? settings.columns[col].dataFieldName : "&nbsp;");
                     var headerCtrls = [];
                     if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls.length > 0)
-                        headerCtrls = privateMethods.GetControls(settings.columns[col].Controls, gridViewId, true);
+                        headerCtrls = privateMethods.GetControls(settings.columns[col].Controls, gridViewId, true, idPrefix);
 
                     if (headerCtrls.length > 0) {
                         $.each(headerCtrls, function (index, ctrl) {
@@ -1127,7 +1172,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     else
                         cell.html(colheader);
 
-                    rowHeader.append(cell)
+                    rowHeader.append(cell);
                 }
             }
             return rowHeader;
@@ -1169,7 +1214,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     var eventResult;
                     if (settings.onBeforeDraw instanceof Function) {
                         eventResult = settings.onBeforeDraw();
-                        if (typeof eventResult != "undefined" && !eventResult)
+                        if (typeof eventResult !== "undefined" && !eventResult)
                             return;
                     }
 
@@ -1179,7 +1224,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                     //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                     if (settings.usePagging) {
-                        if (settings.totalRecordsProperty == null) {
+                        if (settings.totalRecordsProperty === null) {
                             if (data.hasOwnProperty("totalRecords"))
                                 paggingData.totalRecords = data.totalRecords;
                             else
@@ -1195,7 +1240,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         }
 
                         var rest = (paggingData.totalRecords % settings.pageSize);
-                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest == 0) ? 0 : 1);
+                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
                         $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
 
                         //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
@@ -1204,7 +1249,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     }
 
                     var resultData;
-                    if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty != null)
+                    if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
                         resultData = data[settings.dataResultProperty];
                     else
                         resultData = data.result;
@@ -1213,7 +1258,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. <br/> Intente nuevamente más tarde.");
-                    if (settings.onError != null && settings.onError instanceof Function)
+                    if (settings.onError !== null && settings.onError instanceof Function)
                         settings.onError(jqXHR, textStatus, errorThrown);
                 }
             });
@@ -1226,7 +1271,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 //El evento puede cancelar el dibujado de la grilla, si tras su ejecución devolviera false.
                 if (settings.onBeforeDraw instanceof Function) {
                     eventResult = settings.onBeforeDraw();
-                    if (typeof eventResult != "undefined" && !eventResult)
+                    if (typeof eventResult !== "undefined" && !eventResult)
                         return;
                 }
 
@@ -1238,7 +1283,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         dataString = $(settings.dataSourceObject).text();
 
                     //como se trata de un data source del tipo json, se realiza un eval
-                    if (typeof dataString !== "undefined" && dataString != null) {
+                    if (typeof dataString !== "undefined" && dataString !== null) {
                         data = eval("(" + dataString + ")");
                     }
                 }
@@ -1256,14 +1301,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 }
 
 
-                if (typeof data != "undefined" && data != null) {
+                if (typeof data !== "undefined" && data !== null) {
                     //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                     //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                     if (settings.usePagging) {
                         paggingData.totalRecords = data.length;
 
                         var rest = (paggingData.totalRecords % settings.pageSize);
-                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest == 0) ? 0 : 1);
+                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
                         $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
 
                         //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
@@ -1271,7 +1316,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             drawPager(gridViewId);
 
                         //Se realiza la paginación de los datos.
-                        if (data != null && data.length > 0) {
+                        if (data !== null && data.length > 0) {
                             var lowerBound = paggingData.currIndex * settings.pageSize;
                             data = data.slice(lowerBound, lowerBound + settings.pageSize);
                         }
@@ -1282,14 +1327,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var msg = "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message;
                 drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message);
 
-                if (settings.onError != null && settings.onError instanceof Function)
+                if (settings.onError !== null && settings.onError instanceof Function)
                     settings.onError(null, msg, error);
             }
         }
 
         init(this);
         return this;
-    }
+    };
 })(jQuery);
 
 /*
