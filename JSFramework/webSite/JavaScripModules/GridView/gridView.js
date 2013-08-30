@@ -873,12 +873,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             //obtiene la información de la fila padre.
             var parentRowData;
-            if (elem.attr("gridViewType") === "childGridView") {
+            if (elem.attr("gridViewType") == "childGridView") {
                 var gridTR = elem.parents("TR:first");
                 var rowIndex = gridTR.attr("gridView_rowIndex");
-                var parentRow = $("TBODY>TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='row']", gridTR.parents("table"));
+                //se obtiene la grilla padre
+                var tblParentGridView = gridTR.parents("table");
+                //obtiene la ROW hija de la grilla padre que contiene a este childGrid
+                var parentRow = tblParentGridView.children("TBODY").children("TR[gridView_rowIndex='" + rowIndex + "'][gridview_rowType='row']");
                 parentRowData = parentRow.data("itemData");
-
             }
 
             var dataFilter;
