@@ -20,6 +20,17 @@
         function btnDoExec_OnClick(src, evt) {
             $("#txtManualDate").DataTypeValidator({dataType:"date"});
         }
+
+        function DateTypeValidatorGetSettings(dataType)
+        {
+            if (dataType == "currency")
+            {
+                return {
+                    invalidMessageCss: "invalidMessage",
+                    invalidDataCss:"invalidaData2"
+                };
+            }
+        }
     </script>
 </head>
 <body>
@@ -29,11 +40,18 @@
             background-color: #FF8C8C;
         }
 
+        .invalidaData2
+        {
+            background-color: #8470b7;
+            color: #FFFFFF;
+        }
+
         .invalidMessage
         {
             border: 1px solid #CCCCCC;
             border-radius: 5px 5px;
-            background-color: #FF8C8C;
+            background-color: blue;
+            opacity:.5;
             color: #FFFFFF;
         }
     </style>

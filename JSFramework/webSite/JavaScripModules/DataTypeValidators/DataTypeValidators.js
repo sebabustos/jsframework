@@ -34,7 +34,7 @@ Especificaciones:
         dateformat: null,
         includeTime: true,
         useJQueryDatepicker: true,
-        datePickerSettings :{},
+        datePickerSettings: {},
         allowCurrency: false,
         allowDecimals: true,
         allowNegativesValues: true,
@@ -42,8 +42,9 @@ Especificaciones:
         validDataRegex: null,
         allowNumbers: true,
 
-        comaSeparators: null, //el/los caracteres que se utilizarán como separador de decimales. Si se incluyen varios se permitirá cualquiera de ellos.
+        commaSeparators: null, //el/los caracteres que se utilizarán como separador de decimales. Si se incluyen varios se permitirá cualquiera de ellos.
         invalidDataCss: 'invalidData',
+        invalidMessageCss:'default',
         showInvalidMessage: true,
         onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
         onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
@@ -101,18 +102,12 @@ Especificaciones:
     }
     var numericDataTypeValidator = {
         ValidateInput: function (keyCode, currValue, settings) {
-            var comaSep = settings.comaSep;
+            var comaSep = settings.commaSeparators;
             var allowCurrency = settings.allowCurrency;
             var comaSepCharCode = [];
             var comaSepChar = [];
-            var comaSepString;
-            if (comaSep instanceof String) {
-                comaSepString = comaSep;
-                comaSep = comaSepString.split('');
-            }
-
-            if (comaSep instanceof Array) {
-                comaSepString = comaSep.join();
+            if (typeof comaSep === "string") {
+                comaSep = comaSep.split('');
             }
 
             if (typeof allowCurrency === "undefined" || allowCurrency !== true)
@@ -122,7 +117,7 @@ Especificaciones:
             if (typeof comaSep !== "undefined" && comaSep !== null && comaSep !== "") {
                 for (var comaChar in comaSep) {
                     //se obtiene el charcode del caracter
-                    comaSepCharCode.push(comaSepString.charCodeAt(comaChar));
+                    comaSepCharCode.push(comaSep[comaChar].charCodeAt(0));
                     //se registra el caracter
                     comaSepChar.push(comaSep[comaChar]);
                 }
@@ -184,7 +179,7 @@ Especificaciones:
             return isValid;
         }
         , ValidateData: function (string, settings) {
-            var comaSep = settings.comaSeparators;
+            var comaSep = settings.commaSeparators;
             var allowCurrency = settings.allowCurrency;
             var validDataRegex = settings.validDataRegex;
 
@@ -330,7 +325,13 @@ Especificaciones:
                         if (settings.showInvalidMessage) {
                             var elemId = $this.attr("ValidatorId");
                             $("#InvalidMessage" + elemId).remove();
-                            var invalidMsg = $("<div id='InvalidMessage" + elemId + "' class='invalidMessage " + dataType + "InvalidMessage' >" + settings.invalidDataMessage + "</div>");
+                            //si el usuario sobreescribe el css message se usa ese, aunque este sea vacío, pero si no sobreescribe coloca
+                            //por defecto "invalidMessage"
+                            var cssMessage = settings.invalidMessageCss ==='default'?"":settings.invalidMessageCss;
+                            //si existe definido un CSS para el mensaje, se coloca la clase específica según el tipo de dato, sino no.
+                            var cssDataTypeMessage = (cssMessage !=='' && typeof cssMessage !=="undefined") ? " " + dataType + cssMessage:"";
+
+                            var invalidMsg = $("<div id='InvalidMessage" + elemId + "' class='" + cssMessage + cssDataTypeMessage + "' >" + settings.invalidDataMessage + "</div>");
                             $this.parent().append(invalidMsg);
                             var pos = $this.position();
                             invalidMsg.css({
@@ -338,6 +339,19 @@ Especificaciones:
                                 top: (pos.top - ($this.height() - ($this.height() / 10))),
                                 left: pos.left
                             });
+
+                            if (settings.invalidMessageCss === 'default')
+                            {
+                                invalidMsg.css({
+                                    borderWidth: 1,
+                                    borderStyle: "solid",
+                                    borderColor: "#CCCCCC",
+                                    borderRadius: "5px 5px",
+                                    backgroundColor: "#FF8C8C",
+                                    color: "#FFFFFF"
+                                });
+                            }
+
                         }
                         if (typeof settings.onValidationFailed === "function")
                             settings.onValidationFailed($this);
@@ -398,7 +412,7 @@ Especificaciones:
             if (settings.dataType === "numeric")
                 methods.setNumericValidator(options, $this);
             else if (settings.dataType === "integer")
-                methods.setNumericValidator($.extend({}, {allowDecimals: false}, options), $this);
+                methods.setNumericValidator($.extend({}, { allowDecimals: false }, options), $this);
             else if (settings.dataType === "alphabetic")
                 methods.setAlphabeticValidator(options, $this);
             else if (settings.dataType === "currency")
@@ -436,7 +450,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2013-07-18 - v1.1.0.0
+Código:       | DataTypeValidators - 2013-09-12 - v1.2.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -455,24 +469,21 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.1.0.0
+Versión:      | v1.2.0.0
 ----------------------------------------------------------------
-Fecha:        | 2013-07-18
+Fecha:        | 2013-09-12
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la posibilidad de definir, en la página, una función
- que será utilizada por el componente para obtener la configuración
- de cada tipo de dato, cuando se asignan automáticamente los tipos
- (en la carga de la página)
-- Se agregó el nuevo tipo de dato "integer" que permite el ingreso
-de números pero sin decimales
-- Se agregaron dos configuraciones adicionales:
-	* allowDecimals: afecta a numerics y currency. Permite configurar
-			si se admitirán decimales o no (si se deshabilita no permitirá
-			ingresar ni "," ni "."
-	* allowNegativesValues: afecta a numerics, intenger y currency
-			permite habilitar y deshabilitar la carga de valores
-			negativos.
+ - Se renombró la propiedad "comaSeparators" a "commaSeparators" (2 emes)
+ - Se corrigió un error encuando se definía un tipo de dato numérico (o currency)
+  por el cual no estaba tomando la configuración del separador de comas especificada
+  por el usuario.
+ - Se corrigió una falla cuando la configuración de separadores de coma se especificaba
+  como cadena (string) y no como array.
+ - Se agregó la posibilidad de configurar la clase de estilo del mensaje de validación, y se 
+  modificó el comportamiento por defecto, para que, si no se sobreescribe, se agergue la configuración
+  por código.
+
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -494,6 +505,25 @@ de números pero sin decimales
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
+Código:       | DataTypeValidators - 2013-07-18 - v1.1.0.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se agregó la posibilidad de definir, en la página, una función
+ que será utilizada por el componente para obtener la configuración
+ de cada tipo de dato, cuando se asignan automáticamente los tipos
+ (en la carga de la página)
+- Se agregó el nuevo tipo de dato "integer" que permite el ingreso
+de números pero sin decimales
+- Se agregaron dos configuraciones adicionales:
+	* allowDecimals: afecta a numerics y currency. Permite configurar
+			si se admitirán decimales o no (si se deshabilita no permitirá
+			ingresar ni "," ni "."
+	* allowNegativesValues: afecta a numerics, intenger y currency
+			permite habilitar y deshabilitar la carga de valores
+			negativos.
+----------------------------------------------------------------
 Código:      1.0.0.0
 Autor:       Sebastián Bustos Argañaraz
 Cambios de la Versión:
