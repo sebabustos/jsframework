@@ -1,5 +1,7 @@
 ﻿(function ($) {
     "use strict";
+
+
     var $defaults = {
         followMouse: false,
         offsetTop: 3,
