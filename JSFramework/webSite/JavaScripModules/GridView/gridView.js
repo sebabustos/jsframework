@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2013-xx-xx xx:xx - v2.1.0.0
+Código:         | GridView - 2013-11-05 20:00 - v2.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,9 +16,9 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v1.0.0.10
+Versión:        | v2.1.0.0
 ----------------------------------------------------------------
-Fecha:          | 2013-03-14 10:02
+Fecha:          | 2013-11-05 20:00
 ----------------------------------------------------------------
 Cambios de la Versión:
 - Se agregó la posibilidad de definir el evento 
@@ -49,6 +49,27 @@ Cambios de la Versión:
 
 - Se corrigió un error en un selector de la grilla hija, que no estaba
 trayendo la misma.
+
+- Se agregó la posibilidad de definir clases de estilo (css) a cada columna
+
+- Se agregó al control, en el que se dibuja la grilla, la propiedad "gridView_columnsAmmount" con la cantidad de columnas dibujadas.
+
+- Se agregaron nuevas propiedades gridview_cellType a algunas celdas, a saber:
+    * gridview_cellType='showRowNumber_header': Celda, del encabezado,  con el número de fila.
+    * gridview_cellType='refresh': celda del encabezado con el ícono de refresco.
+    * gridview_cellType='headerControl': a cada celda, del encabezado, que se dibuja para alojar los controles definidos en headerControls.
+    * gridview_cellType='headerCell': a cada celda, del encabezado, correspondiente a las celdas de datos.
+
+- Se corrigió el colSpan de la fila de mensaje, que se muestra cuando la grilla está vacía, y de la fila de ícono de "loading" para que cubra 
+la cantidad de columnas configuradas. Anteriormente estaba en duro.
+
+- Se agregó la posibilidad de definir nuevos tipos de controles como columnas de la grilla, los nuevos tipos son: 'checkbox', 'radio', 'textbox', 'select'
+
+- Se agregó la posibilidad de definir cualquier tipo de evento en los controles, mediante la nueva propiedad events, que es un array del tipo: [{ name: 'event1', handler: function (row, id, rowType, data, src) { } },
+                                                                                                                                                { name: 'event2', handler: function (row, id, rowType, data, src) { } }]
+
+- Se modificó el dibujo de las celdas para que, si se especifica una columna con DataFieldName y Controls, utiliza el valor extraído del DataFieldName (de los datos) como value del/los control/es a dibujar.
+  NOTA: el valor del DataFieldName reemplaza el label definido para el control.
 
 Nuevos Eventos:
  - onPageIndexChanged
@@ -183,15 +204,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         //  width: "",
         //  description: "",
         //  dataFieldName: "", /*=> req.*/
-        //  includeInResult: true
+        //  includeInResult: true,
         //  dataEval: function (){return ... }, --> permite definir una función a la cual se le pasará el valor del datasource y cuyo retorno se utilizará como texto de la celda.
         //  showPreview: false, 
         //  previewCellClass: '', 
         //  type:'databound', /*'databound', 'control', 'empty'*/
+        //  cssClass:'',
         //  Controls:[{
         //    label:"",
         //    onClick: function(row, id, rowType, data, src){},
-        //    type:'', //'image' | 'button', --> si image, label es la URL de la imagen. DEFAULT = button
+        //    events: [{name:'event', handler: function(row, id, rowType, data, src){}}]
+        //    type:'', //'image' | 'button' | 'checkbox' | 'radio' | 'textbox' | 'select' --> si image, label es la URL de la imagen. Cualquier otro el value es es label. DEFAULT = button
         //    template: '', //--> selector que indica el control modelo que se copiará para cada fila.
         //    cssClass: '',
         //    showInHeader:false,
@@ -223,7 +246,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     childGridExpandCell.click(function (evt) {
                         var index = $(this).parent().attr("gridView_rowIndex");
-                        this.drawChildGrid(gridViewId, index);
+                        privateMethods.drawChildGrid(gridViewId, index);
                     });
 
                     row.append(childGridExpandCell);
@@ -261,10 +284,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     if (typeof dataField === "undefined")
                         dataField = "";
 
-                    var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridViewCell' dataFieldName='" + dataField + "'></td>");
+                    var cssClass = settings.columns[col].cssClass;
+                    if (typeof cssClass === "undefined" || cssClass === null)
+                        cssClass = "";
 
+                    var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridViewCell " + cssClass + "' dataFieldName='" + dataField + "'></td>");
+                    var colValue = null;
                     if (data.hasOwnProperty(dataField)) {
-                        var colValue = data[dataField];
+                        colValue = data[dataField];
                         if (!settings.columns[col].hasOwnProperty("includeInResult") || settings.columns[col].includeInResult === true)
                             itemData[dataField] = colValue;
 
@@ -274,27 +301,29 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                         if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
                             colValue = settings.columns[col].dataEval(colValue);
-
-                        if (settings.columns[col].hasOwnProperty("showPreview") && settings.columns[col].showPreview) {
-                            var css = '';
-                            if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass !== null && settings.columns[col].previewCellClass !== "")
-                                css = ' ' + settings.columns[col].previewCellClass;
-
-                            cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
-                        }
-                        else
-                            cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
                     }
-                    else {
-                        //Dibuja los controles configurados como columnas.
-                        if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls !== null && settings.columns[col].Controls.length > 0) {
-                            var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false, idPrefix);
-                            $.each(ctrls, function (index, item) {
-                                item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
-                                cell.addClass("controls_container").append(item);
-                            });
-                        }
+
+
+                    //Si la columna tiene definida controles, dibuja los mismos pasando el value correspondiente al dataFieldName (el dataBind)
+                    if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls instanceof Array && settings.columns[col].Controls.length > 0) {
+                        var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false, idPrefix, colValue);
+                        $.each(ctrls, function (index, item) {
+                            item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
+                            cell.addClass("controls_container").append(item);
+                        });
                     }
+                    //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
+                    else if (settings.columns[col].hasOwnProperty("showPreview") && settings.columns[col].showPreview) {
+                        var css = '';
+                        if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass !== null && settings.columns[col].previewCellClass !== "")
+                            css = ' ' + settings.columns[col].previewCellClass;
+
+                        cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
+                    }
+                    //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
+                    else
+                        cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
+
                     row.append(cell);
                     iColCount++;
                 }
@@ -324,18 +353,18 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 }
                 return row;
             },
-            GetControls: function (controls, gridViewId, isHeader, rowId) {
+            GetControls: function (controls, gridViewId, isHeader, rowId, cellValue) {
                 var result = [];
                 $.each(controls, function (index) {
                     if (!isHeader || (controls[index].hasOwnProperty("showInHeader") && controls[index].showInHeader)) {
-                        result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId));
+                        result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId, cellValue));
                     }
                 });
                 return result;
             },
-            CreateControl: function (control, gridViewId, rowId) {
+            CreateControl: function (control, gridViewId, rowId, cellValue) {
                 var ctrlType = 'button';
-                var label = "";
+                var value = "";
                 var name = "";
                 var ctrl = null;
                 var ctrlsTemplate = null;
@@ -343,13 +372,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (control.hasOwnProperty("type") && control.type !== null)
                     ctrlType = control.type.toLowerCase();
                 if (control.hasOwnProperty("label") && control.label !== null)
-                    label = control.label;
+                    value = control.label;
                 if (control.hasOwnProperty("name") && control.name !== null)
                     name = control.name;
                 if (control.hasOwnProperty("template") && control.template !== null && (ctrlsTemplate = $(control.template)).length > 0)
                     ctrlType = "template";
                 if (control.hasOwnProperty("cssClass") && control.cssClass !== null)
                     css = "class='" + control.cssClass + "'";
+                //si se recibe un cellValue, se pisa el value.
+                if (typeof cellValue !== "undefined" && cellValue !== null)
+                    value = cellValue
 
                 var controlTypes ={
                     template:'template',
@@ -372,20 +404,38 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         if (control.hasOwnProperty("alt") && control.alt !== null)
                             alt = control.alt;
 
-                        ctrl = $("<img src='" + label + "' alt='" + alt + "' " + css + "/>");
+                        ctrl = $("<img src='" + value + "' alt='" + alt + "' " + css + "/>");
                         break;
                     case controlTypes.button:
-                        ctrl = $("<input type='button' value='" + label + "' " + css + " />");
+                        ctrl = $("<input type='button' value='" + value + "' " + css + " />");
                         break;
                     case controlTypes.checkbox:
-                        ctrl = $("<input type='checkbox' value='" + label + "' " + css + " />");
+                        ctrl = $("<input type='checkbox' value='" + value + "' " + css + " />");
                         break;
                     case controlTypes.radio:
-                        ctrl = $("<input type='radio' value='" + label + "' " + css + " />");
+                        ctrl = $("<input type='radio' value='" + value + "' " + css + " />");
                         break;
                     case controlTypes.textbox:
+                        ctrl = $("<input type='text'  value='" + value + "' " + css + " />");
                         break;
                     case controlTypes.select:
+                        ctrl = $("<select " + css + " />");
+                        //si el value es un string se asume que es separado por comas y que contiene el listado de los options del select
+                        if (value instanceof String) {
+                            var arrValue = value.split(",");
+                            value = [];
+                            //se genera la estructura {value:..., id:...}
+                            $.each(arrValue, function (index, item) {
+                                value.push({ value: item, text: item });
+                            })
+
+                        }
+
+                        if (value instanceof Array)
+                            //se recorre el array y se agregan los options.
+                            $.each(value, function (index, item) {
+                                ctrl.append($("<option value='" + item.value + "'>" + item.text + "</option>"));
+                            });
                         break;
                 }
 
@@ -400,8 +450,6 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     ctrl.attr("name", name);
                 }
 
-                    
-
                 if (typeof control.onClick === "function") {
                     ctrl.click(function () {
                         //el control se encuentra agregado dentro de una celda, por lo que para obtener la referencia a la fila
@@ -409,6 +457,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         var tr = $(this).parent().parent();
                         control.onClick(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
                     });
+                }
+
+                if (control.events instanceof Array)
+                {
+                    $.each(control.events, function (index,item) {
+                        ctrl.bind(item.name, function () {
+                            var tr = $(this).parent().parent();
+                            item.handler(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
+                        });
+                    });
+
                 }
 
                 if (control.hasOwnProperty("style") && control.style !== null) {
@@ -971,14 +1030,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function drawProcessingIcon(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            $(settings.tableGridBody, elem).empty().append("<tr><td class='tdProcessing' colspan='9'><img src='" + settings.ajaxLoaderImage + "' /></td></tr>");
+            var columnsAmmount = elem.attr("gridView_columnsAmmount");
+            $(settings.tableGridBody, elem).empty().append("<tr><td class='tdProcessing' colspan='" + columnsAmmount + "'><img src='" + settings.ajaxLoaderImage + "' /></td></tr>");
         }
         function drawMessage(gridViewId, msg, cssClass) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
             if (typeof cssClass === "undefined" || cssClass === null)
                 cssClass = "tdMessage";
-            $(settings.tableGridBody, elem).empty().append($("<tr><td colspan='9' class='" + cssClass + "'>" + msg + "</td></tr>"));
+            var columnsAmmount = elem.attr("gridView_columnsAmmount");
+            $(settings.tableGridBody, elem).empty().append($("<tr><td colspan='" + columnsAmmount + "' class='" + cssClass + "'>" + msg + "</td></tr>"));
         }
         function drawHeader(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
@@ -1077,6 +1138,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         }
 
         function getRowHeader(elem, settings) {
+            var columnsAmmount = 0;
             var gridViewId = elem.attr("gridViewId");
             var idPrefix = gridViewId + "_trRowHeader";
             var rowHeader = $("<tr id='" + idPrefix + "' gridview_rowType='header'></tr>");
@@ -1118,16 +1180,18 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 else
                     childGridCell.html("&nbsp;");
 
+                columnsAmmount++;
                 rowHeader.append(childGridCell);
             }
 
             if (settings.showRowNumber) {
-                rowHeader.append($("<td class='gridViewCellHeader'>&nbsp;</td>"));
+                columnsAmmount++;
+                rowHeader.append($("<td class='gridViewCellHeader' gridview_cellType='showRowNumber_header'>&nbsp;</td>"));
             }
 
 
             if (showRefresh) {
-                var cornerCellHeader = $("<td class='gridViewCellHeader'></td>");
+                var cornerCellHeader = $("<td class='gridViewCellHeader' gridview_cellType='refresh'></td>");
                 if (settings.useJQueryUI && (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")) {
                     //se configura una imagen de refrezco usando los íconos de jQueryUI
                     cornerCellHeader.append($("<div onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' class='ui-icon ui-icon-refresh'>&nbsp;</div>"));
@@ -1139,15 +1203,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     cornerCellHeader.append($("<img src='" + settings.refreshImage + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' />"));
                 }
-
+                columnsAmmount++;
                 rowHeader.append(cornerCellHeader);
             }
             if (settings.headerControls !== null) {
                 $.each(settings.headerControls, function (index, item) {
-                    var cornerCellHeader = $("<td class='gridViewCellHeader'></td>");
+                    var cornerCellHeader = $("<td class='gridViewCellHeader' gridview_cellType='headerControl'></td>");
                     var ctrl = privateMethods.CreateControl(item, gridViewId);
                     ctrl.attr("id", idPrefix + "_headerControl_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
 
+                    columnsAmmount++;
                     cornerCellHeader.append(ctrl);
                     rowHeader.append(cornerCellHeader);
                 });
@@ -1156,7 +1221,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             for (var col in settings.columns) {
                 if (!settings.columns[col].hasOwnProperty("visible") || settings.columns[col].visible === true) {
-                    var cell = $("<td class='gridViewCellHeader'></td>");
+                    var cell = $("<td class='gridViewCellHeader' gridview_cellType='headerCell'></td>");
                     if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width !== "");
                     cell.width(settings.columns[col].width);
 
@@ -1174,9 +1239,13 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     else
                         cell.html(colheader);
 
+                    columnsAmmount++;
                     rowHeader.append(cell);
                 }
             }
+
+            elem.attr("gridView_columnsAmmount", columnsAmmount);
+
             return rowHeader;
         }
         function showPreviewCondition(src, evt) {
