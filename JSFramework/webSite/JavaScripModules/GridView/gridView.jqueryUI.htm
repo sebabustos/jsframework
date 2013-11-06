@@ -118,7 +118,7 @@
                                 { Id: 8, Description: " 8", HiddenValue: " hidden 8", ComboBox: [{ value: '1', text: 'Opción 1' }, { value: '2', text: 'Opción 2' }, { value: '3', text: 'Opción 3' }] },
                                 { Id: 9, Description: " 9", HiddenValue: " hidden 9", ComboBox: [{ value: '1', text: 'Opción 1' }, { value: '2', text: 'Opción 2' }, { value: '3', text: 'Opción 3' }] },
                                 { Id: 10, Description: " 10", HiddenValue: " hidden 10", ComboBox: [{ value: '1', text: 'Opción 1' }, { value: '2', text: 'Opción 2' }, { value: '3', text: 'Opción 3' }]}
-                             ],
+                ],
                 //dataSource: "[{ Id: 1, Description: ' 1', HiddenValue: ' hidden 1' },{ Id: 2, Description: ' 2', HiddenValue: ' hidden 2' },{ Id: 3, Description: ' 3', HiddenValue: ' hidden 3' },{ Id: 4, Description: ' 4', HiddenValue: ' hidden 4' },{ Id: 5, Description: ' 5', HiddenValue: ' hidden 5' },{ Id: 6, Description: ' 6', HiddenValue: ' hidden 6' },{ Id: 7, Description: ' 7', HiddenValue: ' hidden 7' },{ Id: 8, Description: ' 8', HiddenValue: ' hidden 8' },{ Id: 9, Description: ' 9', HiddenValue: ' hidden 9' },{ Id: 10, Description: ' 10', HiddenValue: ' hidden 10' }]",
                 usePagging: true,
                 pagerPosition: "up",
@@ -172,11 +172,17 @@
                     },
                     {
                         label: "checkbox",
-                        onClick: function (row, id, rowType, data, src) { },
                         events: [{
                             name: 'change',
                             handler: function (row, id, rowType, data, src) {
                                 alert(id);
+                            }
+                        },
+                        {
+                            name: 'mouseover',
+                            handler: function (row, id, rowType, data, src) {
+                                if (rowType !== "header")
+                                    alert(data.HiddenValue + " MouseOver");
                             }
                         }],
                         type: 'checkbox', //'image' | 'button' | 'checkbox' | 'radio' | 'textbox' | 'select' --> si image, label es la URL de la imagen. Cualquier otro el value es es label. DEFAULT = button
