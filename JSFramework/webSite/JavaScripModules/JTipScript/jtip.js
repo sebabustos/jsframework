@@ -3,26 +3,6 @@ Dependencias:
     jquery-ui.min.js
     jquery.js        
 //////////////////////////////////////////////////////////////////////////////////////////*/
-
-
-//////////////////////////////////////////////////////////////////////////////////////////
-//SEARCHER
-//////////////////////////////////////////////////////////////////////////////////////////
-if (typeof PJJS == "undefined" || !PJJS) {
-    var PJJS = {};
-}
-if (typeof PJJS.Searcher == "undefined" || !PJJS.Searcher)
-    PJJS.Searcher = {};
-if (typeof PJJS.Searcher.Configuration == "undefined" || !PJJS.Searcher.Configuration)
-    PJJS.Searcher.Configuration = {};
-
-//////////////////////////////////////////////////////////////////
-//Activación de la bandera en el objeto searcher para indicar que el LinkPreview está presente
-//////////////////////////////////////////////////////////////////
-PJJS.Searcher.Configuration.isLinkPreview = true;
-
-//////////////////////////////////////////////////////////////////
-
 /* Built Fri May 12 12:53:18 2006 */
 
 
@@ -127,8 +107,8 @@ function JT_show(url, linkId, title, componentValue) {
                 });
                 var clickElementx = pLinkIdPosition.Left + arrowOffset; //set x position
                 try {
-                    var oSearcher = document.getElementById(componentValue.split("$")[0]);
-                    clickElementx = GetElementLayout(oSearcher).Left;
+                    var oElem = document.getElementById(componentValue.split("$")[0]);
+                    clickElementx = GetElementLayout(oElem).Left;
                 }
                 catch (e)
                 { }

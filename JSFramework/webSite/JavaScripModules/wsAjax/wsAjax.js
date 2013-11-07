@@ -1,9 +1,9 @@
-﻿if (typeof PJJS === "undefined" || PJJS === null)
-    var PJJS = {}
-if (typeof PJJS.Commons === "undefined" || PJJS.Commons === null)
-    PJJS.Commons = {}
+﻿if (typeof JSFramework === "undefined" || JSFramework === null)
+    var JSFramework = {}
+if (typeof JSFramework.Commons === "undefined" || JSFramework.Commons === null)
+    JSFramework.Commons = {}
 
-PJJS.Commons.wsAjax = {
+JSFramework.Commons.wsAjax = {
     //wsMethod          = el nombre del Método del webService
     //context           = cualquier objeto que luego se podrá obtener en el OnRequestSuccess
     //OnRequestSuccess  = función que se llamará si la llamada al ws retorna correctamente

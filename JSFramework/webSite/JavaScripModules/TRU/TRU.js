@@ -1,23 +1,15 @@
 ﻿//////////////////////////////////////////////////////////////////////////////////////////
-//SEARCHER
-//////////////////////////////////////////////////////////////////////////////////////////
-if (typeof PJJS == "undefined" || !PJJS)
-    var PJJS = {};
-if (typeof PJJS.Searcher == "undefined" || !PJJS.Searcher)
-    PJJS.Searcher = {};
-
-//////////////////////////////////////////////////////////////////////////////////////////
 //TRU
 //////////////////////////////////////////////////////////////////////////////////////////
 var AMMOUNT_TO_CACHE = 10;
 //////////////////////////////////////////////////////////////////////////////////////////
-PJJS.Searcher.TRU = {
+JSFramework.TRU = {
     add: function (objectName, objectVal) {
         if (typeof objectVal != "undefined" && objectVal != null) {
             if (typeof objectVal.length != "undefined")
-                PJJS.Searcher.TRU.addRange(objectName, objectVal);
+                JSFramework.TRU.addRange(objectName, objectVal);
             else
-                PJJS.Searcher.TRU.addItem(objectName, objectVal);
+                JSFramework.TRU.addItem(objectName, objectVal);
         }
     },
     addItem: function (objectName, objectValue) {
@@ -36,17 +28,17 @@ PJJS.Searcher.TRU = {
 
             oList = oList.reverse()
             //al agregar se agrega al final de la lista.
-            oList.push({ 'id': escape(objectValue.id), 'desc': escape(objectValue.desc), 'info': escape(objectValue.info), 'searcher': escape(objectValue.searcher) });
+            oList.push({ 'id': escape(objectValue.id), 'desc': escape(objectValue.desc), 'info': escape(objectValue.info)) });
             //se vuelve a invertir para conservar el orden, quedando ahora ordenado por último ingresado. Así el último ingresado va a estar primero en la lista.
             oList = oList.reverse()
 
 
-            var URL = PJJS.Searcher.Commons.documentURL();
+            var URL = JSFramework.Commons.documentURL();
             var cookDomain = URL.domain;
             if (cookDomain == "localhost")
                 cookDomain = ".localhost.com";
 
-            PJJS.Searcher.Cookies.setSub("searcher_" + URL.domain + ":" + URL.port + "_" + URL.firstPath, objectName, this.parseToString(oList), { expires: new Date("2050/02/25"), domain: cookDomain, path: "/" + URL.firstPath });
+            JSFramework.Cookies.setSub(URL.domain + ":" + URL.port + "_" + URL.firstPath, objectName, this.parseToString(oList), { expires: new Date("2050/02/25"), domain: cookDomain, path: "/" + URL.firstPath });
         }
     },
     addRange: function (objectName, objectValueArray) {
@@ -76,8 +68,8 @@ PJJS.Searcher.TRU = {
         return retValue;
     },
     listItems: function (objectName) {
-        var URL = PJJS.Searcher.Commons.documentURL();
-        var sValue = PJJS.Searcher.Cookies.getSub("searcher_" + URL.domain + URL.port + "_" + URL.firstPath, objectName, { expires: new Date("2050/02/25") });
+        var URL = JSFramework.Commons.documentURL();
+        var sValue = JSFramework.Cookies.getSub(URL.domain + URL.port + "_" + URL.firstPath, objectName, { expires: new Date("2050/02/25") });
         var retValue = null;
 
         if (sValue != null)
@@ -108,8 +100,8 @@ PJJS.Searcher.TRU = {
         return retValue;
     },
     cleanList: function (objectName) {
-        var URL = PJJS.Searcher.Commons.documentURL();
-        PJJS.Searcher.Cookies.removeSub("searcher_" + URL.domain + URL.port + "_" + URL.firstPath, objectName, { expires: new Date("2050/02/25"),
+        var URL = JSFramework.Commons.documentURL();
+        JSFramework.Cookies.removeSub(URL.domain + URL.port + "_" + URL.firstPath, objectName, { expires: new Date("2050/02/25"),
             path: "/"/*,
             domain: "localhost"*/
         });
@@ -129,11 +121,11 @@ PJJS.Searcher.TRU = {
             if (typeof oObject.length != "undefined") {
                 for (var iCount = 0; iCount < oObject.length; iCount++) {
                     var item = oObject[iCount];
-                    RetValue += "'id':'" + this.formatString(item.id) + "','desc':'" + this.formatString(item.desc) + "','info':'" + this.formatString(item.info) + "','searcher':'" + this.formatString(item.searcher) + "'||";
+                    RetValue += "'id':'" + this.formatString(item.id) + "','desc':'" + this.formatString(item.desc) + "','info':'" + this.formatString(item.info) + "'||";
                 }
             }
             else {
-                RetValue += "'id':'" + this.formatString(oObject.id) + "','desc':'" + this.formatString(oObject.desc) + "','info':'" + this.formatString(oObject.info) + "','searcher':'" + this.formatString(oObject.searcher) + "'||";
+                RetValue += "'id':'" + this.formatString(oObject.id) + "','desc':'" + this.formatString(oObject.desc) + "','info':'" + this.formatString(oObject.info) + "'||";
             }
         }
 

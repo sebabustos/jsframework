@@ -16,7 +16,7 @@
         //Código de Ejemplo:
         var oContext = {contexto:'contexto'};
         function btnDoExec_OnClick(src, evt) {
-            PJJS.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
+            JSFramework.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
             function (result, context) {
                 alert(result.response);
                 alert(context.contexto);
@@ -36,7 +36,7 @@
     <textarea class="code">
         var oContext = {contexto:'contexto'};
         function btnDoExec_OnClick(src, evt) {
-            PJJS.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
+            JSFramework.Commons.wsAjax.doCallWS("../../webServices/wsAjax.asmx", "DoSomething", oContext,
             function (result, context) {
                 alert(result.response);
                 alert(context.contexto);

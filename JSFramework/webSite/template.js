@@ -4,19 +4,19 @@
 //        Template de una función genérica         //
 /////////////////////////////////////////////////////
 
-//El espacio de nombre común es PJJS.Commons. Aunque se puede cambiar PJJS debería ser siempre, 
+//El espacio de nombre común es JSFramework.Commons. Aunque se puede cambiar JSFramework debería ser siempre, 
 //los restantes pueden modificarse a conveniencia
 
 //Si no existe el objeto (espacio de nombre) se crea
-if (typeof PJJS != "undefined" || PJJS == null)
-    var PJJS = {}
+if (typeof JSFramework != "undefined" || JSFramework == null)
+    var JSFramework = {}
 
 //Si no existe el objeto (espacio de nombre) se crea
-if (typeof PJJS.Commons != "undefined" || PJJS.Commons == null)
-    PJJS.Commons = {}
+if (typeof JSFramework.Commons != "undefined" || JSFramework.Commons == null)
+    JSFramework.Commons = {}
 
 
-PJJS.Commons.wsAjax = {
+JSFramework.Commons.wsAjax = {
     method: function (param1, param2, ....) {
 
     }
