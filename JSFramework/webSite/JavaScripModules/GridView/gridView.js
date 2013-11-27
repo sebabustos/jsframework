@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2013-11-05 20:00 - v2.1.0.0
+Código:         | GridView - 2013-11-05 20:00 - v2.1.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,66 +16,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v2.1.0.0
+Versión:        | v2.1.1.0
 ----------------------------------------------------------------
-Fecha:          | 2013-11-05 20:00
+Fecha:          | 2013-11-27 09:19
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de definir el evento 
-    "onPageIndexChanged" que se ejecutará luego de haberse hecho
-    el cambio de página en la grilla y ejecutado la búsqueda 
-    de esa página.
-- Se agregó la posibilidad de agregar filas manualmente (Gon Oviedo)
-    Se agregaron los métodos addRow e insertRow.
-
-- Se modificó el ID de la fila del encabezado para que se componga 
-   del gridViewId + el sufijo "_trRowHeader": 
-      
-        ID = gridViewId + "_trRowHeader"
-
-- Se modificó el ID de los controles configurados en el encabezado 
-   para que contengan, el prefijo de la fila del encabezado + 
-   "_headerControl_" + el ID del control, si lo tuviera más un 
-   prefijo del índice del control:
-   
-        ID = gridViewId + "_trRowHeader_headerControl_" ctrl.attr("id") + "_" + index
-
-- Se modificó el ID de los controles de celdas que se deben agregar al 
-   encabezado para que contengan, el prefijo de la fila del encabezado 
-   mas el índice de la columna + "_controlHeaderIncluded_" + el ID del 
-   control, si lo tuviera más un prefijo del índice del control:
-	
-        ID = idPrefix + "_column" + col + "_controlHeaderIncluded_" + ctrl.attr("id") + "_" + index
-
-- Se corrigió un error en un selector de la grilla hija, que no estaba
-trayendo la misma.
-
-- Se agregó la posibilidad de definir clases de estilo (css) a cada columna
-
-- Se agregó al control, en el que se dibuja la grilla, la propiedad "gridView_columnsAmmount" con la cantidad de columnas dibujadas.
-
-- Se agregaron nuevas propiedades gridview_cellType a algunas celdas, a saber:
-    * gridview_cellType='showRowNumber_header': Celda, del encabezado,  con el número de fila.
-    * gridview_cellType='refresh': celda del encabezado con el ícono de refresco.
-    * gridview_cellType='headerControl': a cada celda, del encabezado, que se dibuja para alojar los controles definidos en headerControls.
-    * gridview_cellType='headerCell': a cada celda, del encabezado, correspondiente a las celdas de datos.
-
-- Se corrigió el colSpan de la fila de mensaje, que se muestra cuando la grilla está vacía, y de la fila de ícono de "loading" para que cubra 
-la cantidad de columnas configuradas. Anteriormente estaba en duro.
-
-- Se agregó la posibilidad de definir nuevos tipos de controles como columnas de la grilla, los nuevos tipos son: 'checkbox', 'radio', 'textbox', 'select'
-
-- Se agregó la posibilidad de definir cualquier tipo de evento en los controles, mediante la nueva propiedad events, que es un array del tipo: [{ name: 'event1', handler: function (row, id, rowType, data, src) { } },
-                                                                                                                                                { name: 'event2', handler: function (row, id, rowType, data, src) { } }]
-
-- Se modificó el dibujo de las celdas para que, si se especifica una columna con DataFieldName y Controls, utiliza el valor extraído del DataFieldName (de los datos) como value del/los control/es a dibujar.
-  NOTA: el valor del DataFieldName reemplaza el label definido para el control.
-
-Nuevos Eventos:
- - onPageIndexChanged
-Nuevos métodos
- - addRow
- - insertRow
+- Se modificaron los ID del theader y tbody usados, para que 
+agreguen, como sufijo, el ID de la grilla; y se agregó un nuevo
+atributo a los mismos controles, para identificarlos ([gridview_element])
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -162,7 +110,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         showFirstPageButton: true,
         showLastPageButton: true,
         showRowNumber: false,
-        tableGridBody: "#tbBody",
+        tableGridBody: "[gridview_element=tbBody]",
         tableGridPager: null,
         selectionMode: 'cell', //'row'|'cell'
         getFilterData: function () { return {}; },
@@ -312,7 +260,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             cell.addClass("controls_container").append(item);
                         });
                     }
-                    //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
+                        //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
                     else if (settings.columns[col].hasOwnProperty("showPreview") && settings.columns[col].showPreview) {
                         var css = '';
                         if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass !== null && settings.columns[col].previewCellClass !== "")
@@ -320,7 +268,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                         cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
                     }
-                    //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
+                        //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
                     else
                         cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
 
@@ -383,19 +331,18 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (typeof cellValue !== "undefined" && cellValue !== null)
                     value = cellValue
 
-                var controlTypes ={
-                    template:'template',
-                    image:'image',
-                    button:'button',
-                    checkbox:'checkbox',
+                var controlTypes = {
+                    template: 'template',
+                    image: 'image',
+                    button: 'button',
+                    checkbox: 'checkbox',
                     radio: 'radio',
                     textbox: 'textbox',
-                    select:'select'
+                    select: 'select'
                 };
 
                 //TODO: ¿eventos onBeforeCreatingControl o algo así?
-                switch(ctrlType)
-                {
+                switch (ctrlType) {
                     case controlTypes.template:
                         ctrl = ctrlsTemplate.clone();
                         break;
@@ -439,8 +386,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         break;
                 }
 
-                if (name !== null)
-                {
+                if (name !== null) {
                     //Si es un radio button, se usa el mismo ID para todos los radio, ya que es lo que agrupa los mismos.
                     if (ctrlType !== controlTypes.radio)
                         //se actualiza el name, para que no todos los controles, de todas las filas, tengan el mismo name.
@@ -459,9 +405,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     });
                 }
 
-                if (control.events instanceof Array)
-                {
-                    $.each(control.events, function (index,item) {
+                if (control.events instanceof Array) {
+                    $.each(control.events, function (index, item) {
                         ctrl.bind(item.name, function () {
                             var tr = $(this).parent().parent();
                             item.handler(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
@@ -786,7 +731,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
 
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            
+
             var lastRowIndex = $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:last").attr("gridView_rowIndex");
             var rowIndex = parseFloat(lastRowIndex) + 1;
 
@@ -817,7 +762,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             else
                 throw new Error("El atPosition debe ser un número o \"last\" o \"first\"");
 
-            
+
         }
     };
 
@@ -879,8 +824,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             target.empty()
                 .addClass((itemOptions.useJQueryUI ? "ui-widget " : "") + "gridView")
-                .append("<thead id='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "header'></thead>") /*inserta el header*/
-                .append("<tbody id='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "body'></tbody>") /*inserta el body*/;
+                .append("<thead id='tbHeader_" + gridViewId + "' gridview_element='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "header'></thead>") /*inserta el header*/
+                .append("<tbody id='tbBody_" + gridViewId + "' gridview_element='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "body'></tbody>") /*inserta el body*/;
 
             if (typeof itemOptions.pagerPosition === "undefined" || itemOptions.pagerPosition === null)
                 itemOptions.pagerPosition = $default.pagerPosition;
@@ -1045,7 +990,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
 
-            $("#tbHeader", elem).empty().append(getRowHeader(elem, settings));
+            $("[gridview_element=tbHeader]:first", elem).empty().append(getRowHeader(elem, settings));
 
             return true;
         }
@@ -1407,10 +1352,69 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         return this;
     };
 })(jQuery);
-
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2013-11-05 20:00 - v2.1.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de definir el evento 
+    "onPageIndexChanged" que se ejecutará luego de haberse hecho
+    el cambio de página en la grilla y ejecutado la búsqueda 
+    de esa página.
+- Se agregó la posibilidad de agregar filas manualmente (Gon Oviedo)
+    Se agregaron los métodos addRow e insertRow.
+
+- Se modificó el ID de la fila del encabezado para que se componga 
+   del gridViewId + el sufijo "_trRowHeader": 
+      
+        ID = gridViewId + "_trRowHeader"
+
+- Se modificó el ID de los controles configurados en el encabezado 
+   para que contengan, el prefijo de la fila del encabezado + 
+   "_headerControl_" + el ID del control, si lo tuviera más un 
+   prefijo del índice del control:
+   
+        ID = gridViewId + "_trRowHeader_headerControl_" ctrl.attr("id") + "_" + index
+
+- Se modificó el ID de los controles de celdas que se deben agregar al 
+   encabezado para que contengan, el prefijo de la fila del encabezado 
+   mas el índice de la columna + "_controlHeaderIncluded_" + el ID del 
+   control, si lo tuviera más un prefijo del índice del control:
+	
+        ID = idPrefix + "_column" + col + "_controlHeaderIncluded_" + ctrl.attr("id") + "_" + index
+
+- Se corrigió un error en un selector de la grilla hija, que no estaba
+trayendo la misma.
+
+- Se agregó la posibilidad de definir clases de estilo (css) a cada columna
+
+- Se agregó al control, en el que se dibuja la grilla, la propiedad "gridView_columnsAmmount" con la cantidad de columnas dibujadas.
+
+- Se agregaron nuevas propiedades gridview_cellType a algunas celdas, a saber:
+    * gridview_cellType='showRowNumber_header': Celda, del encabezado,  con el número de fila.
+    * gridview_cellType='refresh': celda del encabezado con el ícono de refresco.
+    * gridview_cellType='headerControl': a cada celda, del encabezado, que se dibuja para alojar los controles definidos en headerControls.
+    * gridview_cellType='headerCell': a cada celda, del encabezado, correspondiente a las celdas de datos.
+
+- Se corrigió el colSpan de la fila de mensaje, que se muestra cuando la grilla está vacía, y de la fila de ícono de "loading" para que cubra 
+la cantidad de columnas configuradas. Anteriormente estaba en duro.
+
+- Se agregó la posibilidad de definir nuevos tipos de controles como columnas de la grilla, los nuevos tipos son: 'checkbox', 'radio', 'textbox', 'select'
+
+- Se agregó la posibilidad de definir cualquier tipo de evento en los controles, mediante la nueva propiedad events, que es un array del tipo: [{ name: 'event1', handler: function (row, id, rowType, data, src) { } },
+                                                                                                                                                { name: 'event2', handler: function (row, id, rowType, data, src) { } }]
+
+- Se modificó el dibujo de las celdas para que, si se especifica una columna con DataFieldName y Controls, utiliza el valor extraído del DataFieldName (de los datos) como value del/los control/es a dibujar.
+  NOTA: el valor del DataFieldName reemplaza el label definido para el control.
+
+Nuevos Eventos:
+ - onPageIndexChanged
+Nuevos métodos
+ - addRow
+ - insertRow
 ================================================================
 Código:         | GridView - 2013-03-14 10:02 - v2.0.0.0
 Autor:          | Seba Bustos
