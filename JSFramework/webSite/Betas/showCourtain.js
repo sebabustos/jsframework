@@ -7,22 +7,22 @@
             zIndex: 9998
         },
         loadingImg: '../images/indicator.gif',
-        appendTo:'body'
+        appendTo: 'body'
     }
 
     var settings = $.extend({}, $default, options);
-    var courtainId = "id='divCourtain" + (settings.sufixId !== "" ? ("_" + settings.sufixId) : "");
+    var courtainId = "divCourtain" + (settings.sufixId !== "" ? ("_" + settings.sufixId) : "");
     var imgLoadingId = "imgLoading" + (settings.sufixId !== "" ? ("_" + settings.sufixId) : "");
 
     var courtain = $("<div id='" + courtainId + "' courtainId='" + courtainId + "' courtainType='courtain'></div>")
 					.addClass(settings.courtainCss)
 					.css({
-						position: "absolute",
-						top: $(window).scrollTop(),
-						left: $(window).scrollLeft(),
-						width: $(window).width(),
-						height: $(window).height(),
-						zIndex: 9997
+					    position: "absolute",
+					    top: $(window).scrollTop(),
+					    left: $(window).scrollLeft(),
+					    width: $(window).width(),
+					    height: $(window).height(),
+					    zIndex: 9997
 					})
 					.appendTo($(settings.appendTo));
 
@@ -30,22 +30,25 @@
 		.appendTo($(settings.appendTo))
 		.css(settings.imageCSS)
 		.position({
-			my: 'center center',
-			at: 'center center',
-			of: courtain
+		    my: 'center center',
+		    at: 'center center',
+		    of: courtain
 		});
 
-	$(window).scroll(function () {
-	    $("[courtainId]").css({
-			top: $(window).scrollTop(),
-			left: $(window).scrollLeft()
-		});
-	});
+    $(window).scroll(function () {
+        $("[courtainId]").css({
+            top: $(window).scrollTop(),
+            left: $(window).scrollLeft()
+        });
+    });
 
 
-	return courtainId;
+    return courtainId;
 }
 
 function hideCourtain(id) {
-    $("[courtainId=" + id + "]").remove();
+    if (typeof id === "undefined")
+        $("[courtainId]").remove();
+    else
+        $("[courtainId=" + id + "]").remove();
 }
