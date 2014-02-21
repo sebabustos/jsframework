@@ -106,12 +106,14 @@
         }
 
         function init(target) {
-            if (target.length > 1)
-                target.each(function (index) {
-                    configMyToolTop($(this));
-                });
-            else
-                configMyToolTop(target);
+            if (typeof target !== "undefined" && target.length > 0) {
+                if (target.length > 1)
+                    target.each(function (index) {
+                        configMyToolTop($(this));
+                    });
+                else
+                    configMyToolTop(target);
+            }
 
         }
 
