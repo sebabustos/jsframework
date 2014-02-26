@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2013-11-05 20:00 - v2.1.1.0
+Código:         | GridView - 2014-02-26 0908 - v3.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,14 +16,27 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v2.1.1.0
+Versión:        | v3.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2013-11-27 09:19
+Fecha:          | 2014-02-26 09:08
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se modificaron los ID del theader y tbody usados, para que 
-agreguen, como sufijo, el ID de la grilla; y se agregó un nuevo
-atributo a los mismos controles, para identificarlos ([gridview_element])
+- Se agregaron los eventos onRowDataBounding y onRowDataBound
+   OnRowDataBounding: function (gridViewId, data, rowIndex) { }
+     Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la 
+      grilla, un json con los datos que componente la fila (todas las columnas no sólo 
+      las que tengan  "includeInResult: true") y la posición de la fila dentro de la 
+      grilla (el índice)
+     Este evento puede, opcionalmente, devolver un json con los datos que usará el 
+      componente para dibujar la fila. Obviamente este json debe cumplir con la 
+      estructura del datasource, es decir del data recibido por parámetro.
+   OnRowDataBound: function (row, gridViewId, data, rowIndex) { }
+     Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro 
+      el control TR correspondiente a la fila agregada, el id de la grilla, un json 
+      con los datos usados para dibujar la grilla y el índice de la fila agregada.
+     Usando el parámetro row es posible, por ejemplo, acceder a los controles que 
+      se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, 
+      deshabilitar un textbox.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -118,7 +131,22 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         onBeforeSearch: null, //function () { },
         onBeforeDraw: null, //function () { },
         onError: null, //function () { },
-        onRowSelect: null, //function (src, itemData) { },
+        ///<Type>Evento</Type>
+        ///<Name>onRowSelect</Name>
+        ///<Description>Este evento se ejecutará, si la grilla admite selección (alloSelection:true), cuando el usuario seleccione una fila, ya sea 
+        ///mediante el uso del botón de selección (si selectionMode:'cell') o mediante el uso de la fila completa (selectionMode:'row')
+        ///</Description>
+        ///<Parametros>
+        ///src: jquery, TR que representa la fila seleccionada
+        ///itemData: json, que contendrá las columnas de datos que componen la fila, configuradas como "includeInResult:true"
+        ///</Parametros>
+        onRowSelect: null,  //function (src, itemData) { },
+        onRowDataBounding: null,//function (gridViewId, data, rowIndex) { }
+        //Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la grilla, un json con los datos que componente la fila (todas las columnas no sólo las que tengan "includeInResult: true") y la posición de la fila dentro de la grilla (el índice)
+        //Este evento puede, opcionalmente, devolver un json con los datos que usará el componente para dibujar la fila. Obviamente este json debe cumplir con la estructura del datasource, es decir del data recibido por parámetro.
+        onRowDataBound: null,   //function (row, gridViewId, data, rowIndex) { }
+        //Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro el control TR correspondiente a la fila agregada, el id de la grilla, un json con los datos usados para dibujar la grilla y el índice de la fila agregada.
+        //Usando el parámetro row es posible, por ejemplo, acceder a los controles que se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, deshabilitar un textbox.
         onGridDrawed: null,
         onPaggingIndexChange: null, //function (gridId, pageIndexFrom, pageIndexTo, isLastPage) { },
         onPageIndexChanged: null, //function (gridId, currentPageIndex) { },
@@ -735,6 +763,12 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var lastRowIndex = $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:last").attr("gridView_rowIndex");
             var rowIndex = parseFloat(lastRowIndex) + 1;
 
+            if (settings.onRowDataBounding instanceof Function) {
+                var result = settings.onRowDataBounding(gridViewId, rowData, rowIndex);
+                if (typeof result !== "undefined" && result !== null)
+                    rowData = result;
+            }
+
             var $row = privateMethods.newRow(rowData, gridViewId, rowIndex, settings);
 
             if (settings.onRowSelect instanceof Function && settings.allowSelection) {
@@ -762,7 +796,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             else
                 throw new Error("El atPosition debe ser un número o \"last\" o \"first\"");
 
-
+            if (settings.onRowDataBound instanceof Function)
+                settings.onRowDataBound($row, gridViewId, rowData, rowIndex);
         }
     };
 
@@ -1016,20 +1051,33 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         //Dibuja las filas y celdas de la grilla 
         function drawGridView(elem, settings, data) {
             var gridViewId = elem.attr("gridViewId");
-            var rows = [];
             var rowIndex = 0;
 
             if (data !== null && data.length > 0) {
+
+                $(settings.tableGridBody, elem).empty();//limpia la tabla que contiene el body.
+
+
                 //Dibuja las filas
                 for (var item in data) {
-                    //agrega cada file en el array
-                    rows.push(privateMethods.newRow(data[item], gridViewId, rowIndex, settings));
+                    var rowData = data[item];
+
+                    if (settings.onRowDataBounding instanceof Function) {
+                        var result = settings.onRowDataBounding(gridViewId, rowData, rowIndex);
+                        if (typeof result !== "undefined" && result !== null)
+                            rowData = result;
+                    }
+
+                    var $row = privateMethods.newRow(rowData, gridViewId, rowIndex, settings);
+                    //agrega la fila
+                    $(settings.tableGridBody, elem).append($row);
+
+                    if (settings.onRowDataBound instanceof Function)
+                        settings.onRowDataBound($row, gridViewId, rowData, rowIndex);
+
                     rowIndex++;
                 }
 
-                $(settings.tableGridBody, elem)
-                        .empty()//limpia la tabla que contiene el body.
-                        .append(rows);//se agregan las filas
 
                 if (settings.onRowSelect instanceof Function && settings.allowSelection) {
 
@@ -1355,6 +1403,15 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2013-11-05 20:00 - v2.1.1.0
+Autor:          | Seba Bustos
+Fecha:          | 2013-11-27 09:19
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se modificaron los ID del theader y tbody usados, para que 
+agreguen, como sufijo, el ID de la grilla; y se agregó un nuevo
+atributo a los mismos controles, para identificarlos ([gridview_element])
 ================================================================
 Código:         | GridView - 2013-11-05 20:00 - v2.1.0.0
 Autor:          | Seba Bustos
