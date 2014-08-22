@@ -1,0 +1,76 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../../references/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <script src="../../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/general.css" rel="stylesheet" type="text/css" />
+
+    <!--<link href="../../css/jqueryUI_custom-theme/jquery-ui-1.8.16.custom.css" rel="stylesheet" type="text/css" />-->
+    <link href="../../css/jqueryui_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript" src="Autofilter.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+            $(".FilterText").autofilter();
+        })
+            </script>
+    <style type="text/css">
+        .FilterText {
+            border: 1px solid #F1F1F1;
+            margin: 3px 0 4px 0;
+            padding: 1px 1px 1px 3px;
+            box-shadow: 2px 2px 1px #AAAAAA;
+            border-radius: 5px;
+            background-color: #f1f1f1;
+            width: 95%;
+            height: 17px;
+            font-style: normal;
+            font-size: 100%;
+            color: #666666;
+        }
+        .FilterText.watermarked {
+            color: #999999;
+            font-style: italic;
+            font-size: 90%;
+        }
+
+            .FilterText:focus {
+                font-style: normal;
+                font-size: 100%;
+                color: #666666;
+            }
+    </style>
+</head>
+<body>
+<fieldset>
+    <legend>Auto Fitler</legend>
+    <br />
+    Filter <input type="text" class="FilterText" filterSelector=".filterItem" watermark="Marca de agua"/>
+    <div>
+        <div class="filterItem">Test 1</div>
+        <div class="filterItem">Test 2</div>
+        <div class="filterItem">Test 3</div>
+        <div class="filterItem">Test 4</div>
+        <div class="filterItem">Test 5</div>
+        <div class="filterItem">Test 6</div>
+        <div class="filterItem">Test 7</div>
+        <div class="filterItem">Test 8</div>
+        <div class="filterItem">Test 9</div>
+        <div class="filterItem">Test 10</div>
+        <div class="filterItem">Test 11</div>
+        <div class="filterItem">Test 20</div>
+        <div class="filterItem">Test 21</div>
+        <div class="filterItem">Test 30</div>
+        <div class="filterItem">Test 31</div>
+        <div class="filterItem">Test 40</div>
+        <div class="filterItem">Test 41</div>
+    </div>
+    <textarea class="code">
+        $(".txtFilter").autofilter();
+    </textarea>
+</fieldset>
+</body>
+</html>
