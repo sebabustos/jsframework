@@ -4,11 +4,19 @@
 (function ($) {
     "use strict";
     var $tempthis = null;
+    var eFilterTextStyle = {
+        Normal: 0,
+        Uppercase: 1,
+        Lowercase: 2
+    }
+
     //Configuración por defecto del plugin 
     var $default = {
         filterSelector: null,
-        doFilter:null,
+        doFilter: null,
+        filterAttribute: null,
         useWatermark: true,
+        filterTextStyle: eFilterTextStyle.Uppercase,
         watermark: null,
         watermarkClass: 'watermarked',
         //Se ejecuta antes de realizar el filtro de los datos y si devuelve un valor del tipo string
@@ -57,16 +65,34 @@
                 if (typeof settings.onBeforeClearFilter === "function")
                     //sólo cancelará la operación si el evento devuelte false.
                     doClear = (settings.onBeforeClearFilter(srcId) !== false);
-                
+
                 if (doClear)
-                $(filterSelector).show(200);
+                    $(filterSelector).show(200);
 
                 if (typeof settings.onAfterClearFilter === "function")
                     settings.onAfterClearFilter(srcId);
             }
             else {
-                var notFound = $(filterSelector).not(":contains('" + filterText.toUpperCase() + "')").hide(200).length;
-                var found = $(filterSelector + ":contains('" + filterText.toUpperCase() + "')").show(200).length;
+                var notFound, found;
+                //var notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
+                //var found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+
+                if (settings.filterTextStyle === eFilterTextStyle.Uppercase)
+                    filterText = filterText.toUpperCase();
+                else if (settings.filterTextStyle === eFilterTextStyle.Lowercase)
+                    filterText = filterText.toLowerCase();
+
+                //Si se define el atributo de filtro, se utiliza ese
+                if (typeof settings.filterAttribute !== "undefined" && settings.filterAttribute !== null && settings.filterAttribute !== "") {
+                    notFound = $(filterSelector).not("[" + settings.filterAttribute + '*="' + filterText + '"]').hide(200).length;
+                    found = $(filterSelector + "[" + settings.filterAttribute + '*="' + filterText + '"]').show(200).length;
+                }
+                    //si no se define un atributo de filtro, se utiliza el contains.
+                else {
+                    notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
+                    found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+                }
+
 
                 if (typeof settings.onAfterFilter === "function")
                     settings.onAfterFilter(srcId, filterText, found, notFound);
@@ -83,8 +109,8 @@
                 filterSelector = settings.filterSelector;
             else
                 filterSelector = $this.attr("filterSelector");
-            
-            if(typeof settings.doFilter==="function")
+
+            if (typeof settings.doFilter === "function")
                 settings.doFilter($this.attr("autofilterId"), $this.val(), filterSelector);
             else
                 methods.doFilter($this.attr("autofilterId"), $this.val(), filterSelector);
@@ -168,7 +194,7 @@
             }
 
             if (filter === "" || filter.toUpperCase() === watermark.toUpperCase()) {
-                if(watermark!=="")
+                if (watermark !== "")
                     $this.val(watermark);
                 if (watermarkClass !== "")
                     $this.addClass(watermarkClass);
@@ -178,8 +204,8 @@
                     filterSelector = settings.filterSelector;
                 else
                     filterSelector = $this.attr("filterSelector");
-                
-                if(typeof settings.doFilter==="function")
+
+                if (typeof settings.doFilter === "function")
                     settings.doFilter($this.attr("autofilterId"), filter, filterSelector);
                 else
                     methods.doFilter($this.attr("autofilterId"), filter, filterSelector);
@@ -191,7 +217,7 @@
     };
 
     $.fn.autofilter = function (options) {
-        var settings = $.extend($default, options);
+        var settings = $.extend({}, $default, options);
         //Si no se recibe el parámetro options, se devuelve el objeto "methods"
         //lo que permitirá ejecutar los métodos públicos definidos allí.
         //Esta funcionalidad permite obtener la referencia a methods sin la necesidad de 
@@ -260,7 +286,7 @@
                 var watermark;
                 if (typeof settings.watermark !== "undefined" && settings.watermark !== null && settings.watermark !== "")
                     watermark = settings.watermark;
-                else if (typeof target.attr("watermark") !== "undefined" && target.attr("watermark") !== "") 
+                else if (typeof target.attr("watermark") !== "undefined" && target.attr("watermark") !== "")
                     watermark = target.attr("watermark");
 
                 target.val(watermark);
@@ -271,7 +297,7 @@
                 target.blur(methods.filterTextbox_blur);
             }
 
-            
+
             target.keyup(methods.filterTextbox_keyup);
             target.change(methods.filterTextbox_change);
 
@@ -291,7 +317,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | Autofilter - 2014-07-24 1123 - 1.0.0.0
+Código:       | Autofilter - 2014-08-26 1034 - 1.0.1.0
 ----------------------------------------------------------------
 Nombre:       | Autofilter
 ----------------------------------------------------------------
@@ -306,13 +332,14 @@ Descripción:  | Configura un control para que al cambiar su valor
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.0.0.0
+Versión:      | v1.0.1.0
 ----------------------------------------------------------------
-Fecha:        | 2014-07-24 11:23
+Fecha:        | 2014-08-26 10:34
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Primera versión del plugin
-
+- Se agregó la posibilidad de definir un atributo que se utilizará para filtrar los controles.
+- Se agregó la posibilidad de configurar el estilo del texto de filtrado, como Normal (no modifica en nada el texto ingresado), Uppercase (pasa a mayúscula el texto ingresado antes de filtrar), Lowercase (pasa a minúscula el texto ingresado antes de filtrar)
+- Se corrigió un error que existía, por el cual no estaba almacenando correctamente la configuración del usuario en el control.
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -334,15 +361,14 @@ cuando este contenga el watermark o cuando se le quite el mismo.
                        POSIBLES MEJORAS
 ================================================================
  [Posibles mejoras pendientes para el componente/producto/funcionalidad]
- - Permitir definir un atributo sobre el cual se busque y no sólo 
- que se busque sobre el contenido.
+ - 
  ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
-Código:       [código del producto]
-Autor:        [Autor]
+Código:       | Autofilter - 2014-07-24 1123 - 1.0.0.0
+Autor:        | Sebastián Bustos Argañaraz
 Cambios de la Versión:
-  - [Cambios que incluyó la versión]
+  - Primera versión del plugin
 ================================================================
 */
