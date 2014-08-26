@@ -2,7 +2,7 @@
 ================================================================
 VERSIÓN
 ================================================================
-Código:       | webDialog - 2012-09-20 1730 - 1.0.0.5
+Código:       | webDialog - 2014-07-21 - 1.1.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -16,15 +16,17 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v1.0.0.5
+Versión:      | v1.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2013-06-17 16:36
+Fecha:        | 2014-07-21 10:34
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la devolución del control de dialog al ejecutarse
-el método, para que sea posible, por ejemplo, almacenar en una
-variable el control, y cerrarlo a demanda.
-- Se agregó, al div de cortina, la clase divDialogCourtain
+- Se corrigió una falla que existía cuando se llamaba al plugin
+pasando como primer parámetro el texto a mostrar en el mensaje
+y como segundo la configuración. La misma no estaba almacenándose
+en el componente para luego recuperarla.
+- Se cambió el nombre del atributo usado para almacenar la 
+configuració, de "webDialog:config" a "webDialog_config"
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -46,6 +48,20 @@ POSIBLES MEJORAS
 ================================================================
 HISTORIAL DE VERSIONES
 ================================================================
+Código:       | webDialog - 2012-09-20 1730 - 1.0.0.5
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Versión:      | v1.0.0.5
+----------------------------------------------------------------
+Fecha:        | 2013-06-17 16:36
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la devolución del control de dialog al ejecutarse
+el método, para que sea posible, por ejemplo, almacenar en una
+variable el control, y cerrarlo a demanda.
+- Se agregó, al div de cortina, la clase divDialogCourtain
+----------------------------------------------------------------
 Código:       | webDialog - 2012-09-20 1730 - 1.0.0.4
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
@@ -134,7 +150,7 @@ Cambios de la Versión:
         close: function (id) {
             var dialogWindow = $("[webDialogId='" + id + "']");
             var diagCont = $(".webDialogContent", dialogWindow);
-            var settings = $.extend({}, $default, dialogWindow.data("webDialog:config"));
+            var settings = $.extend({}, $default, dialogWindow.data("webDialog_config"));
 
             if ((diagCont.attr("webDialog_type") == "control") && (diagCont.attr("webDialog_cloned") == "false")) {
                 $("[webDialog_ctrlId]", diagCont)
@@ -169,6 +185,7 @@ Cambios de la Versión:
 
             //Si el parámetro es un string se asume un texto o url.
             if (typeof options === "string") {
+                var opt = { content: options };
                 //si el segundo parámetro es un string, se considera que es el tipo de cuadro de dialog que se desea mostrar
                 //es decir: text, url (iframe) o control)
                 if (arguments.length > 1) {
@@ -176,14 +193,18 @@ Cambios de la Versión:
 
                         //se sobreescribe, en la configuración, el tipo de dialog si es un URL o Control
                         //caso contrario se asume text.
-                        if (arguments[1] === "url" || arguments[1] === "control")
+                        if (arguments[1] === "url" || arguments[1] === "control") {
+                            opt.type = arguments[1];
                             settings.type = arguments[1];
+                        }
                     }
-                    //Si el segundo parámetro es un object, se considera que son las opciones.
-                    else if (typeof arguments[1] === "object")
-                        settings = $.extend(settings, arguments[1]);
+                        //Si el segundo parámetro es un object, se considera que son las opciones.
+                    else if (typeof arguments[1] === "object") {
+                        opt = $.extend(opt, arguments[1]);
+                    }
                 }
-                settings.content = options;
+                options = opt;
+                settings = $.extend(settings, options);
             }
 
 
@@ -251,7 +272,7 @@ Cambios de la Versión:
 
                 }
 
-                dialogContainer.data("webDialog:config", options);
+                dialogContainer.data("webDialog_config", options);
                 dialogContainer.append(titleBar);
                 dialogContainer.append(dialogContent);
                 dialogContainer.append(footerBar);
