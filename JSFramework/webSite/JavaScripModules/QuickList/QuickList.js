@@ -2,7 +2,7 @@
 ================================================================
 VERSIÓN
 ================================================================
-Código:       | QuickList - 2012-05-04 1256 - 1.0.0.3
+Código:       | QuickList - 2014-09-10 1613 - 3.0.0.0
 ----------------------------------------------------------------
 Nombre:       | QuickList
 ----------------------------------------------------------------
@@ -16,20 +16,19 @@ Descripción:  | plugin de jquery que permite configurar un
 ----------------------------------------------------------------
 Autor:        | Seba Bustos
 ----------------------------------------------------------------
-Versión:      | v1.0.0.3
+Versión:      | v3.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2012-05-04 1256
+Fecha:        | 2014-09-10 16:13
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla que existía cuando se realiza la compro-
-bación de si existía el evento onbeforfilter, el tipo se compa-
-raba con "Function" pero debía ser "function" (con f minúscula)
-- Se agregó una nueva opción al parámetro "showMoreButton" para 
-que se pueda configurar que siempre se muestre, no sólo cuando
-la cantidad de registros supera la cantidad configurada. Se 
-coloco esta funcionalidad por defecto (el always).
-- Se modificó el método doSearch para que, si el evento
-onBeforFilter devuelve false, cancele la búsqueda.
+- Se agregó la posibilidad de definir un Header al quickList
+- Se agregó la posibilidad de definir un template que será el 
+item que se usará para mostrar cada elemento de la lista.
+- Se agregó la posiblidad de habilitar o deshabilitar el 
+resaltado de la palabra de filtro en el listado de elementos de 
+coincidencias.
+- Se modificó el código para que puedan coexistir varios quicklist
+en una misma página y que estos se vean simultáneamente.
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -66,6 +65,19 @@ Cambios de la Versión:
 la validación por null como primera alternativa, porque estaba
 generando un error.
 ================================================================
+Código:       QuickList - 2012-05-04 1256 - 1.0.0.3
+Autor:        Seba Bustos
+Cambios de la Versión:
+- Se corrigió una falla que existía cuando se realiza la compro-
+bación de si existía el evento onbeforfilter, el tipo se compa-
+raba con "Function" pero debía ser "function" (con f minúscula)
+- Se agregó una nueva opción al parámetro "showMoreButton" para 
+que se pueda configurar que siempre se muestre, no sólo cuando
+la cantidad de registros supera la cantidad configurada. Se 
+coloco esta funcionalidad por defecto (el always).
+- Se modificó el método doSearch para que, si el evento
+onBeforFilter devuelve false, cancele la búsqueda.
+================================================================
 */
 (function ($) {
     "use strict";
@@ -79,10 +91,13 @@ generando un error.
         useKeyboard: true,
         autoFilter: false, //a medida que vaya escribiendo va filtrando
         minInput: 0, //la cantidad mínima de caracteres para que se ejecute el autoFilter.
+        headerTemplate: null,
+        itemTemplate: null,
         //searchOnFocus: false,
         searchOnEnter: true,
         noDataLabel: "No se encontró ningún dato",
         indicatorImage: "../../Images/indicator.gif",
+        highlightFilterInput: true,
         onShowMoreSelected: function (src) {
         }, //URL a la cual se navegará cuando se presione en el botón más.
         onSelect: function (src, index, data) {
@@ -92,6 +107,7 @@ generando un error.
         onFilterSucces: function () { },
         onError: function () { }
     }
+    var $tempThis = null;
     var quickListIds = 0;
     var internalMethods = {
         showUp: function (src) {
@@ -101,7 +117,7 @@ generando un error.
             if (typeof settings.filterData === "undefined" || settings.filterData == null)
                 filter = $(src).val();
             else if (typeof settings.filterData === "function")
-                filter = settings.filterData();
+                filter = settings.filterData(src);
             else if (typeof settings.filterData === "string")
                 filter = settings.filterData;
             else if (typeof settings.filterData === "object")
@@ -110,20 +126,19 @@ generando un error.
             internalMethods.doSearch(settings.dataSource, filter, $(src));
         },
         toggleIndicator: function ($this, doShow) {
+            var quickListId = $this.attr("quickListId");
+            $("[quickList_controlType=divQuickListIndicator][quickListId=" + quickListId + "]").remove();
             if (doShow) {
-                $("#divQuickListIndicator").remove();
                 var settings = $.extend({}, $default, $this.data("quickList_config"));
                 var img = $("<img src='" + settings.indicatorImage + "' style='max-width:" + $this.width() + "px'/>");
-                var indicatorDiv = $("<div id='divQuickListIndicator' class='QuickListItem' style='text-align:center;'></div>").append(img);
+                var indicatorDiv = $("<div class='QuickListItem' quickList_controlType='divQuickListIndicator' quickListId='" + quickListId + "' style='text-align:center;'></div>").append(img);
                 internalMethods.createDiv($this).append(indicatorDiv).fadeIn(500);
             }
-            else
-                $("#divQuickListIndicator").remove();
-
         },
         createDiv: function ($this) {
             $this = $($this);
-            return $("<div id='QuickList' class='QuickList' ownerQuickListId='" + $this.attr("quickListId") + "' style='display:none'></div>")
+            var quickListId = $this.attr("quickListId");
+            return $("<div class='QuickList' ownerQuickListId='" + quickListId + "' plugin='quickList' style='display:none'></div>")
                     .appendTo("body")
                     .css({ zIndex: 20, position: "absolute", width: $this.outerWidth(), top: $this.outerHeight(), left: 0, display: 'inline-block' })
                     .position({
@@ -135,24 +150,26 @@ generando un error.
                     .hide();
         },
         doSearch: function (dataSource, filter, sourceControl) {
-            var settings = $.extend({}, $default, $(sourceControl).data("quickList_config"));
+            var $this = $(sourceControl);
+            var settings = $.extend({}, $default, $this.data("quickList_config"));
             //verifica si se definió el evento y se ejecuta
             if (typeof settings.onBeforeFilter === "function") {
                 var result = settings.onBeforeFilter(filter, sourceControl);
-                //el resultado del evento, si este devolviera algo, sobreescribirá el texto de filtro.
-                if (typeof result != "undefined" && result !== false)
-                    filter = result;
-                else
+                //si la respuseta del filter es false, entonces se cancela la ejecución del quicklist.
+                if (result === false)
                     return;
+                //el resultado del evento, si este devolviera algo, sobreescribirá el texto de filtro.
+                if (typeof result != "undefined")
+                    filter = result;
             }
-            internalMethods.toggleIndicator($(sourceControl), true);
+            internalMethods.toggleIndicator($this, true);
             //se asume URL
             if (typeof dataSource !== "undefined" && dataSource != null) {
                 if (typeof dataSource === "string") {
                     //el filter siempre debe tener un valor, si el parámetro es nulo o no viene se inicializa con un json vacio.
                     if (typeof filter === "undefined" || filter === null)
                         filter = {};
-                    //si el filter es un string, se coloca dentro de un json, y el parámetro se asume que se llama "filter".
+                        //si el filter es un string, se coloca dentro de un json, y el parámetro se asume que se llama "filter".
                     else if (typeof filter === "string")
                         filter = "{ 'filter': \"" + filter + "\"}";
                     else if (typeof filter === "object")
@@ -176,11 +193,13 @@ generando un error.
                             if (typeof eventResponse !== "undefined")
                                 result = eventResponse;
 
-                            methods.show(sourceControl, result, filter);
+                            var filterExpression = $this.prop("quickList_filterExpression");
+
+                            methods.show(sourceControl, result, (typeof filterExpression === "undefined" || filterExpression === null) ? "" : filterExpression);
                         },
                         error: function (jqXHR, textStatus, errorThrown) {
                             settings.onError(jqXHR, textStatus, errorThrown);
-                            internalMethods.toggleIndicator($(sourceControl), false);
+                            internalMethods.toggleIndicator($this, false);
                         }
                     })
                 }
@@ -206,8 +225,10 @@ generando un error.
     };
     $.fn.quickList = function (options) {
         if (typeof options === "string" && options !== null && options !== "") {
-            if (options.toLowerCase() === "methods")
+            if (options.toLowerCase() === "methods") {
+                $tempThis = this;
                 return methods;
+            }
         }
 
         var settings = $.extend({}, $default, options);
@@ -243,19 +264,23 @@ generando un error.
     }
 
     //var isShown = false;
-    var keys = { ENTER: 13, TAB: 9, ESC: 27, ARRUP: 38, ARRDN: 40, PLUS: 107, MINUS: 109, END: 35, HOME: 36,
+    var keys = {
+        ENTER: 13, TAB: 9, ESC: 27, ARRUP: 38, ARRDN: 40, PLUS: 107, MINUS: 109, END: 35, HOME: 36,
         DELETE: 46, BACKSPACE: 8, CAPSLOCK: 20
     };
     var methods = {
         onKeyUp: function (src, evt) {
             var $this = $(src);
+            var quickListId = $this.attr("quickListId");
+            $this.prop("quickList_filterExpression", $this.val());
+
             var settings = $.extend({}, $default, $this.data("quickList_config"));
 
             if (evt.keyCode === keys.ENTER && settings.searchOnEnter) {
                 if (typeof $this.attr("quickListShown") === "undefined" || $this.attr("quickListShown") == "false")
                     internalMethods.showUp($this);
                 else {
-                    var selected = methods.getSelected();
+                    var selected = methods.getSelected(quickListId);
                     if (selected != null) {
                         var onSelResult = true;
                         if (selected.elem !== null && selected.elem.id === "more")
@@ -273,14 +298,13 @@ generando un error.
             else if (evt.keyCode === keys.ARRDN || evt.keyCode === keys.ARRUP) {
                 if (typeof $this.attr("quickListShown") === "undefined" || $this.attr("quickListShown") == "false") {
                     internalMethods.showUp($this);
-                    var quickListId = $this.attr("quickListId");
-                    methods.highligthItem(0);
+                    methods.highligthItem(0, quickListId);
                 }
                 else {
-                    methods.moveSelection(evt.keyCode);
+                    methods.moveSelection(evt.keyCode, quickListId);
                 }
             }
-            //Sólo se ejecuta la búsqueda, autoFilter, si se presiona algún caracter alfa numérico o backspace o delete.
+                //Sólo se ejecuta la búsqueda, autoFilter, si se presiona algún caracter alfa numérico o backspace o delete.
             else if ((evt.keyCode >= 48 && evt.keyCode <= 90) || (evt.keyCode >= 96 && evt.keyCode <= 105) || evt.keyCode == keys.BACKSPACE
                 || evt.keyCode == keys.DELETE) {
 
@@ -290,11 +314,16 @@ generando un error.
                     methods.hide($this);
             }
         },
-        getSelected: function () {
+        getSelected: function (quickListId) {
+            if (typeof quickListId === "undefined" || quickListId === null)
+                quickListId = $tempThis.attr("quickListId");
+
+            var $this = $("[ownerQuickListId=" + quickListId + "]");
+
             var retVal = {};
             var selectedItem = null;
 
-            if ((selectedItem = $(".QuickListItemSelected", $("#QuickList"))).length > 0) {
+            if ((selectedItem = $(".QuickListItemSelected", $this)).length > 0) {
                 retVal.index = selectedItem.attr("index");
                 retVal.elem = eval("(" + selectedItem.attr("srcElem") + ")");
             }
@@ -303,12 +332,17 @@ generando un error.
 
             return retVal;
         },
-        moveSelection: function (key) {
+        moveSelection: function (key, quickListId) {
             var ARRUP = 38, ARRDN = 40, END = 35, HOME = 36;
             var selIndex = -1, selectedItem;
 
-            var itemCounts = $(".QuickListItem", $("#QuickList")).length - 1;
-            if ((selectedItem = $(".QuickListItemSelected", $("#QuickList"))).length > 0)
+            if (typeof quickListId === "undefined" || quickListId === null)
+                quickListId = $tempThis.attr("quickListId");
+
+            var $this = $("[ownerQuickListId=" + quickListId + "]");
+
+            var itemCounts = $(".QuickListItem", $this).length - 1;
+            if ((selectedItem = $(".QuickListItemSelected", $this)).length > 0)
                 selIndex = parseFloat(selectedItem.attr("index"));
 
             if (key == ARRDN)
@@ -325,15 +359,26 @@ generando un error.
             if (selIndex < 0)
                 selIndex = itemCounts;
 
-            this.highligthItem(selIndex);
+            this.highligthItem(selIndex, quickListId);
         },
-        highligthItem: function (index) {
-            $(".QuickListItemSelected", $("#QuickList")).removeClass("QuickListItemSelected");
-            $(".QuickListItem[index='" + index + "']", $("#QuickList")).addClass("QuickListItemSelected");
+        highligthItem: function (index, quickListId) {
+            if (typeof quickListId === "undefined" || quickListId === null)
+                quickListId = $tempThis.attr("quickListId");
+
+            var $this = $("[ownerQuickListId=" + quickListId + "]");
+
+            $(".QuickListItemSelected", $this).removeClass("QuickListItemSelected");
+            $(".QuickListItem[index='" + index + "']", $this).addClass("QuickListItemSelected");
         },
         hide: function ($this) {
-            $("#QuickList").fadeOut(250, function () {
-                $("#QuickList").remove();
+
+            if (typeof $this === "undefined" || $this === null)
+                $this = $tempThis;
+
+            var quickListId = $this.attr("quickListId");
+            var $quickListsrc = $("[ownerQuickListId=" + quickListId + "]");
+            $quickListsrc.fadeOut(250, function () {
+                $quickListsrc.remove();
             })
             $($this).removeAttr("quickListShown");
         },
@@ -353,7 +398,9 @@ generando un error.
         show: function ($this, data, input) {
             var settings = $.extend({}, $default, $($this).data("quickList_config"));
 
-            $("#QuickList").remove();
+            var quickListId = $this.attr("quickListId");
+
+            $("[ownerQuickListId=" + quickListId + "]").remove();
             var quickListItem = "";
             var index = 0;
             if (typeof data !== "undefined" && data !== null && data.length > 0) {
@@ -362,13 +409,19 @@ generando un error.
 
                     if (data[item].css != null && data[item].css != "")
                         css = css + " " + data[item].css;
+                    var content;
+                    if (settings.itemTemplate)
+                        content = settings.itemTemplate.replace("{value}", data[item].value);
+                    else
+                        content = data[item].value;
 
-                    var items = input.split(" ");
-                    var content = data[item].value;
-                    for (var searchExpr in items) {
-                        if (items[searchExpr] != "") {
-                            var reg = new RegExp("(" + items[searchExpr] + ")", "gi");
-                            content = content.replace(reg, "<span class='filterMatch' style='font-weight:bold;'>$1</span>");
+                    if (settings.highlightFilterInput) {
+                        var items = input.split(" ");
+                        for (var searchExpr in items) {
+                            if (items[searchExpr] != "") {
+                                var reg = new RegExp("(" + items[searchExpr] + ")", "gi");
+                                content = content.replace(reg, "<span class='filterMatch' style='font-weight:bold;'>$1</span>");
+                            }
                         }
                     }
 
@@ -386,31 +439,36 @@ generando un error.
                 quickListItem += "<div class='QuickListItem' index='0' id='QuickListItem_0' srcElem=\"{id:null,value:null, info:null, cssClass:null}\" > " + settings.noDataLabel + "</div>";
             }
 
-            var quickList = internalMethods.createDiv($this)
-                    .append($(quickListItem).keyup(function (evt) { alert(1); }))
+            var quickList = internalMethods.createDiv($this);
+
+            if (typeof settings.headerTemplate !== "undefined" && settings.headerTemplate !== null)
+                quickList.append(settings.headerTemplate);
+            var quickListId = $this.attr("quickListId");
+            quickList.append($(quickListItem).keyup(function (evt) { }))
                     .fadeIn(1000)
                     .mouseenter(function (evt) {
                         methods.cancelHidding($(this));
                     })
                     .mouseleave(function (evt) {
                         methods.startHidding($(this), 5000);
-                    }).focus(function () {
+                    })
+                    .focus(function () {
                         methods.cancelHidding($(this));
                     }).blur(function () {
                         methods.startHidding($(this), 5000);
                     });
 
             if (typeof settings.onSelect != "undefined" && settings.onSelect != null) {
-                $(".QuickListItem:not(.MoreListItem)", $("#QuickList")).click(function (evt) {
+                $(".QuickListItem:not(.MoreListItem)", quickList).click(function (evt) {
                     var onSelResult = settings.onSelect($this, $(this).attr("index"), eval("(" + $(this).attr("srcElem") + ")"));
                     if (typeof onSelResult === "undefined" && onSelResult !== false)
                         methods.hide($this);
                 }).mouseover(function () {
-                    methods.highligthItem($(this).attr("index"));
+                    methods.highligthItem($(this).attr("index"), quickListId);
                 })
             }
             if (settings.showMoreButton !== false) {
-                var moreItem = $(".MoreListItem", $("#QuickList"));
+                var moreItem = $(".MoreListItem", quickList);
                 if (typeof settings.onShowMoreSelected === "function") {
                     moreItem.click(function (evt) {
                         var onSelResult = settings.onShowMoreSelected(this);
@@ -425,7 +483,7 @@ generando un error.
                     });
                 }
                 moreItem.mouseover(function () {
-                    methods.highligthItem($(this).attr("index"));
+                    methods.highligthItem($(this).attr("index"), quickListId);
                 });
             }
             $($this).attr("quickListShown", true);
