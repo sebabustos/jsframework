@@ -2,7 +2,7 @@
 ================================================================
 VERSIÓN
 ================================================================
-Código:       | webDialog - 2014-07-21 - 1.1.0.0
+Código:       | webDialog - 2014-09-12 1157 - 1.1.1.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -16,17 +16,23 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v1.1.0.0
+Versión:      | v1.1.1.0
 ----------------------------------------------------------------
-Fecha:        | 2014-07-21 10:34
+Fecha:        | 2014-09-12 11:57
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla que existía cuando se llamaba al plugin
-pasando como primer parámetro el texto a mostrar en el mensaje
-y como segundo la configuración. La misma no estaba almacenándose
-en el componente para luego recuperarla.
-- Se cambió el nombre del atributo usado para almacenar la 
-configuració, de "webDialog:config" a "webDialog_config"
+- Se agregó la posiblidad de configurar el autoScroll, que 
+posicionará el cuadro de diálogo en la ubicación donde se encuentre
+scrollada la pantalla.
+- Se agregó la clase dialogTitleButtonBarContainer al anchor que 
+contiene la barra de controles
+- Se modificó el plugin para que, cuando se muestra una URL en un
+iframe, no muestre el scroll del dialog, sino sólo el del frame.
+- Se corrigió un problema que existía cuando se iniciaba el dialogo
+en una ventana pequeña, y este sobre pasaba la misma, y al agrandar
+la ventana, partes del dialogo permanecían fuera de los márgenes
+a pesar de caber. Se modificó para que en el resize de la ventana, 
+se reposicione el dialogo en el centro.
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -47,6 +53,22 @@ POSIBLES MEJORAS
 -
 ================================================================
 HISTORIAL DE VERSIONES
+================================================================
+Código:       | webDialog - 2014-07-21 - 1.1.0.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Versión:      | v1.1.0.0
+----------------------------------------------------------------
+Fecha:        | 2014-07-21 10:34
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla que existía cuando se llamaba al plugin
+pasando como primer parámetro el texto a mostrar en el mensaje
+y como segundo la configuración. La misma no estaba almacenándose
+en el componente para luego recuperarla.
+- Se cambió el nombre del atributo usado para almacenar la 
+configuració, de "webDialog:config" a "webDialog_config"
 ================================================================
 Código:       | webDialog - 2012-09-20 1730 - 1.0.0.5
 ----------------------------------------------------------------
@@ -131,11 +153,22 @@ Cambios de la Versión:
         allowResize: true,
         useJQueryUI: true,
         cloneControl: false,
+        autoScroll: true,
         buttons: {}
     }
-    $.fn.center = function () {
+    $.fn.center = function (doAutoScroll) {
         var top = ($(window).height() - this.outerHeight()) / 2;
         var left = ($(window).width() - this.outerWidth()) / 2;
+        var scrollLeft = 0;
+        var scrollTop = 0;
+        if (doAutoScroll === true) {
+            scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
+            scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
+        }
+
+        left += scrollLeft;
+        top += scrollTop;
+
 
         //return { top: (top > 0 ? top : 0), left: (left > 0 ? left : 0) };
         this.css({
@@ -143,6 +176,16 @@ Cambios de la Versión:
             "left": left
         });
 
+        return {
+            position: {
+                "top": top,
+                "left": left
+            },
+            scrollPosition: {
+                "top": scrollTop,
+                "left": scrollLeft
+            }
+        };
     }
     var webDialogsIds = 0;
     //función iframe y text
@@ -171,7 +214,6 @@ Cambios de la Versión:
             }
             if (typeof settings.onCloseFunction != "undefined" && settings.onCloseFunction != null && result)
                 settings.onCloseFunction();
-
         },
         show: function (options) {
             //$.webDialog.close();
@@ -215,7 +257,7 @@ Cambios de la Versión:
             //Se crea el div del dialog mismo.
             var dialogContainer = $("<div id='divDialogWindow_" + currentId + "' webDialogId='" + currentId + "' title='" + settings.title + "' class='modalDialog'></div>");
             //Se crea un div que va a contener el text, control o iframe del dialog.
-            var dialogContent = $("<div class='webDialogContent' style='height:80%'></div>");
+            var dialogContent = $("<div class='webDialogContent' style='height:85%'></div>");
 
 
             if (settings.content != null) {
@@ -255,12 +297,12 @@ Cambios de la Versión:
                 }
 
                 //Se crea la barra de Título
-                var titleBar = $("<div class='dialogTitleContainer' style='height:5%'><span webDialogId='dialogTitle' class='dialogTitle'>" + settings.title + "</span><a href='#' webDialogId='buttonBarContainer'></a></div>");
+                var titleBar = $("<div class='dialogTitleContainer' style='height:5%'><span webDialogId='dialogTitle' class='dialogTitle'>" + settings.title + "</span><a href='#' class='dialogTitleButtonBarContainer' webDialogId='buttonBarContainer'></a></div>");
                 if (settings.showCloseButton)
                     $("[webDialogId='buttonBarContainer']", titleBar).append($("<span webDialogId='closeButton' class='dialogCloseButton' onClick='$.webDialog.close(\"" + currentId + "\");' >cerrar</span>"));
 
                 //Se crea el div con el pie del dialog.
-                var footerBar = $("<div style='width:100%;height:15%;padding:0px;margin:0px' class='dialogFooterContainer' ></div>");
+                var footerBar = $("<div style='width:100%;height:10%;padding:0px;margin:0px' class='dialogFooterContainer' ></div>");
                 if (typeof settings.buttons === "object") {
                     $.each(settings.buttons, function (text, func) {
                         var button = $("<input type='button' webDialog_button='true' value='" + text + "' />");
@@ -280,7 +322,10 @@ Cambios de la Versión:
 
                 if (settings.useJQueryUI) {
                     dialogContainer.addClass("ui-dialog ui-widget ui-widget-content ui-corner-all");
-                    dialogContent.addClass("ui-dialog-content ui-widget-content");
+                    if (settings.type !== "url")
+                        dialogContent.addClass("ui-dialog-content");
+
+                    dialogContent.addClass("ui-widget-content");
                     titleBar.addClass("ui-dialog-titlebar ui-widget-header ui-corner-all ui-helper-clearfix");
                     $("[webDialogId='dialogTitle']", titleBar).addClass("ui-dialog-title");
                     $("[webDialogId='buttonBarContainer']", titleBar).addClass("ui-dialog-titlebar-close ui-corner-all");
@@ -289,6 +334,7 @@ Cambios de la Versión:
 
                     //footerBar.addClass();
                 }
+
                 dialogContainer.appendTo($("body")).css(
                     {
                         position: "absolute",
@@ -306,9 +352,12 @@ Cambios de la Versión:
                     dialogContainer.width(settings.width);
                 if (settings.height)
                     dialogContainer.height(settings.height);
-
-                if (settings.position != null && settings.position == "center")
-                    dialogContainer.center();
+                if (settings.position != null && settings.position == "center") {
+                    dialogContainer.center(settings.autoScroll);
+                    $(window).resize(function () {
+                        dialogContainer.center(settings.autoScroll);
+                    })
+                }
 
                 if (settings.allowDrag) {
                     //ui-draggable
