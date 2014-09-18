@@ -2,7 +2,7 @@
 ================================================================
 VERSIÓN
 ================================================================
-Código:       | webDialog - 2014-09-12 1157 - 1.1.1.0
+Código:       | webDialog - 2014-09-18 1028 - 1.1.2.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -16,23 +16,14 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v1.1.1.0
+Versión:      | v1.1.2.0
 ----------------------------------------------------------------
-Fecha:        | 2014-09-12 11:57
+Fecha:        | 2014-09-18 10:28
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posiblidad de configurar el autoScroll, que 
-posicionará el cuadro de diálogo en la ubicación donde se encuentre
-scrollada la pantalla.
-- Se agregó la clase dialogTitleButtonBarContainer al anchor que 
-contiene la barra de controles
-- Se modificó el plugin para que, cuando se muestra una URL en un
-iframe, no muestre el scroll del dialog, sino sólo el del frame.
-- Se corrigió un problema que existía cuando se iniciaba el dialogo
-en una ventana pequeña, y este sobre pasaba la misma, y al agrandar
-la ventana, partes del dialogo permanecían fuera de los márgenes
-a pesar de caber. Se modificó para que en el resize de la ventana, 
-se reposicione el dialogo en el centro.
+- Se modificó para que reubique correctamente el dialog y el
+courtain al scrollar o cambiar el tamaño de la ventana contenedora
+del mismo.
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -53,6 +44,27 @@ POSIBLES MEJORAS
 -
 ================================================================
 HISTORIAL DE VERSIONES
+================================================================
+Código:       | webDialog - 2014-09-12 1157 - 1.1.1.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Versión:      | v1.1.1.0
+----------------------------------------------------------------
+Fecha:        | 2014-09-12 11:57
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posiblidad de configurar el autoScroll, que 
+posicionará el cuadro de diálogo en la ubicación donde se encuentre
+scrollada la pantalla.
+- Se agregó la clase dialogTitleButtonBarContainer al anchor que 
+contiene la barra de controles
+- Se modificó el plugin para que, cuando se muestra una URL en un
+iframe, no muestre el scroll del dialog, sino sólo el del frame.
+- Se corrigió un problema que existía cuando se iniciaba el dialogo
+en una ventana pequeña, y este sobre pasaba la misma, y al agrandar
+la ventana, partes del dialogo permanecían fuera de los márgenes
+a pesar de caber. Se modificó para que en el resize de la ventana, 
+se reposicione el dialogo en el centro.
 ================================================================
 Código:       | webDialog - 2014-07-21 - 1.1.0.0
 ----------------------------------------------------------------
@@ -356,7 +368,28 @@ Cambios de la Versión:
                     dialogContainer.center(settings.autoScroll);
                     $(window).resize(function () {
                         dialogContainer.center(settings.autoScroll);
-                    })
+                        var webDialogId = dialogContainer.attr("webDialogId");
+                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]")
+
+                        var scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
+                        var scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
+                        courtain.css({
+                            width: $(window).width() + scrollLeft,
+                            height: $(window).height() + scrollTop
+                        });
+
+                    }).scroll(function () {
+                        dialogContainer.center(settings.autoScroll);
+                        var webDialogId = dialogContainer.attr("webDialogId");
+                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]")
+
+                        var scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
+                        var scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
+                        courtain.css({
+                            width: $(window).width() + scrollLeft,
+                            height: $(window).height() + scrollTop
+                        });
+                    });
                 }
 
                 if (settings.allowDrag) {
@@ -370,18 +403,24 @@ Cambios de la Versión:
 
 
                 if (settings.modal != null && settings.modal === true) {
-                    var courtain = $("<div webDialogId='divDialogCourtain_" + currentId + "' class='divDialogCourtain' ></div>");
+                    var courtain = $("<div webDialogId='divDialogCourtain_" + currentId + "' webDialog_controlType='courtain' class='divDialogCourtain' ></div>");
+
+                    var scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
+                    var scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
 
                     if (settings.useJQueryUI) {
-                        courtain.addClass("ui-widget-overlay");
+                        courtain.addClass("ui-widget-overlay").css({
+                            width: $(window).width() + scrollLeft,
+                            height: $(window).height() + scrollTop
+                        });
                     }
                     else {
                         courtain.css({
                             position: "absolute",
                             top: 0,
                             left: 0,
-                            width: $(window).width(),
-                            height: $(window).height(),
+                            width: $(window).width() + scrollLeft,
+                            height: $(window).height() + scrollTop,
                             zIndex: 9998
                         });
                     }
