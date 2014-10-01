@@ -2,7 +2,7 @@
 ================================================================
 VERSIÓN
 ================================================================
-Código:       | QuickList - 2014-09-10 1613 - 3.0.0.0
+Código:       | QuickList - 2014-10-01 1640 - 3.0.1.0
 ----------------------------------------------------------------
 Nombre:       | QuickList
 ----------------------------------------------------------------
@@ -16,19 +16,14 @@ Descripción:  | plugin de jquery que permite configurar un
 ----------------------------------------------------------------
 Autor:        | Seba Bustos
 ----------------------------------------------------------------
-Versión:      | v3.0.0.0
+Versión:      | v3.0.1.0
 ----------------------------------------------------------------
-Fecha:        | 2014-09-10 16:13
+Fecha:        | 2014-10-01 16:40
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de definir un Header al quickList
-- Se agregó la posibilidad de definir un template que será el 
-item que se usará para mostrar cada elemento de la lista.
-- Se agregó la posiblidad de habilitar o deshabilitar el 
-resaltado de la palabra de filtro en el listado de elementos de 
-coincidencias.
-- Se modificó el código para que puedan coexistir varios quicklist
-en una misma página y que estos se vean simultáneamente.
+- se corrigió una falla que existía en el método hide, el cual, 
+en algunas ocasiones, se llamaba pasando directamente el control,
+no el Id del quickList y eso no estaba contemplado.
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -41,6 +36,18 @@ POSIBLES MEJORAS
 - multiples listados simultáneos.
 ================================================================
 HISTORIAL DE VERSIONES
+================================================================
+Código:       QuickList - 2014-09-10 1613 - 3.0.0.0
+Autor:        Seba Bustos
+Cambios de la Versión:
+- Se agregó la posibilidad de definir un Header al quickList
+- Se agregó la posibilidad de definir un template que será el 
+item que se usará para mostrar cada elemento de la lista.
+- Se agregó la posiblidad de habilitar o deshabilitar el 
+resaltado de la palabra de filtro en el listado de elementos de 
+coincidencias.
+- Se modificó el código para que puedan coexistir varios quicklist
+en una misma página y que estos se vean simultáneamente.
 ================================================================
 Código:       QuickList - 2012-02-10 1044 - 1.0.0.0
 Autor:        Seba Bustos
@@ -92,6 +99,7 @@ onBeforFilter devuelve false, cancele la búsqueda.
         autoFilter: false, //a medida que vaya escribiendo va filtrando
         minInput: 0, //la cantidad mínima de caracteres para que se ejecute el autoFilter.
         headerTemplate: null,
+        footerTemplate: null,
         itemTemplate: null,
         //searchOnFocus: false,
         searchOnEnter: true,
@@ -127,18 +135,17 @@ onBeforFilter devuelve false, cancele la búsqueda.
         },
         toggleIndicator: function ($this, doShow) {
             var quickListId = $this.attr("quickListId");
-            $("[quickList_controlType=divQuickListIndicator][quickListId=" + quickListId + "]").remove();
+            $("[quickList_controlType=" + eControlType.QuickListIndicator + "][quickListId=" + quickListId + "]").remove();
             if (doShow) {
                 var settings = $.extend({}, $default, $this.data("quickList_config"));
                 var img = $("<img src='" + settings.indicatorImage + "' style='max-width:" + $this.width() + "px'/>");
-                var indicatorDiv = $("<div class='QuickListItem' quickList_controlType='divQuickListIndicator' quickListId='" + quickListId + "' style='text-align:center;'></div>").append(img);
-                internalMethods.createDiv($this).append(indicatorDiv).fadeIn(500);
+                var indicatorDiv = $("<div class='QuickListItem' quickList_controlType='" + eControlType.QuickListIndicator + "' quickListId='" + quickListId + "' style='text-align:center;'></div>").append(img);
+                internalMethods.createDiv(quickListId).append(indicatorDiv).fadeIn(500);
             }
         },
-        createDiv: function ($this) {
-            $this = $($this);
-            var quickListId = $this.attr("quickListId");
-            return $("<div class='QuickList' ownerQuickListId='" + quickListId + "' plugin='quickList' style='display:none'></div>")
+        createDiv: function (quickListId) {
+            var $this = $("[quickList_controlType=" + eControlType.Source + "][quickListId=" + quickListId + "]");
+            return $("<div class='QuickList' quickListId='" + quickListId + "' quickList_controlType='" + eControlType.QuickList + "' plugin='quickList' style='display:none'></div>")
                     .appendTo("body")
                     .css({ zIndex: 20, position: "absolute", width: $this.outerWidth(), top: $this.outerHeight(), left: 0, display: 'inline-block' })
                     .position({
@@ -223,6 +230,12 @@ onBeforFilter devuelve false, cancele la búsqueda.
             }
         }
     };
+    var eControlType = {
+        Source: 'source',
+        QuickList: 'quickList',
+        QuickListItem: 'quickListItem',
+        QuickListIndicator: 'divQuickListIndicator'
+    }
     $.fn.quickList = function (options) {
         if (typeof options === "string" && options !== null && options !== "") {
             if (options.toLowerCase() === "methods") {
@@ -234,7 +247,9 @@ onBeforFilter devuelve false, cancele la búsqueda.
         var settings = $.extend({}, $default, options);
 
         function init($this) {
-            $this.data("quickList_config", options);
+            $this.data("quickList_config", options)
+                 .attr("quickList_controlType", eControlType.Source);
+
             $.each($this, function (index, item) {
                 //if (typeof options.sourceControl !== "undefined" && options.sourceControl !== null)
                 //    options.sourceControl
@@ -262,7 +277,21 @@ onBeforFilter devuelve false, cancele la búsqueda.
 
         return this;
     }
+    $.quickList = {
+        get: function (src, controlType) {
+            var $this = $(src);
+            if (typeof $this.attr("quickListId") !== "undefined") {
+                var quickListId = $this.attr("quickListId");
 
+                if (typeof controlType === "undefined" || controlType === null || controlType === "")
+                    controlType = eControlType.Source;
+
+                return $("[quickList_controlType=" + controlType + "][quickListId= " + quickListId + "]");
+            }
+            return $this;
+        },
+        ControlTypes: eControlType
+    }
     //var isShown = false;
     var keys = {
         ENTER: 13, TAB: 9, ESC: 27, ARRUP: 38, ARRDN: 40, PLUS: 107, MINUS: 109, END: 35, HOME: 36,
@@ -289,11 +318,11 @@ onBeforFilter devuelve false, cancele la búsqueda.
                             onSelResult = settings.onSelect($this, selected.index, selected.elem);
                     }
                     if (typeof onSelResult === "undefined" && onSelResult !== false)
-                        methods.hide($this);
+                        methods.hide(quickListId);
                 }
             }
             else if (evt.keyCode === keys.ESC) {
-                methods.hide($this);
+                methods.hide(quickListId);
             }
             else if (evt.keyCode === keys.ARRDN || evt.keyCode === keys.ARRUP) {
                 if (typeof $this.attr("quickListShown") === "undefined" || $this.attr("quickListShown") == "false") {
@@ -311,14 +340,14 @@ onBeforFilter devuelve false, cancele la búsqueda.
                 if (settings.autoFilter)
                     internalMethods.showUp($this);
                 else
-                    methods.hide($this);
+                    methods.hide(quickListId);
             }
         },
         getSelected: function (quickListId) {
             if (typeof quickListId === "undefined" || quickListId === null)
                 quickListId = $tempThis.attr("quickListId");
 
-            var $this = $("[ownerQuickListId=" + quickListId + "]");
+            var $this = $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]");
 
             var retVal = {};
             var selectedItem = null;
@@ -339,7 +368,7 @@ onBeforFilter devuelve false, cancele la búsqueda.
             if (typeof quickListId === "undefined" || quickListId === null)
                 quickListId = $tempThis.attr("quickListId");
 
-            var $this = $("[ownerQuickListId=" + quickListId + "]");
+            var $this = $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]");
 
             var itemCounts = $(".QuickListItem", $this).length - 1;
             if ((selectedItem = $(".QuickListItemSelected", $this)).length > 0)
@@ -365,29 +394,38 @@ onBeforFilter devuelve false, cancele la búsqueda.
             if (typeof quickListId === "undefined" || quickListId === null)
                 quickListId = $tempThis.attr("quickListId");
 
-            var $this = $("[ownerQuickListId=" + quickListId + "]");
+            var $this = $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]");
 
             $(".QuickListItemSelected", $this).removeClass("QuickListItemSelected");
             $(".QuickListItem[index='" + index + "']", $this).addClass("QuickListItemSelected");
         },
-        hide: function ($this) {
-
-            if (typeof $this === "undefined" || $this === null)
+        hide: function (param) {
+            var $this;
+            var quickListId;
+            if (typeof param === "undefined" || param === null)
                 $this = $tempThis;
+            else if (typeof param === "string") {
+                quickListId = param
+                $this = $("[quickList_controlType=" + eControlType.Source + "][quickListId= " + quickListId + "]");
+            }
+            else {
+                $this = param;
+                quickListId = $this.attr("quickListId");
+            }
 
-            var quickListId = $this.attr("quickListId");
-            var $quickListsrc = $("[ownerQuickListId=" + quickListId + "]");
-            $quickListsrc.fadeOut(250, function () {
-                $quickListsrc.remove();
+            var $quickList = $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]");
+            $quickList.fadeOut(250, function () {
+                $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]").remove();
             })
             $($this).removeAttr("quickListShown");
         },
-        startHidding: function ($this, ms) {
+        startHidding: function (quickListId, ms) {
             if (typeof ms == "undefined" || isNaN(ms))
                 ms = 5000;
             var toId = window.setTimeout(function () {
-                methods.hide($this);
+                methods.hide(quickListId);
             }, ms);
+            var $this = $("[quickList_controlType=" + eControlType.Source + "][quickListId= " + quickListId + "]");
             $this.attr("timeOutId", toId);
         },
         cancelHidding: function ($this) {
@@ -400,7 +438,7 @@ onBeforFilter devuelve false, cancele la búsqueda.
 
             var quickListId = $this.attr("quickListId");
 
-            $("[ownerQuickListId=" + quickListId + "]").remove();
+            $("[quickList_controlType='" + eControlType.QuickList + "'][quickListId=" + quickListId + "]").remove();
             var quickListItem = "";
             var index = 0;
             if (typeof data !== "undefined" && data !== null && data.length > 0) {
@@ -426,23 +464,24 @@ onBeforFilter devuelve false, cancele la búsqueda.
                     }
 
                     var elem = "{id:'" + data[item].id + "', value:'" + data[item].value + "', info:'" + data[item].info + "',cssClass:'" + data[item].cssClass + "'}";
-                    quickListItem += "<div class='QuickListItem" + css + "' index='" + index + "' id='QuickListItem_" + index + "' srcElem=\"" + elem + "\" >" + content + " <div class='QuickListItemInfo'>" + data[item].info + "</div></div>";
+                    quickListItem += "<div class='QuickListItem" + css + "' index='" + index + "' quickListId='" + quickListId + "' quickList_controlType='" + eControlType.QuickListItem + "' srcElem=\"" + elem + "\" >" + content + " <div class='QuickListItemInfo'>" + data[item].info + "</div></div>";
                     index++;
                     if (index > settings.itemsShown)
                         break;
                 }
                 if ((settings.showMoreButton === "always") || (data.length > settings.itemsShown && settings.showMoreButton === true)) {
-                    quickListItem += "<div class='QuickListItem MoreListItem' index='" + index + "' id='QuickListItem_More' srcElem=\"{id:'more'}\">" + settings.moreButtonLabel + " </div>";
+                    quickListItem += "<div class='QuickListItem MoreListItem' index='" + index + "' srcElem=\"{id:'more'}\">" + settings.moreButtonLabel + " </div>";
                 }
             }
             else {
-                quickListItem += "<div class='QuickListItem' index='0' id='QuickListItem_0' srcElem=\"{id:null,value:null, info:null, cssClass:null}\" > " + settings.noDataLabel + "</div>";
+                quickListItem += "<div class='QuickListItem' index='0' id='QuickListItem_0' quickList_controlType='" + eControlType.QuickListItem + "' srcElem=\"{id:null,value:null, info:null, cssClass:null}\" > " + settings.noDataLabel + "</div>";
             }
 
-            var quickList = internalMethods.createDiv($this);
+            var quickList = internalMethods.createDiv(quickListId);
 
             if (typeof settings.headerTemplate !== "undefined" && settings.headerTemplate !== null)
                 quickList.append(settings.headerTemplate);
+
             var quickListId = $this.attr("quickListId");
             quickList.append($(quickListItem).keyup(function (evt) { }))
                     .fadeIn(1000)
@@ -450,13 +489,15 @@ onBeforFilter devuelve false, cancele la búsqueda.
                         methods.cancelHidding($(this));
                     })
                     .mouseleave(function (evt) {
-                        methods.startHidding($(this), 5000);
+                        methods.startHidding(quickListId, 5000);
                     })
                     .focus(function () {
                         methods.cancelHidding($(this));
                     }).blur(function () {
-                        methods.startHidding($(this), 5000);
+                        methods.startHidding(quickListId, 5000);
                     });
+            if (typeof settings.footerTemplate !== "undefined" && settings.footerTemplate !== null)
+                quickList.append(settings.footerTemplate);
 
             if (typeof settings.onSelect != "undefined" && settings.onSelect != null) {
                 $(".QuickListItem:not(.MoreListItem)", quickList).click(function (evt) {
