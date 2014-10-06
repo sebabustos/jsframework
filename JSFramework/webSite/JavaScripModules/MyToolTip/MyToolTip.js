@@ -20,6 +20,21 @@
             offset: "10 -2"
         }
     };
+    var $tempthis = null;
+    var methods = {
+        removeToolTip: function (target) {
+            if (typeof target === "undefined" || target === null)
+                target = $tempthis;
+
+            if (typeof target.attr("myToolTipId") !== "undefined") {
+                target.unbind("mouseenter.myToolTip");
+                target.unbind("mouseleave.myToolTip");
+                target.removeData("myToolTipconfig");
+                target.removeAttr("myToolTipId");
+            }
+            return target;
+        }
+    };
     var defaultStyle = 'background-color: #F6F6F6;border: 1px solid #F1F1F1;padding: 5px;border-radius: 3px;box-shadow: #999999 4px 2px 10px;';
     var guiid = 0;
 
@@ -30,6 +45,12 @@
             showUpDelay: "showUpDelay",
             hiding: "hiding"
         }
+        //si ya está inicializado y se vuelve a llamar, sin options, se devuelve el objeto Methods.
+        if (typeof options === "undefined" && this.length > 0 && typeof this.attr("myToolTipId") !== "undefined") {
+            $tempthis = this;
+            return methods;
+        }
+
         var createToolTip = function (src) {
             var myToolTipId = src.attr("myToolTipId");
             var settings = $.extend({}, $defaults, src.data("myToolTipconfig"));
@@ -65,12 +86,10 @@
             }
         }
 
-
-
         var srcElement = this;
         function configMyToolTop(target) {
             var myToolTipId = (typeof target[0].id != "undefined") ? target[0].id : guiid++;
-            target.mouseenter(function (e) {
+            target.bind("mouseenter.myToolTip", function (e) {
                 var $this = $(this);
                 var settings = $.extend({}, $defaults, $this.data("myToolTipconfig"));
                 if (settings.showUpDelay > 0) {
@@ -86,7 +105,7 @@
                 }
                 else
                     createToolTip($this);
-            }).mouseleave(function () {
+            }).bind("mouseleave.myToolTip", function () {
                 var $this = $(this);
                 var settings = $.extend({}, $defaults, $this.data("myToolTipconfig"));
                 var duration = settings.showUpEffect ? settings.hideeffectDuration : 0;
@@ -120,7 +139,6 @@
             target.data("myToolTipconfig", itemOptions)
                   .attr("myToolTipId", myToolTipId);
         }
-
         function init(target) {
             if (typeof target !== "undefined" && target !== null && target.length > 0) {
                 if (target.length > 1)
@@ -140,7 +158,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | MyToolTip - 2014-07-23 - 1.0.0.0
+Código:       | MyToolTip - 2014-10-06 - 1.0.1.0
 ----------------------------------------------------------------
 Nombre:       | MyToolTip
 ----------------------------------------------------------------
@@ -153,12 +171,17 @@ Descripción:  | Muestra un pequeño popup, no intrusivo, que sigue
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.0.0.0
+Versión:      | v1.0.1.0
 ----------------------------------------------------------------
-Fecha:        | 2014-07-23 08:42
+Fecha:        | 2014-10-06 11:09
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Primera versión estable del producto.
+ - Se agregó la posibilidad de remove la funcionalidad de un plugin
+ ya inicializado, mediante el nuevo método "removeToolTip"
+ - Se modificó la inicialización del plugin, para que, cuando se 
+llama al plugin sin parámetros ($().myToolTip()), si el control
+para el cual se llama ya está inicializado devuelve el objeto
+"methods"
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -189,9 +212,9 @@ mediante el uso del objeto position de jquery.
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
-Código:       [código del producto]
-Autor:        [Autor]
+Código:       | MyToolTip - 2014-07-23 - 1.0.0.0
+Autor:        | Sebastián Bustos Argañaraz
 Cambios de la Versión:
-  - [Cambios que incluyó la versión]
+  - Primera versión estable del producto.
 ================================================================
 */
