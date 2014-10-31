@@ -97,14 +97,16 @@
                     newLine.css({ marginLeft: 5 * spaces});
                     newHTML +=newLine.outerHTML();
                 }
-                var divRoot = $("<div><div id='divCodeContainer' class='CodeContainer'>ver/ocultar código</div><div id='divCodeBody' class='CodeBody' style='display:none'></div></div>");
+                var divRoot = $("<div><div formatCodeid='divCodeContainer' class='CodeContainer'>ver/ocultar código</div><div formatCodeidId='divCodeBody' class='CodeBody' style='display:none'></div></div>");
                 var divCode = $("<div></div>",{'class':'code', 'id':$(this).attr("id")});
                 divCode.html(newHTML);
-                var divCodeContainer = $("#divCodeContainer",divRoot);
-                divCodeContainer.toggle(function(){$("#divCodeBody",$(this).parent()).show()},function(){$("#divCodeBody",$(this).parent()).hide()})
+                var divCodeContainer = $("[formatCodeid=divCodeContainer]", divRoot);
 
+                divCodeContainer.click(function () {
+                    $("[formatCodeidId=divCodeBody]", $(this).parent()).toggle();
+                });
                 divRoot.insertAfter($(this));
-                $("#divCodeBody",divRoot).append(divCode);
+                $("[formatCodeidId=divCodeBody]", divRoot).append(divCode);
                 $(this).remove();
             })    
 
