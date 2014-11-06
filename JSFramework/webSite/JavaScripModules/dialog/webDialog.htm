@@ -188,5 +188,35 @@
         });
     </textarea>
 </fieldset>
+
+<br />
+<script type="text/javascript" language="javascript">
+    function btnShowPluginDialogWithId(doClose) {
+        var txtDialogId = $("#txtDialogId");
+        if (doClose)
+            $.webDialog.close(txtDialogId.val());
+        else
+            $("#divPluggedIn").webDialog({
+                dialogId: txtDialogId.val(),
+                modal: false
+            });
+    }
+</script>
+<fieldset>
+    <legend>Dialog Plugin With DialogId</legend>
+    Id del Dialog<input type="text" id="txtDialogId" value="DialogId" />
+    <input id="Button4" onclick="btnShowPluginDialogWithId();" value="Mostrar dialogo" type="button" />
+    <input id="Button4" onclick="btnShowPluginDialogWithId(true);" value="Ocultar dialogo" type="button" />
+    <div id="divPluggedIn">
+        Este es el contenido del div que será mostrado en el dialog usando el plugin
+    </div>
+    <br />
+    <textarea class="code">
+        $.webDialog.show({
+        content: $("<div style='background-color:yellow;border:1px solid #999999'><input type='textbox' /><input type='button' onclick='alert();' text='Botón' /></div>"),
+        type: "control"
+        });
+    </textarea>
+</fieldset>
 </body>
 </html>
