@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2014-02-26 0908 - v3.0.0.0
+Código:         | GridView - 2014-11-17 1546 - v3.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,27 +16,24 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v3.0.0.0
+Versión:        | v3.1.0.0
 ----------------------------------------------------------------
-Fecha:          | 2014-02-26 09:08
+Fecha:          | 2014-11-17 09:08
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregaron los eventos onRowDataBounding y onRowDataBound
-   OnRowDataBounding: function (gridViewId, data, rowIndex) { }
-     Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la 
-      grilla, un json con los datos que componente la fila (todas las columnas no sólo 
-      las que tengan  "includeInResult: true") y la posición de la fila dentro de la 
-      grilla (el índice)
-     Este evento puede, opcionalmente, devolver un json con los datos que usará el 
-      componente para dibujar la fila. Obviamente este json debe cumplir con la 
-      estructura del datasource, es decir del data recibido por parámetro.
-   OnRowDataBound: function (row, gridViewId, data, rowIndex) { }
-     Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro 
-      el control TR correspondiente a la fila agregada, el id de la grilla, un json 
-      con los datos usados para dibujar la grilla y el índice de la fila agregada.
-     Usando el parámetro row es posible, por ejemplo, acceder a los controles que 
-      se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, 
-      deshabilitar un textbox.
+- Se agregó el evento onComplete, que se ejecutará siempre luego de realizar una búsqueda y dibujar la grilla, aún cuando se produjer un error en el dataSource.
+- Se agregó el nuevo método isChildGrid, entre los métodos públicos del control gridView, consumible mediante: $("...").gridView().isChildGrid();
+- Se agregó una propiedad childGridView, a la propiedad methods, devuelta por el gridView, que contiene métodos particulares de las grillas hijas. 
+   Esta propiedad posee 2 métodos:
+      getRowContainer, que devuelve el control fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainer();
+      getRowContainerData, que devuelve el elemento del datasource de la fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainerData();
+- Se modificó el evento onCleanSearch, para agregar, al último, el nuevo parámetro "gridViewId"
+- Se modificó el evento onBeforeSearch, para agregar, al último, el nuevo parámetro "gridViewId"
+- Se modificó la lógica del evento click de selección de una fila y celda, para que no use, en el selector, los objetos TR y TD, sino que realice la búsqueda a partir de los atributos, de manera de poder, a futuro, modificar los controles usados para dibujar la grilla.
+- Se modificó el evento onBeforeDraw, para agregar el parámetro "gridViewId"
+- Se modificó el método loadDataSourceWS para que, tanto en el evento OnError, como en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onComplete
+- Se modificó el método loadDataSourceWS para que, en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onError si se produjera algún tipo de excepción.
+- Se modificó el método loadDataSourceJSon para que ejecute el evento onComplete, luego de dibujar la grilla.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -127,10 +124,11 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         tableGridPager: null,
         selectionMode: 'cell', //'row'|'cell'
         getFilterData: function () { return {}; },
-        onCleanSearch: null, //function () { return true;},
-        onBeforeSearch: null, //function () { },
-        onBeforeDraw: null, //function () { },
-        onError: null, //function () { },
+        onCleanSearch: null, //function ($gridViewSrc, settings, paggingData, gridViewId) { return true;},
+        onBeforeSearch: null, //function (pageIndex, settings.pageSize, gridViewId) { },
+        onBeforeDraw: null, //function (gridViewId) { return true;},
+        onError: null, //function (jqXHR, textStatus, errorThrown) { },
+        onComplete: null,  //function (gridViewId, isSuccess, status, messageError) { },
         ///<Type>Evento</Type>
         ///<Name>onRowSelect</Name>
         ///<Description>Este evento se ejecutará, si la grilla admite selección (alloSelection:true), cuando el usuario seleccione una fila, ya sea 
@@ -140,16 +138,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         ///src: jquery, TR que representa la fila seleccionada
         ///itemData: json, que contendrá las columnas de datos que componen la fila, configuradas como "includeInResult:true"
         ///</Parametros>
-        onRowSelect: null,  //function (src, itemData) { },
+        onRowSelect: null,  //function (row, gridViewId, data) { },
         onRowDataBounding: null,//function (gridViewId, data, rowIndex) { }
         //Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la grilla, un json con los datos que componente la fila (todas las columnas no sólo las que tengan "includeInResult: true") y la posición de la fila dentro de la grilla (el índice)
         //Este evento puede, opcionalmente, devolver un json con los datos que usará el componente para dibujar la fila. Obviamente este json debe cumplir con la estructura del datasource, es decir del data recibido por parámetro.
         onRowDataBound: null,   //function (row, gridViewId, data, rowIndex) { }
         //Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro el control TR correspondiente a la fila agregada, el id de la grilla, un json con los datos usados para dibujar la grilla y el índice de la fila agregada.
         //Usando el parámetro row es posible, por ejemplo, acceder a los controles que se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, deshabilitar un textbox.
-        onGridDrawed: null,
-        onPaggingIndexChange: null, //function (gridId, pageIndexFrom, pageIndexTo, isLastPage) { },
-        onPageIndexChanged: null, //function (gridId, currentPageIndex) { },
+        onGridDrawed: null, //function (gridViewId){}
+        onPaggingIndexChange: null, //function (gridViewId, pageIndexFrom, pageIndexTo, isLastPage) { },
+        onPageIndexChanged: null, //function (gridViewId, currentPageIndex) { },
         totalRecordsProperty: null,
         dataResultProperty: null,
         ajaxLoaderImage: "../../Images/indicator.gif",
@@ -543,6 +541,29 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
         };
     var methods = {
+        isChildGrid: function (gridViewId) {
+            var $gridViewId = $("[gridViewId=" + gridViewId + "]");
+            return $gridViewId.attr("gridview_rowType") === "childGrid";
+        },
+        childGridView: {
+            //Devuelve el TR de la fila de datos, de la grilla padre asociada.
+            getRowContainer: function (childGridViewId) {
+                var $this;
+                if (typeof childGridViewId === "undefined" || childGridViewId === null)
+                    $this = $tempthis;
+                else
+                    $this = $("[gridViewId=" + childGridViewId + "]");
+
+                var gridTR = $this.parents("TR[gridview_rowtype=childGrid]:first");
+                //la grilla es contenido en la siguiente fila (TR) de la fila de datos asociada.
+                return gridTR.prev();
+            },
+            ///Obtiene el itemData de la fila asociada
+            getRowContainerData: function (childGridViewId) {
+                var parentRow = getParentRow(childGridViewId);
+                return parentRow.data("itemData");
+            },
+        },
         cleanSearch: function () {
             var gridViewId;
             if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
@@ -555,7 +576,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var paggingData = $.extend({}, elem.data("gridView:gagging"));
 
                 if (settings.onCleanSearch instanceof Function) {
-                    var response = settings.onCleanSearch(elem, settings, paggingData);
+                    var response = settings.onCleanSearch(elem, settings, paggingData, gridViewId);
                     if (typeof response !== "undefined" && !response)
                         return;
                 }
@@ -904,7 +925,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             methods.cleanSearch(gridViewId);
             var eventResult;
             if (settings.onBeforeSearch instanceof Function) {
-                eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize);
+                eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize, gridViewId);
                 if (typeof eventResult !== "undefined" && !eventResult) {
                     return;
                 }
@@ -1046,7 +1067,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function drawResults(gridViewId, data) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            drawGridView(elem, settings, data);
+                drawGridView(elem, settings, data);
         }
         //Dibuja las filas y celdas de la grilla 
         function drawGridView(elem, settings, data) {
@@ -1084,12 +1105,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     //En selectionMode=='cell' la fila sólo selecciona presionando sobre el botón de selección, por lo que s registra el evento en el mismo.
                     if (typeof settings.selectionMode !== "undefined" && settings.selectionMode !== null && settings.selectionMode.toLowerCase() === 'cell') {
                         $(".selectionCell", $(settings.tableGridBody, elem)).click(function (evt) {
-                            settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
+                            var $parentRow = $(this).parent("[gridview_rowType=row]:first");
+                            settings.onRowSelect($parentRow, gridViewId, $parentRow.data("itemData"));
                         });
                     }
                         //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
                     else {
-                        $("TR>TD.gridViewCell:not(.controls_container)", $(settings.tableGridBody, elem)).click(function (evt) {
+                        $("[gridview_rowType=row]>[gridview_cellType=data]:not(.controls_container)", $(settings.tableGridBody, elem))
+                            .click(function (evt) {
                             settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
                         });
                     }
@@ -1266,6 +1289,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     wsUrl = wsUrl.replace(reg, parentGridRowData[prop]);
                 }
             }
+            var isSuccess = true, status = "success", messageError = null;
+
 
             $.ajax({
                 async: settings.ajaxConfig.async,
@@ -1275,67 +1300,87 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 dataType: settings.ajaxConfig.dataType,
                 contentType: settings.ajaxConfig.contentType,
                 success: function (data, textStatus, jqXHR) {
-                    var eventResult;
-                    if (settings.onBeforeDraw instanceof Function) {
-                        eventResult = settings.onBeforeDraw();
-                        if (typeof eventResult !== "undefined" && !eventResult)
-                            return;
-                    }
-
-                    if (data.hasOwnProperty("d"))
-                        data = data.d;
-
-                    //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
-                    //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
-                    if (settings.usePagging) {
-                        if (settings.totalRecordsProperty === null) {
-                            if (data.hasOwnProperty("totalRecords"))
-                                paggingData.totalRecords = data.totalRecords;
-                            else
-                                paggingData.totalRecords = data.length;
-                        }
-                        else {
-                            if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
-                                alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
+                    try {
+                        var eventResult;
+                        if (settings.onBeforeDraw instanceof Function) {
+                            eventResult = settings.onBeforeDraw(gridViewId);
+                            if (eventResult === false)
                                 return;
-                            }
-                            else
-                                paggingData.totalRecords = data[settings.totalRecordsProperty];
                         }
 
-                        var rest = (paggingData.totalRecords % settings.pageSize);
-                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
-                        $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
+                        if (data.hasOwnProperty("d"))
+                            data = data.d;
 
-                        //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
-                        if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
-                            drawPager(gridViewId);
+                        //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
+                        //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
+                        if (settings.usePagging) {
+                            if (settings.totalRecordsProperty === null) {
+                                if (data.hasOwnProperty("totalRecords"))
+                                    paggingData.totalRecords = data.totalRecords;
+                                else
+                                    paggingData.totalRecords = data.length;
+                            }
+                            else {
+                                if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
+                                    alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
+                                    return;
+                                }
+                                else
+                                    paggingData.totalRecords = data[settings.totalRecordsProperty];
+                            }
+
+                            var rest = (paggingData.totalRecords % settings.pageSize);
+                            paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
+                            $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
+
+                            //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
+                            if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
+                                drawPager(gridViewId);
+                        }
+
+                        var resultData;
+                        if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
+                            resultData = data[settings.dataResultProperty];
+                        else
+                            resultData = data.result;
+
+                        drawResults(gridViewId, resultData);
                     }
-
-                    var resultData;
-                    if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
-                        resultData = data[settings.dataResultProperty];
-                    else
-                        resultData = data.result;
-
-                    drawResults(gridViewId, resultData);
+                    catch (excep) {
+                        isSuccess = false;
+                        status = "error";
+                        messageError = excep.message;
+                        if (settings.onError !== null && settings.onError instanceof Function)
+                            settings.onError(jqXHR, textStatus, errorThrown);
+                    }
+                    finally {
+                        if (settings.onComplete !== null && settings.onComplete instanceof Function)
+                            settings.onComplete(gridViewId, isSuccess, status, messageError);
+                    }
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
+                    isSuccess = false;
+                    status = "error";
+                    messageError = errorThrown;
                     drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. <br/> Intente nuevamente más tarde.");
                     if (settings.onError !== null && settings.onError instanceof Function)
                         settings.onError(jqXHR, textStatus, errorThrown);
+                    if (settings.onComplete !== null && settings.onComplete instanceof Function)
+                        settings.onComplete(gridViewId, isSuccess, status, messageError);
                 }
             });
         }
         function loadDataSourceJSon(gridViewId, settings, paggingData, parentGridRowData) {
+            var isSuccess = true, status = "success", messageError = null;
+
             try {
                 var data = null;
                 var eventResult;
                 //Se ejecuta el evento OnBeforeDraw si estuviera definido.
                 //El evento puede cancelar el dibujado de la grilla, si tras su ejecución devolviera false.
                 if (settings.onBeforeDraw instanceof Function) {
-                    eventResult = settings.onBeforeDraw();
-                    if (typeof eventResult !== "undefined" && !eventResult)
+                    eventResult = settings.onBeforeDraw(gridViewId);
+                    if (eventResult===false)
                         return;
                 }
 
@@ -1391,8 +1436,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var msg = "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message;
                 drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message);
 
+                isSuccess = false;
+                status = "error";
+                messageError = excep.message;
+
                 if (settings.onError !== null && settings.onError instanceof Function)
                     settings.onError(null, msg, error);
+            }
+            finally
+            {
+                if (settings.onComplete !== null && settings.onComplete instanceof Function)
+                    settings.onComplete(gridViewId, isSuccess, status, messageError);
             }
         }
 
@@ -1403,6 +1457,28 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2014-02-26 0908 - v3.0.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2014-02-26 09:08
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregaron los eventos onRowDataBounding y onRowDataBound
+   OnRowDataBounding: function (gridViewId, data, rowIndex) { }
+     Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la 
+      grilla, un json con los datos que componente la fila (todas las columnas no sólo 
+      las que tengan  "includeInResult: true") y la posición de la fila dentro de la 
+      grilla (el índice)
+     Este evento puede, opcionalmente, devolver un json con los datos que usará el 
+      componente para dibujar la fila. Obviamente este json debe cumplir con la 
+      estructura del datasource, es decir del data recibido por parámetro.
+   OnRowDataBound: function (row, gridViewId, data, rowIndex) { }
+     Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro 
+      el control TR correspondiente a la fila agregada, el id de la grilla, un json 
+      con los datos usados para dibujar la grilla y el índice de la fila agregada.
+     Usando el parámetro row es posible, por ejemplo, acceder a los controles que 
+      se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, 
+      deshabilitar un textbox.
 ================================================================
 Código:         | GridView - 2013-11-05 20:00 - v2.1.1.0
 Autor:          | Seba Bustos
