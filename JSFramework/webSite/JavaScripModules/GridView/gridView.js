@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2014-11-17 1546 - v3.1.0.0
+Código:         | GridView - 2014-11-18 1721 - v3.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,24 +16,12 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v3.1.0.0
+Versión:        | v3.2.0.0
 ----------------------------------------------------------------
-Fecha:          | 2014-11-17 09:08
+Fecha:          | 2014-11-18 17:21
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó el evento onComplete, que se ejecutará siempre luego de realizar una búsqueda y dibujar la grilla, aún cuando se produjer un error en el dataSource.
-- Se agregó el nuevo método isChildGrid, entre los métodos públicos del control gridView, consumible mediante: $("...").gridView().isChildGrid();
-- Se agregó una propiedad childGridView, a la propiedad methods, devuelta por el gridView, que contiene métodos particulares de las grillas hijas. 
-   Esta propiedad posee 2 métodos:
-      getRowContainer, que devuelve el control fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainer();
-      getRowContainerData, que devuelve el elemento del datasource de la fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainerData();
-- Se modificó el evento onCleanSearch, para agregar, al último, el nuevo parámetro "gridViewId"
-- Se modificó el evento onBeforeSearch, para agregar, al último, el nuevo parámetro "gridViewId"
-- Se modificó la lógica del evento click de selección de una fila y celda, para que no use, en el selector, los objetos TR y TD, sino que realice la búsqueda a partir de los atributos, de manera de poder, a futuro, modificar los controles usados para dibujar la grilla.
-- Se modificó el evento onBeforeDraw, para agregar el parámetro "gridViewId"
-- Se modificó el método loadDataSourceWS para que, tanto en el evento OnError, como en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onComplete
-- Se modificó el método loadDataSourceWS para que, en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onError si se produjera algún tipo de excepción.
-- Se modificó el método loadDataSourceJSon para que ejecute el evento onComplete, luego de dibujar la grilla.
+- Se agregó la posibilidad de mostrar o no el Indicator de procesamiento
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -123,6 +111,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         tableGridBody: "[gridview_element=tbBody]",
         tableGridPager: null,
         selectionMode: 'cell', //'row'|'cell'
+        showProcessingIndicator: true,
         getFilterData: function () { return {}; },
         onCleanSearch: null, //function ($gridViewSrc, settings, paggingData, gridViewId) { return true;},
         onBeforeSearch: null, //function (pageIndex, settings.pageSize, gridViewId) { },
@@ -957,7 +946,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (!dataFilter.hasOwnProperty("pageIndex"))
                     dataFilter.pageIndex = pageIndex;
             }
-            drawProcessingIcon(gridViewId);
+            if (settings.showProcessingIndicator)
+                drawProcessingIcon(gridViewId);
 
             if (settings.dataSourceType.toLowerCase() === "ws") {
                 loadDataSourceWS(gridViewId, settings, dataFilter, paggingData, parentRowData);
@@ -1457,6 +1447,25 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2014-11-17 1546 - v3.1.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2014-11-17 09:08
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó el evento onComplete, que se ejecutará siempre luego de realizar una búsqueda y dibujar la grilla, aún cuando se produjer un error en el dataSource.
+- Se agregó el nuevo método isChildGrid, entre los métodos públicos del control gridView, consumible mediante: $("...").gridView().isChildGrid();
+- Se agregó una propiedad childGridView, a la propiedad methods, devuelta por el gridView, que contiene métodos particulares de las grillas hijas. 
+   Esta propiedad posee 2 métodos:
+      getRowContainer, que devuelve el control fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainer();
+      getRowContainerData, que devuelve el elemento del datasource de la fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainerData();
+- Se modificó el evento onCleanSearch, para agregar, al último, el nuevo parámetro "gridViewId"
+- Se modificó el evento onBeforeSearch, para agregar, al último, el nuevo parámetro "gridViewId"
+- Se modificó la lógica del evento click de selección de una fila y celda, para que no use, en el selector, los objetos TR y TD, sino que realice la búsqueda a partir de los atributos, de manera de poder, a futuro, modificar los controles usados para dibujar la grilla.
+- Se modificó el evento onBeforeDraw, para agregar el parámetro "gridViewId"
+- Se modificó el método loadDataSourceWS para que, tanto en el evento OnError, como en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onComplete
+- Se modificó el método loadDataSourceWS para que, en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onError si se produjera algún tipo de excepción.
+- Se modificó el método loadDataSourceJSon para que ejecute el evento onComplete, luego de dibujar la grilla.
 ================================================================
 Código:         | GridView - 2014-02-26 0908 - v3.0.0.0
 Autor:          | Seba Bustos
