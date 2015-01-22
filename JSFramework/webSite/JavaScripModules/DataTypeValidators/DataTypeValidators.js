@@ -38,29 +38,122 @@ Especificaciones:
         allowCurrency: false,
         allowDecimals: true,
         allowNegativesValues: true,
-        specialChars: false,
+        allowedChars: null,
+        specialChars: null,
         validDataRegex: null,
         allowNumbers: true,
 
         commaSeparators: null, //el/los caracteres que se utilizarán como separador de decimales. Si se incluyen varios se permitirá cualquiera de ellos.
         invalidDataCss: 'invalidData',
-        invalidMessageCss:'default',
+        invalidMessageCss: 'default',
         showInvalidMessage: true,
         onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
         onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
         invalidDataMessage: "El dato ingresado es inválido"
     }
+    var internalMethods = {
+        getAllowedChars: function (settings) {
+            var allowedChars = settings.allowedChars;
+            if (typeof allowedChars !== "undefined" && allowedChars !== null) {
+                if (typeof settings.specialChars !== "undefined" && settings.specialChars !== null)
+                    allowedChars += settings.specialChars;
+                if (settings.allowCurrency)
+                    allowedChars += "$";
+                if (settings.allowDecimals) {
+                    var isCommaDecSep = (parseFloat("1.0") > parseFloat("1,0"));
+                    var commaSep;
+                    if (isCommaDecSep)
+                        commaSep = ","
+                    else
+                        commaSep = "."
+                    allowedChars += commaSep;
+                }
+                if (settings.allowNegativesValues)
+                    allowedChars += "-";
+            }
+            else allowedChars = null;
 
+            return allowedChars;
+        }
+    }
     //#region Funciones de validación para cada tipo de dato
+    var genericDataTypeValidator = {
+        ValidateInput: function (keyCode, currValue, settings) {
+            var allowedChars = internalMethods.getAllowedChars(settings)
+            var inputChar = String.fromCharCode(keyCode);
+            var isValid = true;
+            //sólo se valida si existe algún caracter configurado, sino se asume que acepta todos.
+            if (typeof allowedChars !== "undefined" && allowedChars !== null) {
+                isValid = allowedChars.indexOf(inputChar) >= 0;
+                if (!isValid && typeof specialChars === "string" && specialChars !== null)
+                    isValid = isValid & specialChars.indexOf(inputChar);
+            }
+            return isValid;
+        }
+        , ValidateData: function (string, settings) {
+            var retVal = false;
+            var allowedChars = internalMethods.getAllowedChars(settings)
+            var validDataRegex = settings.validDataRegex;
+
+            var regConfig = "";
+            var isValidDataRegexDefined = (typeof validDataRegex !== "undefined" && validDataRegex !== null && validDataRegex.length > 0);
+            var isAllowedCharsDefined = (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars > 0);
+
+            //Si no está definida la lista de caracteres permitidos, ni una expresión regular, se permiten todos los caracteres.
+            if (!isValidDataRegexDefined && !isAllowedCharsDefined)
+                retVal = true;
+            else {
+                if (!isValidDataRegexDefined) {
+                    //se reemplazan los caracteres reservados de las expresiones regulares por sus respectivos caracteres de escape.
+                    allowedChars = allowedChars
+                                        .replace(".", "\.")
+                                        .replace("[", "\[")
+                                        .replace("]", "\]")
+                                        .replace("(", "\(")
+                                        .replace(")", "\)")
+                                        .replace("*", "\*")
+                                        .replace("+", "\+")
+                                        .replace("$", "\$")
+                                        .replace("\\", "\\\\")
+                                        .replace("^", "\^");
+
+                    validDataRegex = "^[" + allowedChars + "]*$";
+                    regConfig = "gi";
+                }
+                else {
+                    var end;
+                    //se valida si la expresión regular tiene el formato /expres/config
+                    //en cuyo caso se separa expres y config.
+
+                    if (validDataRegex[0] === "/")
+                        //Se quita el primer / si existe
+                        validDataRegex = validDataRegex.slice(1);
+                    if ((end = validDataRegex.lastIndexOf("/")) > 0) {
+                        //Se quita la parte de configuración y se guarda
+                        regConfig = validDataRegex.slice(end);
+                        //se quita el / final de la expresión regular.
+                        regConfig = regConfig.slice(1);
+                        //la expresión en sí misma.
+                        validDataRegex = validDataRegex(0, end);
+                    }
+                }
+
+                var regex = new RegExp(validDataRegex, regConfig);
+                retVal = regex.test(string);
+            }
+            return retVal;
+        }
+    }
+
     var alphabeticDataTypeValidator = {
         ValidateInput: function (keyCode, currValue, settings) {
             var specialChars = settings.specialChars;
-            var allowdeChars = "abcdefghijklmnñopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ áéíóúÁÉÍÓÚüÜ";
+            var allowedChars = "abcdefghijklmnñopqrstuvwxyzABCDEFGHIJKLMNÑOPQRSTUVWXYZ áéíóúÁÉÍÓÚüÜ";
             if (settings.allowNumbers)
-                allowdeChars += "0123456789";
+                allowedChars += "0123456789";
             var inputChar = String.fromCharCode(keyCode);
 
-            var isValid = allowdeChars.indexOf(inputChar) >= 0;
+            var isValid = allowedChars.indexOf(inputChar) >= 0;
             if (!isValid && typeof specialChars === "string" && specialChars !== null)
                 isValid = isValid & specialChars.indexOf(inputChar);
 
@@ -102,24 +195,24 @@ Especificaciones:
     }
     var numericDataTypeValidator = {
         ValidateInput: function (keyCode, currValue, settings) {
-            var comaSep = settings.commaSeparators;
+            var commaSep = settings.commaSeparators;
             var allowCurrency = settings.allowCurrency;
-            var comaSepCharCode = [];
-            var comaSepChar = [];
-            if (typeof comaSep === "string") {
-                comaSep = comaSep.split('');
+            var commaSepCharCode = [];
+            var commaSepChar = [];
+            if (typeof commaSep === "string") {
+                commaSep = commaSep.split('');
             }
 
             if (typeof allowCurrency === "undefined" || allowCurrency !== true)
                 allowCurrency = false;
 
-            //para cada caracter del comaSep se obtiene el char Code
-            if (typeof comaSep !== "undefined" && comaSep !== null && comaSep !== "") {
-                for (var comaChar in comaSep) {
+            //para cada caracter del commaSep se obtiene el char Code
+            if (typeof commaSep !== "undefined" && commaSep !== null && commaSep !== "") {
+                for (var commaChar in commaSep) {
                     //se obtiene el charcode del caracter
-                    comaSepCharCode.push(comaSep[comaChar].charCodeAt(0));
+                    commaSepCharCode.push(commaSep[commaChar].charCodeAt(0));
                     //se registra el caracter
-                    comaSepChar.push(comaSep[comaChar]);
+                    commaSepChar.push(commaSep[commaChar]);
                 }
             }
                 //si no se configuró ningún separador particular, se usa el default
@@ -127,13 +220,13 @@ Especificaciones:
                 var isCommaDecSep = (parseFloat("1.0") > parseFloat("1,0"));
                 if (isCommaDecSep) {
                     //44 ==> , (coma)  , teclado y numpad
-                    comaSepCharCode = [44];
-                    comaSepChar = [","];
+                    commaSepCharCode = [44];
+                    commaSepChar = [","];
                 }
                 else {
                     //46 ==> . (punto) , teclado y numpad
-                    comaSepCharCode = [46];
-                    comaSepChar = ["."];
+                    commaSepCharCode = [46];
+                    commaSepChar = ["."];
                 }
             }
 
@@ -161,15 +254,15 @@ Especificaciones:
                 if (settings.allowDecimals && !isValid && (currValue.length > 1 || currValue.length == 1 && currValue !== "-")) {
                     var bAllow = true;
                     //Sólo se admite UN SÓLO caracter de decimales
-                    for (var comaChar in comaSepChar) {
-                        if (currValue.indexOf(comaSepChar[comaChar]) >= 0) {
+                    for (var commaChar in commaSepChar) {
+                        if (currValue.indexOf(commaSepChar[commaChar]) >= 0) {
                             bAllow = false;
                             break;
                         }
                     }
                     if (bAllow) {
-                        for (var comaChar in comaSepCharCode) {
-                            if (isValid = (isValid || (keyCode === comaSepCharCode[comaChar])))
+                        for (var commaChar in commaSepCharCode) {
+                            if (isValid = (isValid || (keyCode === commaSepCharCode[commaChar])))
                                 break;
                         }
                     }
@@ -179,21 +272,21 @@ Especificaciones:
             return isValid;
         }
         , ValidateData: function (string, settings) {
-            var comaSep = settings.commaSeparators;
+            var commaSep = settings.commaSeparators;
             var allowCurrency = settings.allowCurrency;
             var validDataRegex = settings.validDataRegex;
 
             var regConfig = "";
             if (typeof validDataRegex === "undefined" || validDataRegex === null || validDataRegex.length === 0) {
-                if (typeof comaSep === "undefined" || comaSep === null) {
+                if (typeof commaSep === "undefined" || commaSep === null) {
                     var isCommaDecSep = (parseFloat("1.0") > parseFloat("1,0"));
                     if (isCommaDecSep)
-                        comaSep = ","
+                        commaSep = ","
                     else
-                        comaSep = "."
+                        commaSep = "."
                 }
                 var currencyRegex = allowCurrency ? "[\\$]{0,1}" : "";
-                var decimalRegex = settings.allowDecimals ? "([" + comaSep + "]{0,1}(\\d)+||(\\d)*)" : "";
+                var decimalRegex = settings.allowDecimals ? "([" + commaSep + "]{0,1}(\\d)+||(\\d)*)" : "";
                 var negativesRegex = settings.allowNegativesValues ? "[-]{0,1}" : "";
                 validDataRegex = "^" + negativesRegex + currencyRegex + "(\\d)+" + decimalRegex + "$";
                 regConfig = "gi";
@@ -327,9 +420,9 @@ Especificaciones:
                             $("#InvalidMessage" + elemId).remove();
                             //si el usuario sobreescribe el css message se usa ese, aunque este sea vacío, pero si no sobreescribe coloca
                             //por defecto "invalidMessage"
-                            var cssMessage = settings.invalidMessageCss ==='default'?"":settings.invalidMessageCss;
+                            var cssMessage = settings.invalidMessageCss === 'default' ? "" : settings.invalidMessageCss;
                             //si existe definido un CSS para el mensaje, se coloca la clase específica según el tipo de dato, sino no.
-                            var cssDataTypeMessage = (cssMessage !=='' && typeof cssMessage !=="undefined") ? " " + dataType + cssMessage:"";
+                            var cssDataTypeMessage = (cssMessage !== '' && typeof cssMessage !== "undefined") ? " " + dataType + cssMessage : "";
 
                             var invalidMsg = $("<div id='InvalidMessage" + elemId + "' class='" + cssMessage + cssDataTypeMessage + "' >" + settings.invalidDataMessage + "</div>");
                             $this.parent().append(invalidMsg);
@@ -340,8 +433,7 @@ Especificaciones:
                                 left: pos.left
                             });
 
-                            if (settings.invalidMessageCss === 'default')
-                            {
+                            if (settings.invalidMessageCss === 'default') {
                                 invalidMsg.css({
                                     borderWidth: 1,
                                     borderStyle: "solid",
@@ -377,7 +469,9 @@ Especificaciones:
                 $this.datepicker(datePickSett);
             }
         },
-
+        setGenericValidator: function (options, $this) {
+            methods.initValidator($this, $default, options, genericDataTypeValidator);
+        },
         setCurrencyValidator: function (options, $this) {
             //El currency es un número que acepta el caracter de $. El allowCurrency define si se permite o no este caracter, y por defecto está 
             //deshabilitado por lo que se hace el extend para que, si el usuario no lo especificó, por defecto se habilite, para este tipo de dato.
@@ -420,7 +514,10 @@ Especificaciones:
             else if (settings.dataType === "date")
                 methods.setDateValidator(options, $this);
             else
+                methods.setGenericValidator(options, $this);
+            /*else
                 alert("El tipo de dato configurado no existe, los tipos válidos son: \"numeric\", \"integer\", \"alphabetic\", \"currency\", \"date\"");
+            */
         }
 
         init(this);
@@ -437,6 +534,17 @@ Especificaciones:
                 var settings = {};
                 if (typeof DateTypeValidatorGetSettings === "function")
                     settings = DateTypeValidatorGetSettings(dataType);
+                var validRegex = $this.attr("validDataRegex");
+                if (typeof validRegex !== "undefined" && validRegex !== null && validRegex !== "")
+                    settings = $.extend(settings, { "validDataRegex": validRegex });
+
+                var allowedChars = $this.attr("allowedChars");
+                if (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars !== "") {
+                    allowedChars = (allowedChars.replace("0-9", "0123456789")
+                                               .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
+                                               .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
+                    settings = $.extend(settings, { "allowedChars": allowedChars });
+                }
                 var options = $.extend(settings, { "dataType": dataType });
 
                 $this.DataTypeValidator(options);
@@ -450,7 +558,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2013-09-12 - v1.2.0.0
+Código:       | DataTypeValidators - 2015-01-22 - v3.0.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -469,21 +577,35 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.2.0.0
+Versión:      | v3.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2013-09-12
+Fecha:        | 2015-01-22
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se renombró la propiedad "comaSeparators" a "commaSeparators" (2 emes)
- - Se corrigió un error encuando se definía un tipo de dato numérico (o currency)
-  por el cual no estaba tomando la configuración del separador de comas especificada
-  por el usuario.
- - Se corrigió una falla cuando la configuración de separadores de coma se especificaba
-  como cadena (string) y no como array.
- - Se agregó la posibilidad de configurar la clase de estilo del mensaje de validación, y se 
-  modificó el comportamiento por defecto, para que, si no se sobreescribe, se agergue la configuración
-  por código.
-
+ - Se quitó la configuración "invalidMessageCss", que no era utilizada
+ - Se agregó la posibilidad de configurar los caracteres permitidos
+ que serán usados para permitir o no determinadas teclas (en el keyUp)
+ La configuración es posible mediante la propiedad "allowedChars" o 
+ bien con un atributo "allowedChars" en el tag del control.
+ Esta propiedad es una cadena con todos los caracteres permitidos, NO una 
+ expresión regular. Sin embargo se definieron algunos atajos que permitirán
+ simplificar este listado, y que serán reemplazadas por su correspondiente 
+ secuencia de caracteres:
+    * a-z: permitirá los caracteres de la "a" a la "z" en minúscula
+    * A-Z: permitirá los caracteres de la "a" a la "z" en mayúscula
+    * 0-9: permitirá los números del 0 al 9.
+ - Se agregó la posibilidad de configurar la expresión regular usada
+ para validar el texto ingresado como un atributo del control, mediante el 
+ atributo "validDataRegex"
+  Ej:<input type="text" dataType="regex" id="txtMail" validDataRegex="^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$" allowedChars="a-zA-Z0-9_.+-@"/>
+ - Se modificó el valor por defecto de la propiedad "specialChars" 
+ para que sea null, en lugar de false.
+ - se agregó un nuevo DataTypeValidator, el "genericDataTypeValidator"
+ que será usado para todos los tipos de datos no contemplados, y para el regex.
+ Este validator sólo permitirá el ingreso de los caracteres que hayan sido definidos
+ en la propiedad (o atributo del control) "allowedChars" (incluyendo la coma, punto, etc 
+ si se habilitaran los mismos); y validará que el texto ingresado cumpla con la expresión 
+ regular definida en 
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -505,6 +627,21 @@ Cambios de la Versión:
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
+Código:       | DataTypeValidators - 2013-09-12 - v1.2.0.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se renombró la propiedad "commaSeparators" a "commaSeparators" (2 emes)
+ - Se corrigió un error encuando se definía un tipo de dato numérico (o currency)
+  por el cual no estaba tomando la configuración del separador de comas especificada
+  por el usuario.
+ - Se corrigió una falla cuando la configuración de separadores de coma se especificaba
+  como cadena (string) y no como array.
+ - Se agregó la posibilidad de configurar la clase de estilo del mensaje de validación, y se 
+  modificó el comportamiento por defecto, para que, si no se sobreescribe, se agergue la configuración
+  por código.
+----------------------------------------------------------------
 Código:       | DataTypeValidators - 2013-07-18 - v1.1.0.0
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
