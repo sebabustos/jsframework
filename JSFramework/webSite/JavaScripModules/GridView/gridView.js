@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2014-11-18 1721 - v3.2.0.0
+Código:         | GridView - 2015-02-04 1524 - v4.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,12 +16,19 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v3.2.0.0
+Versión:        | v4.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2014-11-18 17:21
+Fecha:          | 2015-02-04 15:24
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de mostrar o no el Indicator de procesamiento
+- Se renombró el atributo donde se guardan los datos de paginación
+de gridView:gagging a gridView:pagging
+- Se agregó el nuevo atributo griview_isHeader (true|false) a
+los controles definidos para cada fila, de manera de poder
+distinguir si el control pertenece al encabezado o no.
+- Se modificó la lógica para que siempre cargue el atributo de 
+los datos de paginación, aún cuando la paginación está deshabilitada
+de manera de poder acceder, princpalmente, al totalRecords.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -272,6 +279,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false, idPrefix, colValue);
                         $.each(ctrls, function (index, item) {
                             item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
+                            item.attr("griview_isHeader", "false");
                             cell.addClass("controls_container").append(item);
                         });
                     }
@@ -551,7 +559,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             getRowContainerData: function (childGridViewId) {
                 var parentRow = getParentRow(childGridViewId);
                 return parentRow.data("itemData");
-            },
+            }
         },
         cleanSearch: function () {
             var gridViewId;
@@ -562,7 +570,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             var elem = $("[gridViewId=" + gridViewId + "]");
             if (elem.length > 0) {
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 if (settings.onCleanSearch instanceof Function) {
                     var response = settings.onCleanSearch(elem, settings, paggingData, gridViewId);
@@ -575,7 +583,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 paggingData.pageAmm = 0;
                 paggingData.currIndex = 0;
                 paggingData.currPageGroupNum = 0;
-                elem.data("gridView:gagging", paggingData);
+                elem.data("gridView:pagging", paggingData);
                 $("[gridViewId=" + gridViewId + "]").gridView("drawPager");
             }
         },
@@ -588,7 +596,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     gridViewId = arguments[0];
                 var elem = $("[gridViewId=" + gridViewId + "]");
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 if (paggingData.currIndex > 0) {
                     var fromIndex = paggingData.currIndex;
@@ -601,7 +609,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             return;
                     }
                     paggingData.currIndex--;
-                    elem.data("gridView:gagging", paggingData);
+                    elem.data("gridView:pagging", paggingData);
                     if ((paggingData.currIndex - 1) <= (paggingData.currPageGroupNum * settings.pagesShown))
                         this.movePrevPageGroup(gridViewId);
                     $(elem).gridView("doSearch", paggingData.currIndex);
@@ -620,7 +628,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                 var elem = $("[gridViewId=" + gridViewId + "]");
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
                 if ((paggingData.currIndex + 1) < paggingData.pageAmm) {
                     var fromIndex = paggingData.currIndex;
                     var toIndex = paggingData.currIndex + 1;
@@ -634,7 +642,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     }
                     paggingData.currIndex++;
                     var nextPage = paggingData.currIndex + 1;
-                    elem.data("gridView:gagging", paggingData);
+                    elem.data("gridView:pagging", paggingData);
                     if ((nextPage <= paggingData.pageAmm) && (nextPage > ((paggingData.currPageGroupNum + 1) * settings.pagesShown)))
                         this.moveNextPageGroup(gridViewId);
                     $(elem).gridView("doSearch", paggingData.currIndex);
@@ -668,7 +676,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                 var elem = $("[gridViewId=" + gridViewId + "]");
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 if (pageIndex < 0 || pageIndex >= paggingData.pageAmm)
                     throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
@@ -696,10 +704,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 else
                     gridViewId = arguments[0];
                 var elem = $("[gridViewId=" + gridViewId + "]");
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
                 if (paggingData.currPageGroupNum > 0) {
                     paggingData.currPageGroupNum--;
-                    elem.data("gridView:gagging", paggingData);
+                    elem.data("gridView:pagging", paggingData);
                     $(elem).gridView("drawPager");
                 }
             },
@@ -711,10 +719,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     gridViewId = arguments[0];
                 var elem = $("[gridViewId=" + gridViewId + "]");
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
                 if (((paggingData.currPageGroupNum + 1) * settings.pagesShown) < paggingData.pageAmm) {
                     paggingData.currPageGroupNum++;
-                    elem.data("gridView:gagging", paggingData);
+                    elem.data("gridView:pagging", paggingData);
                     $(elem).gridView("drawPager");
                 }
             },
@@ -725,10 +733,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 else
                     gridViewId = arguments[0];
                 var elem = $("[gridViewId=" + gridViewId + "]");
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 paggingData.currPageGroupNum = 0;
-                elem.data("gridView:gagging", paggingData);
+                elem.data("gridView:pagging", paggingData);
 
                 $(elem).gridView("drawPager");
             },
@@ -740,11 +748,11 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     gridViewId = arguments[0];
                 var elem = $("[gridViewId=" + gridViewId + "]");
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:gagging"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 var rest = (paggingData.pageAmm % settings.pagesShown);
                 paggingData.currPageGroupNum = ((paggingData.pageAmm - rest) / settings.pagesShown) - (rest === 0 ? 1 : 0);
-                elem.data("gridView:gagging", paggingData);
+                elem.data("gridView:pagging", paggingData);
                 $(elem).gridView("drawPager");
             }
         },
@@ -887,7 +895,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
 
             target.data("gridviewconfig", itemOptions)
-                .data("gridView:gagging", $paggingData)
+                .data("gridView:pagging", $paggingData)
                 .attr("gridViewId", gridViewId);
 
 
@@ -898,7 +906,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function doSearch(gridViewId, pageIndex) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            var paggingData = $.extend({}, elem.data("gridView:gagging"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (isNaN(pageIndex))
                 throw new Error("El pageIndex debe ser un número");
@@ -959,7 +967,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         }
         function doRefresh(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var paggingData = $.extend({}, elem.data("gridView:gagging"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             elem.gridView("doSearch", paggingData.currIndex);
         }
@@ -967,7 +975,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function drawPager(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            var paggingData = $.extend({}, elem.data("gridView:gagging"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             var pageNumbers = "";
             var prod = paggingData.currPageGroupNum * settings.pagesShown;
@@ -1057,7 +1065,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         function drawResults(gridViewId, data) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                drawGridView(elem, settings, data);
+            drawGridView(elem, settings, data);
         }
         //Dibuja las filas y celdas de la grilla 
         function drawGridView(elem, settings, data) {
@@ -1103,8 +1111,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     else {
                         $("[gridview_rowType=row]>[gridview_cellType=data]:not(.controls_container)", $(settings.tableGridBody, elem))
                             .click(function (evt) {
-                            settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
-                        });
+                                settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
+                            });
                     }
 
                 }
@@ -1217,6 +1225,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     var cornerCellHeader = $("<td class='gridViewCellHeader' gridview_cellType='headerControl'></td>");
                     var ctrl = privateMethods.CreateControl(item, gridViewId);
                     ctrl.attr("id", idPrefix + "_headerControl_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
+                    ctrl.attr("griview_isHeader", "true");
 
                     columnsAmmount++;
                     cornerCellHeader.append(ctrl);
@@ -1239,6 +1248,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     if (headerCtrls.length > 0) {
                         $.each(headerCtrls, function (index, ctrl) {
                             ctrl.attr("id", idPrefix + "_column" + col + "_controlHeaderIncluded_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
+                            ctrl.attr("griview_isHeader", "true");
                             cell.append(ctrl);
                         });
                     }
@@ -1301,32 +1311,31 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         if (data.hasOwnProperty("d"))
                             data = data.d;
 
+                        if (settings.totalRecordsProperty === null) {
+                            if (data.hasOwnProperty("totalRecords"))
+                                paggingData.totalRecords = data.totalRecords;
+                            else
+                                paggingData.totalRecords = data.length;
+                        }
+                        else {
+                            if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
+                                alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
+                                return;
+                            }
+                            else
+                                paggingData.totalRecords = data[settings.totalRecordsProperty];
+                        }
                         //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                         //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                         if (settings.usePagging) {
-                            if (settings.totalRecordsProperty === null) {
-                                if (data.hasOwnProperty("totalRecords"))
-                                    paggingData.totalRecords = data.totalRecords;
-                                else
-                                    paggingData.totalRecords = data.length;
-                            }
-                            else {
-                                if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
-                                    alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
-                                    return;
-                                }
-                                else
-                                    paggingData.totalRecords = data[settings.totalRecordsProperty];
-                            }
-
                             var rest = (paggingData.totalRecords % settings.pageSize);
                             paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
-                            $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
 
                             //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
                             if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
                                 drawPager(gridViewId);
                         }
+                        $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
 
                         var resultData;
                         if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
@@ -1341,7 +1350,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         status = "error";
                         messageError = excep.message;
                         if (settings.onError !== null && settings.onError instanceof Function)
-                            settings.onError(jqXHR, textStatus, errorThrown);
+                            settings.onError(null, messageError, excep);
                     }
                     finally {
                         if (settings.onComplete !== null && settings.onComplete instanceof Function)
@@ -1370,7 +1379,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 //El evento puede cancelar el dibujado de la grilla, si tras su ejecución devolviera false.
                 if (settings.onBeforeDraw instanceof Function) {
                     eventResult = settings.onBeforeDraw(gridViewId);
-                    if (eventResult===false)
+                    if (eventResult === false)
                         return;
                 }
 
@@ -1401,14 +1410,13 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
 
                 if (typeof data !== "undefined" && data !== null) {
+
+                    paggingData.totalRecords = data.length;
                     //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                     //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                     if (settings.usePagging) {
-                        paggingData.totalRecords = data.length;
-
                         var rest = (paggingData.totalRecords % settings.pageSize);
                         paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
-                        $("[gridViewId=" + gridViewId + "]").data("gridView:gagging", paggingData);
 
                         //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
                         if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
@@ -1420,6 +1428,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             data = data.slice(lowerBound, lowerBound + settings.pageSize);
                         }
                     }
+                    $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
                     drawResults(gridViewId, data);
                 }
             } catch (error) {
@@ -1433,8 +1442,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (settings.onError !== null && settings.onError instanceof Function)
                     settings.onError(null, msg, error);
             }
-            finally
-            {
+            finally {
                 if (settings.onComplete !== null && settings.onComplete instanceof Function)
                     settings.onComplete(gridViewId, isSuccess, status, messageError);
             }
@@ -1447,6 +1455,15 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2014-11-18 1721 - v3.2.0.0
+----------------------------------------------------------------
+Nombre:         | GridView
+Autor:          | Seba Bustos
+Fecha:          | 2014-11-18 17:21
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de mostrar o no el Indicator de procesamiento
 ================================================================
 Código:         | GridView - 2014-11-17 1546 - v3.1.0.0
 Autor:          | Seba Bustos
