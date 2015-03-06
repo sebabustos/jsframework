@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-02-04 1524 - v4.0.0.0
+Código:         | GridView - 2015-03-06 1201 - v4.0.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,19 +16,22 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.0.0.0
+Versión:        | v4.0.1.0
 ----------------------------------------------------------------
-Fecha:          | 2015-02-04 15:24
+Fecha:          | 2015-03-06 12:01
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se renombró el atributo donde se guardan los datos de paginación
-de gridView:gagging a gridView:pagging
-- Se agregó el nuevo atributo griview_isHeader (true|false) a
-los controles definidos para cada fila, de manera de poder
-distinguir si el control pertenece al encabezado o no.
-- Se modificó la lógica para que siempre cargue el atributo de 
-los datos de paginación, aún cuando la paginación está deshabilitada
-de manera de poder acceder, princpalmente, al totalRecords.
+- Se modificó el evento BeforeDraw para que reciba, por parámetro,
+el resultado de la búsqueda (el objeto data)
+- Se agregó la posibilidad de definir una propiedad, del datasource, que se 
+agregará como atributo de cada fila, mediante la configuración rowDataFieldId.
+Es decir, en esta propiedad se podrá indicar quéel nombre del campo de 
+los devueltos por la búsqueda, que se usará como atributo del TR, y cuyo valor
+se guardará en él.
+Ej: rowDataFieldId: 'Id'...
+   <row Id='valor de Id para la fila'...>
+- Se modificó la lógica del evento onGridDrawed, para que también se ejecute
+cuando el resultado no devuelva ningún registro.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -122,7 +125,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         getFilterData: function () { return {}; },
         onCleanSearch: null, //function ($gridViewSrc, settings, paggingData, gridViewId) { return true;},
         onBeforeSearch: null, //function (pageIndex, settings.pageSize, gridViewId) { },
-        onBeforeDraw: null, //function (gridViewId) { return true;},
+        onBeforeDraw: null, //function (gridViewId data) { return true;},
         onError: null, //function (jqXHR, textStatus, errorThrown) { },
         onComplete: null,  //function (gridViewId, isSuccess, status, messageError) { },
         ///<Type>Evento</Type>
@@ -167,6 +170,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         //    style:'',
         //    alt:'' //--> si el type es image, se usa para el atributo "alt".
         //    }],
+        rowDataFieldId: null,//permite definir una columna como identificador de la fila, creándose un atributo con el nombre del DataFieldName de la columna y con el valor del mismo
         columns: [{}],
         //Ej de configuración de columnas.
         //{
@@ -294,6 +298,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
                     else
                         cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
+
+                    if (typeof settings.rowDataFieldId !== "undefined" && settings.rowDataFieldId !== null && settings.rowDataFieldId !== ""
+                        && settings.rowDataFieldId.toLowerCase() === dataField.toLowerCase())
+                        row.attr(dataField, colValue);
 
                     row.append(cell);
                     iColCount++;
@@ -1147,8 +1155,11 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 }
 
             }
-            else
+            else {
+                if (settings.onGridDrawed instanceof Function)
+                    settings.onGridDrawed(gridViewId);
                 drawMessage(gridViewId, settings.noResultsCaption, settings.noResultsClass);
+            }
         }
 
         function getRowHeader(elem, settings) {
@@ -1302,14 +1313,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 success: function (data, textStatus, jqXHR) {
                     try {
                         var eventResult;
+                        if (data.hasOwnProperty("d"))
+                            data = data.d;
+
                         if (settings.onBeforeDraw instanceof Function) {
-                            eventResult = settings.onBeforeDraw(gridViewId);
+                            eventResult = settings.onBeforeDraw(gridViewId, data);
                             if (eventResult === false)
                                 return;
                         }
-
-                        if (data.hasOwnProperty("d"))
-                            data = data.d;
 
                         if (settings.totalRecordsProperty === null) {
                             if (data.hasOwnProperty("totalRecords"))
@@ -1455,6 +1466,20 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-02-04 1524 - v4.0.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-02-04 15:24
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se renombró el atributo donde se guardan los datos de paginación
+de gridView:gagging a gridView:pagging
+- Se agregó el nuevo atributo griview_isHeader (true|false) a
+los controles definidos para cada fila, de manera de poder
+distinguir si el control pertenece al encabezado o no.
+- Se modificó la lógica para que siempre cargue el atributo de 
+los datos de paginación, aún cuando la paginación está deshabilitada
+de manera de poder acceder, princpalmente, al totalRecords.
 ================================================================
 Código:         | GridView - 2014-11-18 1721 - v3.2.0.0
 ----------------------------------------------------------------
