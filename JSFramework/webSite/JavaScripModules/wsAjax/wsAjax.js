@@ -23,7 +23,7 @@ JSFramework.Commons.wsAjax = {
                 for (var prop in paramArrays) {
                     if (typeof paramArrays[prop] != 'undefined') {
                         if (paramArrays[prop] instanceof Array)
-                            jsonData = jsonData + ",\"" + prop + "\":" + PPJS.Commons.wsAjax.getArrayText(paramArrays[prop]);
+                            jsonData = jsonData + ",\"" + prop + "\":" + JSFramework.Commons.wsAjax.getArrayText(paramArrays[prop]);
                         else
                             jsonData = jsonData + ",\"" + prop + "\":\"" + paramArrays[prop] + "\"";
                     }
@@ -77,7 +77,7 @@ JSFramework.Commons.wsAjax = {
 ================================================================
                           VERSIÓN
 ================================================================
-Código:       | wsAjax - 2013-06-07 0919 - v1.0.3.0
+Código:       | wsAjax - 2015-04-22 1719 - v3.0.0.0
 ----------------------------------------------------------------
 Nombre:       | wsAjax
 ----------------------------------------------------------------
@@ -88,14 +88,13 @@ Descripción:  | función que simplifica la llamada a un servicio
 ----------------------------------------------------------------
 Autor:        | Seba Bustos
 ----------------------------------------------------------------
-Versión:      | v1.0.3.0
+Versión:      | v3.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2013-06-07 9:19 
+Fecha:        | 2015-04-22 17:19
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se modificó el método para sea posible configurar si el 
- parámetro "data" se serializará (es decir se enviará como un 
- string json) o si se enviará directamente como objeto json.
+ - Se corrigió la llamada a getArrayText, que usaba un espacio 
+ de nombres distinto.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -115,6 +114,14 @@ Cambios de la Versión:
 
 ================================================================
                   HISTORIAL DE VERSIONES
+================================================================
+Código:       | wsAjax - 2013-06-07 0919 - v1.0.3.0
+Fecha:        | 2013-06-07 9:19 
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se modificó el método para sea posible configurar si el 
+ parámetro "data" se serializará (es decir se enviará como un 
+ string json) o si se enviará directamente como objeto json.
 ================================================================
 Código:       | wsAjax - 2012-01-17 0926 - v1.0.2.0
 Fecha:        | 2012-11-12 17:03
