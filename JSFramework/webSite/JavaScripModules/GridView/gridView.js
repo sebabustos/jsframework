@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-03-06 1201 - v4.0.1.0
+Código:         | GridView - 2015-04-24 0832 - v4.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,22 +16,16 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.0.1.0
+Versión:        | v4.1.0.0
 ----------------------------------------------------------------
-Fecha:          | 2015-03-06 12:01
+Fecha:          | 2015-04-24 08:32
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se modificó el evento BeforeDraw para que reciba, por parámetro,
-el resultado de la búsqueda (el objeto data)
-- Se agregó la posibilidad de definir una propiedad, del datasource, que se 
-agregará como atributo de cada fila, mediante la configuración rowDataFieldId.
-Es decir, en esta propiedad se podrá indicar quéel nombre del campo de 
-los devueltos por la búsqueda, que se usará como atributo del TR, y cuyo valor
-se guardará en él.
-Ej: rowDataFieldId: 'Id'...
-   <row Id='valor de Id para la fila'...>
-- Se modificó la lógica del evento onGridDrawed, para que también se ejecute
-cuando el resultado no devuelva ningún registro.
+- Se agregó la posibilidad de configurar la imagen de refresh para
+que sea un ícono (un span) o que se dibuje un template (un control
+o selector jquery de un control)
+- Se agregó la clase gridViewRefreshIcon al ícono o imagen de 
+refresh dibujado.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -125,7 +119,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         getFilterData: function () { return {}; },
         onCleanSearch: null, //function ($gridViewSrc, settings, paggingData, gridViewId) { return true;},
         onBeforeSearch: null, //function (pageIndex, settings.pageSize, gridViewId) { },
-        onBeforeDraw: null, //function (gridViewId data) { return true;},
+        onBeforeDraw: null, //function (gridViewId, data) { return true;},
         onError: null, //function (jqXHR, textStatus, errorThrown) { },
         onComplete: null,  //function (gridViewId, isSuccess, status, messageError) { },
         ///<Type>Evento</Type>
@@ -150,8 +144,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         totalRecordsProperty: null,
         dataResultProperty: null,
         ajaxLoaderImage: "../../Images/indicator.gif",
-        refreshImage: null,
-        showRefresh: true,
+        showRefresh: true, //muestra una imagen como ícono de refresh
+        refreshImage: null, //indica qué imagen utilizará
+        refreshIcon: null, //si true, dibujará un span en lugar de un image
+        refreshIconTemplate: null, //un string o control que se usará como icono de refresh
         ajaxConfig: {
             async: true,
             type: "POST",
@@ -194,6 +190,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         //    showInHeader:false,
         //    style:'',
         //    alt:'' //--> si el type es image, se usa para el atributo "alt".
+        //    headerControlTemplate: { //--> si no se configura, y showInHeader es true, se usa el mismo control.
+        //          label:"",
+        //          onClick: function(row, id, rowType, data, src){},
+        //          events: [{name:'event', handler: function(row, id, rowType, data, src){}}]
+        //          type:'', //'image' | 'button' | 'checkbox' | 'radio' | 'textbox' | 'select' --> si image, label es la URL de la imagen. Cualquier otro el value es es label. DEFAULT = button
+        //          template: '', //--> selector que indica el control modelo que se copiará para cada fila.
+        //          cssClass: '',
+        //          style:'',
+        //          alt:''
+        //      }
         //}],
         //}
         noResultsCaption: ". : No se encontraron registros : .",
@@ -201,21 +207,28 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
     };
     var privateMethods =
         {
+            getEvenOddColumnClass: function (colIndex, prefix) {
+                if (typeof prefix === "undefined" || prefix === null)
+                    prefix = "";
+                return prefix + ((colIndex % 2) > 0 ? "evenColumn" : "oddColumn");
+            },
             newRow: function (data, gridViewId, rowIndex, settings) {
                 var idPrefix = gridViewId + "_Row_" + rowIndex;
                 var row = $("<tr id='" + idPrefix + "' gridView_rowIndex='" + rowIndex + "' gridview_rowType='row'></tr>");
                 if ((rowIndex % 2) > 0)
-                    row.addClass("rowAlternate");
+                    row.addClass("gridViewRowAlternate");
                 else
-                    row.addClass("row");
+                    row.addClass("gridViewRow");
+
+                var colIndex = 0;
 
                 if (settings.childGrid !== null) {
                     var childGridExpandCell;
 
                     if (settings.useJQueryUI)
-                        childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='childColapsed'><div id='divExpandButton' class='ui-icon ui-icon-plus'>&nbsp;</div></td>");
+                        childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " childColapsed'><div id='divExpandButton' class='ui-icon ui-icon-plus'>&nbsp;</div></td>");
                     else
-                        childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='childColapsed'>+</td>");
+                        childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " childColapsed'>+</td>");
 
 
                     childGridExpandCell.click(function (evt) {
@@ -224,29 +237,34 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     });
 
                     row.append(childGridExpandCell);
+                    colIndex++;
                 }
 
                 //Celda de números
                 if (settings.showRowNumber) {
-                    row.append($("<td id='" + idPrefix + "_rowNumber' gridview_cellType='rowNumber' class='rowNumber' >" + (rowIndex + 1) + "</td>"));
+                    row.append($("<td id='" + idPrefix + "_rowNumber' gridview_cellType='rowNumber' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " rowNumber' >" + (rowIndex + 1) + "</td>"));
+                    colIndex++;
                 }
+                var selectionColumn = null;
                 //Celda de selección
                 if (settings.allowSelection && settings.selectionMode !== "row") {
                     if (settings.useJQueryUI)
-                        row.append($("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='selectionCell' style='cursor:pointer;'><div class='ui-icon ui-icon-carat-1-e'>&nbsp;</div></td>"));
+                        selectionColumn = $("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " selectionCell' style='cursor:pointer;'><div class='ui-icon ui-icon-carat-1-e'>&nbsp;</div></td>");
                     else
-                        row.append($("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='selectionCell' style='cursor:pointer;'>...</td>"));
+                        selectionColumn = $("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " selectionCell' style='cursor:pointer;'>...</td>");
                 }
-                else {
+                else if (typeof settings.showRefresh === "undefined" || settings.showRefresh === null || settings.showRefresh === true)
+                    selectionColumn = $("<td id='" + idPrefix + "_selectionCell'  gridview_cellType='hiddenSelection' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " selectionCell' >&nbsp;</td>");
 
-                    if (typeof settings.showRefresh === "undefined" || settings.showRefresh === null || settings.showRefresh === true) {
-                        row.append($("<td id='" + idPrefix + "_selectionCell'  gridview_cellType='hiddenSelection' class='selectionCell' >&nbsp;</td>"));
-                    }
+                if (selectionColumn != null) {
+                    row.append(selectionColumn);
+                    colIndex++;
                 }
 
                 if (settings.headerControls !== null) {
                     $.each(settings.headerControls, function (index, item) {
-                        row.append($("<td id='" + idPrefix + "_emptyHeaderControl_" + index.toString() + "' class='emptyHeaderControl'></td>"));
+                        row.append($("<td id='" + idPrefix + "_emptyHeaderControl_" + index.toString() + "' class='" + privateMethods.getEvenOddColumnClass(colIndex) + " emptyHeaderControl'></td>"));
+                        colIndex++;
                     });
                 }
 
@@ -272,6 +290,8 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                         if (settings.columns[col].hasOwnProperty("visible") && !settings.columns[col].visible)
                             cell.hide();
+                        else
+                            cell.addClass(privateMethods.getEvenOddColumnClass(colIndex));
 
                         if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
                             colValue = settings.columns[col].dataEval(colValue);
@@ -305,6 +325,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                     row.append(cell);
                     iColCount++;
+                    colIndex++;
                 }
                 row.data("itemData", itemData);
 
@@ -335,8 +356,20 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             GetControls: function (controls, gridViewId, isHeader, rowId, cellValue) {
                 var result = [];
                 $.each(controls, function (index) {
-                    if (!isHeader || (controls[index].hasOwnProperty("showInHeader") && controls[index].showInHeader)) {
+                    //si es una celda común agrega el control al listado.
+                    if (!isHeader) {
                         result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId, cellValue));
+                    }
+                        //si se tratara del encabezado, se verifica si la column tiene configurado mostrar el control
+                        //en el header
+                    else if (controls[index].showInHeader === true) {
+                        var headerControl;
+                        if (typeof controls[index].headerControlTemplate !== "undefined")
+                            headerControl = controls[index].headerControlTemplate;
+                        else
+                            headerControl = controls[index];
+
+                        result.push(privateMethods.CreateControl(headerControl, gridViewId, rowId, cellValue));
                     }
                 });
                 return result;
@@ -1171,7 +1204,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             if (settings.childGrid !== null) {
                 //Se agrega la celda para el botón de expansión de las grillas anidadas.
-                var childGridCell = $("<td class='gridViewCellHeader childColapsedHeader' gridview_cellType='expandAll'></td>");
+                var childGridCell = $("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + " childColapsedHeader' gridview_cellType='expandAll'></td>");
                 //Si se habilita la posibilidad de abrir todas las grillas hijas simultáneamente se dibuja el botón para ello.
                 if (settings.childGrid.allowExpandAll) {
 
@@ -1211,29 +1244,39 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             if (settings.showRowNumber) {
                 columnsAmmount++;
-                rowHeader.append($("<td class='gridViewCellHeader' gridview_cellType='showRowNumber_header'>&nbsp;</td>"));
+                rowHeader.append($("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + "' gridview_cellType='showRowNumber_header'>&nbsp;</td>"));
             }
 
 
             if (showRefresh) {
-                var cornerCellHeader = $("<td class='gridViewCellHeader' gridview_cellType='refresh'></td>");
+                var cornerCellHeader = $("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + "' gridview_cellType='refresh'></td>");
                 if (settings.useJQueryUI && (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")) {
                     //se configura una imagen de refrezco usando los íconos de jQueryUI
                     cornerCellHeader.append($("<div onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' class='ui-icon ui-icon-refresh'>&nbsp;</div>"));
                 }
                 else {
-                    //se configura una imagen de refrezco con la configurada o la imagen por defecto
-                    if (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")
-                        settings.refreshImage = "images/refresh-icon.png";
+                    var $refreshIcon = null;
+                    if (typeof settings.refreshIconTemplate !== "undefined" && settings.refreshIconTemplate !== null && settings.refreshIconTemplate !== "")
+                        $refreshIcon = $(settings.refreshIconTemplate);
+                    else if (settings.refreshIcon === true)
+                        $refreshIcon = $("<span  />");
+                    else {
+                        //se configura una imagen de refrezco con la configurada o la imagen por defecto
+                        if (typeof settings.refreshImage === "undefined" || settings.refreshImage === null || settings.refreshImage === "")
+                            settings.refreshImage = "images/refresh-icon.png";
 
-                    cornerCellHeader.append($("<img src='" + settings.refreshImage + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView(\"doRefresh\");' />"));
+                        $refreshIcon = $("<img src='" + settings.refreshImage + "' />");
+                    }
+                    $refreshIcon.addClass("gridViewRefreshIcon");
+                    $refreshIcon.click(function () { elem.gridView("doRefresh"); });
+                    cornerCellHeader.append($refreshIcon);
                 }
                 columnsAmmount++;
                 rowHeader.append(cornerCellHeader);
             }
             if (settings.headerControls !== null) {
                 $.each(settings.headerControls, function (index, item) {
-                    var cornerCellHeader = $("<td class='gridViewCellHeader' gridview_cellType='headerControl'></td>");
+                    var cornerCellHeader = $("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + "' gridview_cellType='headerControl'></td>");
                     var ctrl = privateMethods.CreateControl(item, gridViewId);
                     ctrl.attr("id", idPrefix + "_headerControl_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
                     ctrl.attr("griview_isHeader", "true");
@@ -1247,7 +1290,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
             for (var col in settings.columns) {
                 if (!settings.columns[col].hasOwnProperty("visible") || settings.columns[col].visible === true) {
-                    var cell = $("<td class='gridViewCellHeader' gridview_cellType='headerCell'></td>");
+                    var cell = $("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + "' gridview_cellType='headerCell'></td>");
                     if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width !== "");
                     cell.width(settings.columns[col].width);
 
@@ -1448,7 +1491,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
                 isSuccess = false;
                 status = "error";
-                messageError = excep.message;
+                messageError = error.message;
 
                 if (settings.onError !== null && settings.onError instanceof Function)
                     settings.onError(null, msg, error);
@@ -1466,6 +1509,23 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-03-06 1201 - v4.0.1.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-03-06 12:01
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se modificó el evento BeforeDraw para que reciba, por parámetro,
+el resultado de la búsqueda (el objeto data)
+- Se agregó la posibilidad de definir una propiedad, del datasource, que se 
+agregará como atributo de cada fila, mediante la configuración rowDataFieldId.
+Es decir, en esta propiedad se podrá indicar quéel nombre del campo de 
+los devueltos por la búsqueda, que se usará como atributo del TR, y cuyo valor
+se guardará en él.
+Ej: rowDataFieldId: 'Id'...
+   <row Id='valor de Id para la fila'...>
+- Se modificó la lógica del evento onGridDrawed, para que también se ejecute
+cuando el resultado no devuelva ningún registro.
 ================================================================
 Código:         | GridView - 2015-02-04 1524 - v4.0.0.0
 Autor:          | Seba Bustos
