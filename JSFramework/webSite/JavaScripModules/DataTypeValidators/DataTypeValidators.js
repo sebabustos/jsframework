@@ -36,6 +36,7 @@ Especificaciones:
         useJQueryDatepicker: true,
         datePickerSettings: {},
         allowCurrency: false,
+        allowThousandSeparator: false,
         allowDecimals: true,
         allowNegativesValues: true,
         allowedChars: null,
@@ -44,6 +45,7 @@ Especificaciones:
         allowNumbers: true,
 
         commaSeparators: null, //el/los caracteres que se utilizarán como separador de decimales. Si se incluyen varios se permitirá cualquiera de ellos.
+        thousandSeparators: null,
         invalidDataCss: 'invalidData',
         invalidMessageCss: 'default',
         showInvalidMessage: true,
@@ -196,12 +198,19 @@ Especificaciones:
     var numericDataTypeValidator = {
         ValidateInput: function (keyCode, currValue, settings) {
             var commaSep = settings.commaSeparators;
+            var thouSep = settings.thousandSeparators;
             var allowCurrency = settings.allowCurrency;
             var commaSepCharCode = [];
             var commaSepChar = [];
+            var thouSepCharCode = [];
+            var thouSepChar = [];
+
             if (typeof commaSep === "string") {
                 commaSep = commaSep.split('');
             }
+            if (typeof thouSep === "string")
+                thouSep = thouSep.split('');
+
 
             if (typeof allowCurrency === "undefined" || allowCurrency !== true)
                 allowCurrency = false;
@@ -217,7 +226,7 @@ Especificaciones:
             }
                 //si no se configuró ningún separador particular, se usa el default
             else {
-                var isCommaDecSep = (parseFloat("1.0") > parseFloat("1,0"));
+                var isCommaDecSep = !isNaN("1,0");
                 if (isCommaDecSep) {
                     //44 ==> , (coma)  , teclado y numpad
                     commaSepCharCode = [44];
@@ -227,6 +236,32 @@ Especificaciones:
                     //46 ==> . (punto) , teclado y numpad
                     commaSepCharCode = [46];
                     commaSepChar = ["."];
+                }
+            }
+
+
+            //para cada caracter del commaSep se obtiene el char Code
+            if (typeof thouSep !== "undefined" && thouSep !== null && thouSep !== "") {
+                for (var thouChar in thouSep) {
+                    //se obtiene el charcode del caracter
+                    thouSepCharCode.push(thouSep[thouChar].charCodeAt(0));
+                    //se registra el caracter
+                    thouSepChar.push(thouSep[thouChar]);
+                }
+            }
+                //si no se configuró ningún separador particular, se usa el default
+            else {
+                //si el separador de decimales es el . entonces la , es la de miles.
+                var isCommaThousandSep = isNaN("1,0");
+                if (isCommaThousandSep) {
+                    //44 ==> , (comma)  , teclado y numpad
+                    thouSepCharCode = [44];
+                    thouSepChar = [","];
+                }
+                else {
+                    //46 ==> . (punto) , teclado y numpad
+                    thouSepCharCode = [46];
+                    thouSepChar = ["."];
                 }
             }
 
@@ -267,28 +302,36 @@ Especificaciones:
                         }
                     }
                 }
+                if (settings.allowThousandSeparator && !isValid) {
+                    for (var thouChar in thouSepCharCode) {
+                        if (isValid = (isValid || (keyCode === thouSepCharCode[thouChar])))
+                            break;
+                    }
+                }
             }
 
             return isValid;
         }
         , ValidateData: function (string, settings) {
             var commaSep = settings.commaSeparators;
+            var thouSep = settings.thousandSeparator;
             var allowCurrency = settings.allowCurrency;
+            var allowThousandSeparator = settings.allowThousandSeparator;
             var validDataRegex = settings.validDataRegex;
 
             var regConfig = "";
             if (typeof validDataRegex === "undefined" || validDataRegex === null || validDataRegex.length === 0) {
-                if (typeof commaSep === "undefined" || commaSep === null) {
-                    var isCommaDecSep = (parseFloat("1.0") > parseFloat("1,0"));
-                    if (isCommaDecSep)
-                        commaSep = ","
-                    else
-                        commaSep = "."
-                }
+                if (typeof commaSep === "undefined" || commaSep === null)
+                    commaSep = (!isNaN("1,0") ? "," : "\\.");
+                if (typeof thouSep === "undefined" || thouSep === null)
+                    thouSep = (isNaN("1,0") ? "," : "\\.");
+
                 var currencyRegex = allowCurrency ? "[\\$]{0,1}" : "";
                 var decimalRegex = settings.allowDecimals ? "([" + commaSep + "]{0,1}(\\d)+||(\\d)*)" : "";
                 var negativesRegex = settings.allowNegativesValues ? "[-]{0,1}" : "";
-                validDataRegex = "^" + negativesRegex + currencyRegex + "(\\d)+" + decimalRegex + "$";
+                var integerRegex = allowThousandSeparator ? "(\\d{1,3}(" + thouSep + "\\d{3})*)" : "(\\d)+)";
+
+                validDataRegex = "^" + negativesRegex + currencyRegex + integerRegex + decimalRegex + "$";
                 regConfig = "gi";
             }
             else {
@@ -475,7 +518,7 @@ Especificaciones:
         setCurrencyValidator: function (options, $this) {
             //El currency es un número que acepta el caracter de $. El allowCurrency define si se permite o no este caracter, y por defecto está 
             //deshabilitado por lo que se hace el extend para que, si el usuario no lo especificó, por defecto se habilite, para este tipo de dato.
-            options = $.extend({ allowCurrency: true }, options);
+            options = $.extend({ allowCurrency: true, allowThousandSeparator: true }, options);
             methods.initValidator($this, $default, options, numericDataTypeValidator);
         },
 
@@ -558,7 +601,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2015-01-22 - v3.0.0.0
+Código:       | DataTypeValidators - 2015-05-06 - v3.1.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -577,9 +620,37 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v3.0.0.0
+Versión:      | v3.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2015-01-22
+Fecha:        | 2015-05-06
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se agregó la possibilidad de habilitar, y configurar, el caracter de 
+ separador de miles.
+ ================================================================
+                       FUNCIONALIDADES
+================================================================
+- Plugin de jquery que, según el tipo de dato definido:
+    - No permite ingresar caracteres no válidos según el tipo
+    - valide lo ingresado según el tipo de dato configurado al perder el foco
+- Script que automáticamente lea un atributo e inicialice el plugin para los controles.
+================================================================
+                       POSIBLES MEJORAS
+================================================================
+- Hacer un DataTypeValidator("remove") para quitar la lógica de validación.
+- Permitir desactivar el script de inicialización automático.
+- una función que se pueda hacer validate(myString, tipoDato) 
+    Ej: 
+      $.validate("12345", numeric|currency|string|"abc...XYZ");
+- valide la longitud del texto
+
+================================================================
+                    HISTORIAL DE VERSIONES
+    [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2015-01-22 - v3.0.0.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
 Cambios de la Versión:
  - Se quitó la configuración "invalidMessageCss", que no era utilizada
@@ -605,27 +676,7 @@ Cambios de la Versión:
  Este validator sólo permitirá el ingreso de los caracteres que hayan sido definidos
  en la propiedad (o atributo del control) "allowedChars" (incluyendo la coma, punto, etc 
  si se habilitaran los mismos); y validará que el texto ingresado cumpla con la expresión 
- regular definida en 
-================================================================
-                       FUNCIONALIDADES
-================================================================
-- Plugin de jquery que, según el tipo de dato definido:
-    - No permite ingresar caracteres no válidos según el tipo
-    - valide lo ingresado según el tipo de dato configurado al perder el foco
-- Script que automáticamente lea un atributo e inicialice el plugin para los controles.
-================================================================
-                       POSIBLES MEJORAS
-================================================================
-- Hacer un DataTypeValidator("remove") para quitar la lógica de validación.
-- Permitir desactivar el script de inicialización automático.
-- una función que se pueda hacer validate(myString, tipoDato) 
-    Ej: 
-      $.validate("12345", numeric|currency|string|"abc...XYZ");
-- valide la longitud del texto
-
-================================================================
-                    HISTORIAL DE VERSIONES
-    [Registro histórico resumido de las distintas versiones]
+ regular definida
 ================================================================
 Código:       | DataTypeValidators - 2013-09-12 - v1.2.0.0
 ----------------------------------------------------------------
