@@ -314,7 +314,7 @@ Especificaciones:
         }
         , ValidateData: function (string, settings) {
             var commaSep = settings.commaSeparators;
-            var thouSep = settings.thousandSeparator;
+            var thouSep = settings.thousandSeparators;
             var allowCurrency = settings.allowCurrency;
             var allowThousandSeparator = settings.allowThousandSeparator;
             var validDataRegex = settings.validDataRegex;
@@ -329,7 +329,7 @@ Especificaciones:
                 var currencyRegex = allowCurrency ? "[\\$]{0,1}" : "";
                 var decimalRegex = settings.allowDecimals ? "([" + commaSep + "]{0,1}(\\d)+||(\\d)*)" : "";
                 var negativesRegex = settings.allowNegativesValues ? "[-]{0,1}" : "";
-                var integerRegex = allowThousandSeparator ? "(\\d{1,3}(" + thouSep + "\\d{3})*)" : "(\\d)+)";
+                var integerRegex = allowThousandSeparator ? "(\\d{1,3}(" + thouSep + "\\d{3})*)" : "(\\d+)";
 
                 validDataRegex = "^" + negativesRegex + currencyRegex + integerRegex + decimalRegex + "$";
                 regConfig = "gi";
@@ -601,7 +601,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2015-05-07 - v3.1.1.0
+Código:       | DataTypeValidators - 2015-05-07 - v3.1.2.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -620,14 +620,13 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v3.1.1.0
+Versión:      | v3.1.2.0
 ----------------------------------------------------------------
 Fecha:        | 2015-05-07
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se corrigió la configuración de los nombres de los días en el
- calendario JQuery, que figuraba el Lunes como primer día de la
- semana, desfasando todas las fechas.
+ - Se corrigió un error en la expresión regular del validador del tipo 
+numérico, cuando no se habilitaba el caracter de separador de miles.
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -649,6 +648,15 @@ Cambios de la Versión:
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
+Código:       | DataTypeValidators - 2015-05-07 - v3.1.1.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se corrigió la configuración de los nombres de los días en el
+ calendario JQuery, que figuraba el Lunes como primer día de la
+ semana, desfasando todas las fechas.
+ ================================================================
 Código:       | DataTypeValidators - 2015-05-06 - v3.1.0.0
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
