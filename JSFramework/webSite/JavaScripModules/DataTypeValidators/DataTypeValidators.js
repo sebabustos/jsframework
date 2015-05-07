@@ -501,9 +501,9 @@ Especificaciones:
                     currentText: "actual",
                     monthNames: ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"],
                     monthNamesShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
-                    dayNames: ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"],
-                    dayNamesShort: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
-                    dayNamesMin: ["Lu", "Ma", "Mi", "Ju", "Vi", "Sa", "Do"],
+                    dayNames: ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"],
+                    dayNamesShort: ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"],
+                    dayNamesMin: ["Do", "Lu", "Ma", "Mi", "Ju", "Vi", "Sa"],
                     weekHeader: "Semana",
                     dateFormat: "dd/mm/yy"
                 }
@@ -601,7 +601,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2015-05-06 - v3.1.0.0
+Código:       | DataTypeValidators - 2015-05-07 - v3.1.1.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -620,13 +620,14 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v3.1.0.0
+Versión:      | v3.1.1.0
 ----------------------------------------------------------------
-Fecha:        | 2015-05-06
+Fecha:        | 2015-05-07
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la possibilidad de habilitar, y configurar, el caracter de 
- separador de miles.
+ - Se corrigió la configuración de los nombres de los días en el
+ calendario JQuery, que figuraba el Lunes como primer día de la
+ semana, desfasando todas las fechas.
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -648,6 +649,14 @@ Cambios de la Versión:
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
+Código:       | DataTypeValidators - 2015-05-06 - v3.1.0.0
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se agregó la possibilidad de habilitar, y configurar, el caracter de 
+ separador de miles.
+ ================================================================
 Código:       | DataTypeValidators - 2015-01-22 - v3.0.0.0
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
