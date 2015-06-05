@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-04-24 0832 - v4.1.0.0
+Código:         | GridView - 2015-06-05 0949 - v4.1.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,16 +16,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.1.0.0
+Versión:        | v4.1.1.0
 ----------------------------------------------------------------
-Fecha:          | 2015-04-24 08:32
+Fecha:          | 2015-06-05 09:49
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de configurar la imagen de refresh para
-que sea un ícono (un span) o que se dibuje un template (un control
-o selector jquery de un control)
-- Se agregó la clase gridViewRefreshIcon al ícono o imagen de 
-refresh dibujado.
+- Se corrigió una falla que existía a la hora de realizar la
+paginación. No se estaba cargando el paggingData en el control
+lo que hacía que no se dibujaran los controles de paginación.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1384,12 +1382,18 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         if (settings.usePagging) {
                             var rest = (paggingData.totalRecords % settings.pageSize);
                             paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
+                        }
 
+                        $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
+
+                        //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
+                        //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
+                        if (settings.usePagging) {
                             //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
                             if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
                                 drawPager(gridViewId);
                         }
-                        $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
+
 
                         var resultData;
                         if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
@@ -1509,6 +1513,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-04-24 0832 - v4.1.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-04-24 08:32
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de configurar la imagen de refresh para
+que sea un ícono (un span) o que se dibuje un template (un control
+o selector jquery de un control)
+- Se agregó la clase gridViewRefreshIcon al ícono o imagen de 
+refresh dibujado.
 ================================================================
 Código:         | GridView - 2015-03-06 1201 - v4.0.1.0
 Autor:          | Seba Bustos
