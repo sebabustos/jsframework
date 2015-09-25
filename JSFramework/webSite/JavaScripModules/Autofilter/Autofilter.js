@@ -12,6 +12,7 @@
 
     //Configuración por defecto del plugin 
     var $default = {
+        accentInsensitive: false,
         filterSelector: null,
         doFilter: null,
         filterAttribute: null,
@@ -84,13 +85,46 @@
 
                 //Si se define el atributo de filtro, se utiliza ese
                 if (typeof settings.filterAttribute !== "undefined" && settings.filterAttribute !== null && settings.filterAttribute !== "") {
-                    notFound = $(filterSelector).not("[" + settings.filterAttribute + '*="' + filterText + '"]').hide(200).length;
-                    found = $(filterSelector + "[" + settings.filterAttribute + '*="' + filterText + '"]').show(200).length;
+
+                    if (settings.accentInsensitive) {
+                        var replacedFilterText = methods.accentInsensitiveReplace(filterText);
+
+                        notFound = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
+                            var regExp = new RegExp(replacedFilterText, "gi");
+                            var val = $(this).attr(settings.filterAttribute);
+                            return !regExp.test(val);
+                        }).hide(200).length;
+                        found = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
+                            var regExp = new RegExp(replacedFilterText, "gi");
+                            var val = $(this).attr(settings.filterAttribute);
+                            return regExp.test(val);
+                        }).show(200).length;
+                    }
+                    else {
+                        notFound = $(filterSelector).not("[" + settings.filterAttribute + '*="' + filterText + '"]').hide(200).length;
+                        found = $(filterSelector + "[" + settings.filterAttribute + '*="' + filterText + '"]').show(200).length;
+                    }
                 }
                     //si no se define un atributo de filtro, se utiliza el contains.
                 else {
-                    notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
-                    found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+                    if (settings.accentInsensitive) {
+                        var replacedFilterText = methods.accentInsensitiveReplace(filterText);
+
+                        notFound = $(filterSelector).filter(function () {
+                            var regExp = new RegExp(replacedFilterText, "gi");
+                            var val = $(this).text();
+                            return !regExp.test(val);
+                        }).hide(200).length;
+                        found = $(filterSelector).filter(function () {
+                            var regExp = new RegExp(replacedFilterText, "gi");
+                            var val = $(this).text();
+                            return regExp.test(val);
+                        }).show(200).length;
+                    }
+                    else {
+                        notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
+                        found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+                    }
                 }
 
 
@@ -213,6 +247,18 @@
             }
             else if (watermarkClass !== "")
                 $this.removeClass(watermarkClass);
+        },
+        accentInsensitiveReplace: function (text) {
+            return text.replace(/[aàáâãäå]/g, "[aàáâãäå]")
+                    .replace(/[AÀÁÂÃÄÅ]/g, "[AÀÁÂÃÄÅ]")
+                    .replace(/[eèéêë]/g, "[eèéêë]")
+                    .replace(/[EÈÉÊË]/g, "[EÈÉÊË]")
+                    .replace(/[iìíîï]/g, "[iìíîï]")
+                    .replace(/[IÌÍÎÏ]/g, "[IÌÍÎÏ]")
+                    .replace(/[oòóôõ]/g, "[oòóôõ]")
+                    .replace(/[OÒÓÔÕ]/g, "[OÒÓÔÕ]")
+                    .replace(/[uùúûü]/g, "[uùúûü]")
+                    .replace(/[UÙÚÛÜ]/g, "[UÙÚÛÜ]");
         }
     };
 
@@ -317,7 +363,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | Autofilter - 2014-08-26 1034 - 1.0.1.0
+Código:       | Autofilter - 2015-09-25 1116 - 2.0.0.0
 ----------------------------------------------------------------
 Nombre:       | Autofilter
 ----------------------------------------------------------------
@@ -332,14 +378,14 @@ Descripción:  | Configura un control para que al cambiar su valor
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.0.1.0
+Versión:      | v2.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2014-08-26 10:34
+Fecha:        | 2015-09-25 11:16
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de definir un atributo que se utilizará para filtrar los controles.
-- Se agregó la posibilidad de configurar el estilo del texto de filtrado, como Normal (no modifica en nada el texto ingresado), Uppercase (pasa a mayúscula el texto ingresado antes de filtrar), Lowercase (pasa a minúscula el texto ingresado antes de filtrar)
-- Se corrigió un error que existía, por el cual no estaba almacenando correctamente la configuración del usuario en el control.
+ - Se agregró la posibilidad de habilitar el accent-insensitive en la
+ búsqueda, que permitirá encontrar una palabra más allá de si 
+ esta está acentuada o no.
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -361,14 +407,16 @@ cuando este contenga el watermark o cuando se le quite el mismo.
                        POSIBLES MEJORAS
 ================================================================
  [Posibles mejoras pendientes para el componente/producto/funcionalidad]
- - 
+ - Permitir definir un atributo sobre el cual se busque y no sólo 
+ que se busque sobre el contenido.
  ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
 ================================================================
 Código:       | Autofilter - 2014-07-24 1123 - 1.0.0.0
 Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
 Cambios de la Versión:
-  - Primera versión del plugin
+ - Primera versión del plugin
 ================================================================
 */
