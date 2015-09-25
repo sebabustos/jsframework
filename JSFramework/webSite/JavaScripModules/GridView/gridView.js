@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-06-05 0949 - v4.1.1.0
+Código:         | GridView - 2015-06-25 0827 - v4.1.2.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,14 +16,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.1.1.0
+Versión:        | v4.1.2.0
 ----------------------------------------------------------------
-Fecha:          | 2015-06-05 09:49
+Fecha:          | 2015-06-25 08:27
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla que existía a la hora de realizar la
-paginación. No se estaba cargando el paggingData en el control
-lo que hacía que no se dibujaran los controles de paginación.
+- Cuando el datasource era un json, no se estaba cargando el paggingData 
+en el control lo que hacía que no se dibujaran los controles 
+de paginación.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1513,6 +1513,15 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-06-05 0949 - v4.1.1.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-06-05 09:49
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla que existía a la hora de realizar la
+paginación. No se estaba cargando el paggingData en el control
+lo que hacía que no se dibujaran los controles de paginación.
 ================================================================
 Código:         | GridView - 2015-04-24 0832 - v4.1.0.0
 Autor:          | Seba Bustos
