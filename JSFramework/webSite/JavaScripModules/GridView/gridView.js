@@ -1,8 +1,9 @@
-﻿/*
+﻿
+/*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-06-25 0827 - v4.1.2.0
+Código:         | GridView - 2015-11-04 1628 - v4.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,14 +17,37 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.1.2.0
+Versión:        | v4.2.0.0
 ----------------------------------------------------------------
-Fecha:          | 2015-06-25 08:27
+Fecha:          | 2015-11-04 1628
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Cuando el datasource era un json, no se estaba cargando el paggingData 
-en el control lo que hacía que no se dibujaran los controles 
-de paginación.
+- Se corrigió una falla por la cual, cuando una columna estaba 
+configurada como Visible = false, no ejecuta el dataEval configurado.
+- Se agregó el nuevo evento searchResultPreProcessing, que permite
+definir una función a la cual se le pasará el resultado de la búsqueda, 
+previo al dibujado de la grilla, y que permitirá modificar el resultado. 
+Es decir, permitirá un pre-procesamiento de los datos previo al dibujado.
+- Se modificó la lógica de procesamiento de los resultados de un webService, 
+para que, si existe configurada una "dataResultProperty" se tome
+el set de resultados a dibujar de esa propiedad, en el objeto devuelto por
+el webService. Si no existiera esa configuración, se intenta obtener los datos
+de la propiedad "result", si esta propiedad no existiera, se consideran al mismo 
+objeto como el contenedor de los datos a dibujar.
+- Se corrigió una falla por la cual, a una columna configurada con controles 
+configuados, pero sin dataFieldName, no le estaba agregando las clases oddColumn o evenColumn
+- Se corrigió el dibujado de los controles, cuando no existía un cssClass definido, se estaba colocando
+null en el html del control.
+- Se modificó la lógica de dibujado de las columnas del encabezado para que,
+si una columna está configurada como invisible, SÍ se dibuje la columna del 
+encabezado, pero oculta.
+- Se corrigió una falla por la cual, a una columna sin dataFieldName, o una
+columna con un dataFieldName no incluído en el set de resultado, no se le estaba
+aplicando la configuración de Visibilidad.
+- Se modificó la lógica, para que, a una columna sin dataFieldName, o 
+con dataFieldName no incluído en el set de resultados, se le aplique
+también el "dataEval", de manera que permita al desarrollador, asignarle
+un valor por defecto.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -66,6 +90,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 - Dibujar la grilla hija, la segunda vez que ingresa (cuando ya 
   detectá que está creada), el selector de la grilla hija
   no estaba devolviendo correctamente la misma. (Emi Giraudo)
+- la columnas de controles no están agregando el datafieldname
 ================================================================
                         POSIBLES MEJORAS
 ================================================================
@@ -120,6 +145,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         onBeforeDraw: null, //function (gridViewId, data) { return true;},
         onError: null, //function (jqXHR, textStatus, errorThrown) { },
         onComplete: null,  //function (gridViewId, isSuccess, status, messageError) { },
+        searchResultPreProcessing: null, //function (gridViewId, data) { },
         ///<Type>Evento</Type>
         ///<Name>onRowSelect</Name>
         ///<Description>Este evento se ejecutará, si la grilla admite selección (alloSelection:true), cuando el usuario seleccione una fila, ya sea 
@@ -278,23 +304,22 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     if (typeof cssClass === "undefined" || cssClass === null)
                         cssClass = "";
 
-                    var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridViewCell " + cssClass + "' dataFieldName='" + dataField + "'></td>");
+                    var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridViewCell " + cssClass + "' " + (dataField !== "" ? "dataFieldName='" + dataField + "" : "") + "'></td>");
                     var colValue = null;
                     if (data.hasOwnProperty(dataField)) {
                         colValue = data[dataField];
                         if (!settings.columns[col].hasOwnProperty("includeInResult") || settings.columns[col].includeInResult === true)
                             itemData[dataField] = colValue;
-
-
-                        if (settings.columns[col].hasOwnProperty("visible") && !settings.columns[col].visible)
-                            cell.hide();
-                        else
-                            cell.addClass(privateMethods.getEvenOddColumnClass(colIndex));
-
-                        if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
-                            colValue = settings.columns[col].dataEval(colValue);
                     }
 
+                    if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
+                        colValue = settings.columns[col].dataEval(colValue);
+
+                    var isVisible = true;
+                    if (settings.columns[col].hasOwnProperty("visible") && !settings.columns[col].visible) {
+                        isVisible = false;
+                        cell.hide();
+                    }
 
                     //Si la columna tiene definida controles, dibuja los mismos pasando el value correspondiente al dataFieldName (el dataBind)
                     if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls instanceof Array && settings.columns[col].Controls.length > 0) {
@@ -320,6 +345,9 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     if (typeof settings.rowDataFieldId !== "undefined" && settings.rowDataFieldId !== null && settings.rowDataFieldId !== ""
                         && settings.rowDataFieldId.toLowerCase() === dataField.toLowerCase())
                         row.attr(dataField, colValue);
+
+                    if (isVisible)
+                        cell.addClass(privateMethods.getEvenOddColumnClass(colIndex));
 
                     row.append(cell);
                     iColCount++;
@@ -378,7 +406,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var name = "";
                 var ctrl = null;
                 var ctrlsTemplate = null;
-                var css = null;
+                var css = "";
                 if (control.hasOwnProperty("type") && control.type !== null)
                     ctrlType = control.type.toLowerCase();
                 if (control.hasOwnProperty("label") && control.label !== null)
@@ -1287,29 +1315,33 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 
 
             for (var col in settings.columns) {
-                if (!settings.columns[col].hasOwnProperty("visible") || settings.columns[col].visible === true) {
-                    var cell = $("<td class='gridViewCellHeader " + privateMethods.getEvenOddColumnClass(columnsAmmount) + "' gridview_cellType='headerCell'></td>");
-                    if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width !== "");
-                    cell.width(settings.columns[col].width);
 
-                    var colheader = (typeof settings.columns[col].description !== "undefined") ? settings.columns[col].description : ((typeof settings.columns[col].dataFieldName !== "undefined") ? settings.columns[col].dataFieldName : "&nbsp;");
-                    var headerCtrls = [];
-                    if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls.length > 0)
-                        headerCtrls = privateMethods.GetControls(settings.columns[col].Controls, gridViewId, true, idPrefix);
+                var cell = $("<td class='gridViewCellHeader' gridview_cellType='headerCell'></td>");
+                if (settings.columns[col].hasOwnProperty("width") && settings.columns[col].width !== "");
+                cell.width(settings.columns[col].width);
 
-                    if (headerCtrls.length > 0) {
-                        $.each(headerCtrls, function (index, ctrl) {
-                            ctrl.attr("id", idPrefix + "_column" + col + "_controlHeaderIncluded_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
-                            ctrl.attr("griview_isHeader", "true");
-                            cell.append(ctrl);
-                        });
-                    }
-                    else
-                        cell.html(colheader);
+                var colheader = (typeof settings.columns[col].description !== "undefined") ? settings.columns[col].description : ((typeof settings.columns[col].dataFieldName !== "undefined") ? settings.columns[col].dataFieldName : "&nbsp;");
+                var headerCtrls = [];
+                if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls.length > 0)
+                    headerCtrls = privateMethods.GetControls(settings.columns[col].Controls, gridViewId, true, idPrefix);
 
-                    columnsAmmount++;
-                    rowHeader.append(cell);
+                if (headerCtrls.length > 0) {
+                    $.each(headerCtrls, function (index, ctrl) {
+                        ctrl.attr("id", idPrefix + "_column" + col + "_controlHeaderIncluded_" + (typeof ctrl.attr("id") !== "undefined" ? ctrl.attr("id") : "") + "_" + index);
+                        ctrl.attr("griview_isHeader", "true");
+                        cell.append(ctrl);
+                    });
                 }
+                else
+                    cell.html(colheader);
+
+                if (settings.columns[col].hasOwnProperty("visible") && settings.columns[col].visible === false)
+                    cell.hide();
+                else
+                    cell.addClass(privateMethods.getEvenOddColumnClass(columnsAmmount));
+
+                columnsAmmount++;
+                rowHeader.append(cell);
             }
 
             elem.attr("gridView_columnsAmmount", columnsAmmount);
@@ -1363,6 +1395,16 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                                 return;
                         }
 
+                        if (settings.searchResultPreProcessing instanceof Function) {
+                            eventResult = settings.searchResultPreProcessing(gridViewId, data);
+                            //si el resultado del evento es el valor "false", entonces cancela el 
+                            //dibujado de 
+                            if (typeof eventResult !== "undefined" && eventResult !== null)
+                                data = eventResult;
+                            else
+                                data = [];
+                        }
+
                         if (settings.totalRecordsProperty === null) {
                             if (data.hasOwnProperty("totalRecords"))
                                 paggingData.totalRecords = data.totalRecords;
@@ -1398,8 +1440,10 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         var resultData;
                         if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
                             resultData = data[settings.dataResultProperty];
-                        else
+                        else if (data.hasOwnProperty("result"))
                             resultData = data.result;
+                        else
+                            resultData = data;
 
                         drawResults(gridViewId, resultData);
                     }
@@ -1513,6 +1557,15 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-06-25 0827 - v4.1.2.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-06-25 08:27
+----------------------------------------------------------------
+Cambios de la Versión:
+- Cuando el datasource era un json, no se estaba cargando el paggingData 
+en el control lo que hacía que no se dibujaran los controles 
+de paginación.
 ================================================================
 Código:         | GridView - 2015-06-05 0949 - v4.1.1.0
 Autor:          | Seba Bustos
