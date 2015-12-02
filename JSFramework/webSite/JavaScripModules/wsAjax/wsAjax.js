@@ -17,20 +17,26 @@ JSFramework.Commons.wsAjax = {
         }
 
         var jsonData = "";
-
         if (serializeData = (serializeData !== false)) {
-            if (typeof paramArrays != "undefined" && paramArrays != null) {
-                for (var prop in paramArrays) {
-                    if (typeof paramArrays[prop] != 'undefined') {
-                        if (paramArrays[prop] instanceof Array)
-                            jsonData = jsonData + ",\"" + prop + "\":" + JSFramework.Commons.wsAjax.getArrayText(paramArrays[prop]);
-                        else
-                            jsonData = jsonData + ",\"" + prop + "\":\"" + paramArrays[prop] + "\"";
+            if (typeof $.toJSON === "function")
+                jsonData = $.toJSON(paramArrays);
+            else {
+                if (typeof paramArrays != "undefined" && paramArrays != null) {
+                    for (var prop in paramArrays) {
+                        if (typeof paramArrays[prop] != 'undefined') {
+                            if (paramArrays[prop] instanceof Array)
+                                jsonData = jsonData + ",\"" + prop + "\":" + JSFramework.Commons.wsAjax.getArrayText(paramArrays[prop]);
+                            else if (paramArrays[prop] === null)
+                                jsonData = jsonData + ",\"" + prop + "\":null";
+                            else
+                                jsonData = jsonData + ",\"" + prop + "\":\"" + paramArrays[prop] + "\"";
+                        }
                     }
-                }
 
-                if (jsonData.length > 0)
-                    jsonData = jsonData.substring(1);
+                    if (jsonData.length > 0)
+                        jsonData = "{" + jsonData.substring(1) + "}";
+
+                }
             }
         }
 
@@ -39,7 +45,7 @@ JSFramework.Commons.wsAjax = {
                 , url: wsURL + "/" + wsMethod
                 , async: true
             //si se configuró para que serialice el dato a enviar, se manda el data en forma de texto, sino se envía directamente el paramArrays.
-                , data: serializeData ? "{" + jsonData + "}" : paramArrays
+                , data: serializeData ? jsonData : paramArrays
                 , datatype: "json"
                 , success: function (result, status, XMLHttpRequest) {
                     if (typeof OnRequestSuccess != "undefined" && OnRequestSuccess != null) {
@@ -77,7 +83,7 @@ JSFramework.Commons.wsAjax = {
 ================================================================
                           VERSIÓN
 ================================================================
-Código:       | wsAjax - 2015-04-22 1719 - v3.0.0.0
+Código:       | wsAjax - 2015-12-02 1354 - v3.1.0.0
 ----------------------------------------------------------------
 Nombre:       | wsAjax
 ----------------------------------------------------------------
@@ -88,13 +94,17 @@ Descripción:  | función que simplifica la llamada a un servicio
 ----------------------------------------------------------------
 Autor:        | Seba Bustos
 ----------------------------------------------------------------
-Versión:      | v3.0.0.0
+Versión:      | v3.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2015-04-22 17:19
+Fecha:        | 2015-12-02 13:54
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se corrigió la llamada a getArrayText, que usaba un espacio 
- de nombres distinto.
+ - Se corrigió una falla en la serialización de los datos por
+ el cual, cuando una propiedad tenía el valor null, lo agregaba
+ como cadena ("null").
+ - Se agregó la utilización del componente $.toJSon(), para la 
+ serialización de los parámetros, cuando este se encuentra ins-
+ talado.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -114,6 +124,13 @@ Cambios de la Versión:
 
 ================================================================
                   HISTORIAL DE VERSIONES
+================================================================
+Código:       | wsAjax - 2015-04-22 1719 - v3.0.0.0
+Fecha:        | 2015-04-22 17:19
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se corrigió la llamada a getArrayText, que usaba un espacio 
+ de nombres distinto.
 ================================================================
 Código:       | wsAjax - 2013-06-07 0919 - v1.0.3.0
 Fecha:        | 2013-06-07 9:19 
