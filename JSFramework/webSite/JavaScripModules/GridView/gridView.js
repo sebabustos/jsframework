@@ -384,8 +384,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (settings.totalRecordsProperty === null) {
                     if (data.hasOwnProperty("totalRecords"))
                         paggingData.totalRecords = data.totalRecords;
-                    else
-                        paggingData.totalRecords = data.length;
+                    else {
+                        var resultData;
+                        if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null && data.hasOwnProperty(settings.dataResultProperty))
+                            resultData = data[settings.dataResultProperty];
+                        else if (data.hasOwnProperty("result"))
+                            resultData = data.result;
+                        else
+                            resultData = data;
+
+                        paggingData.totalRecords = resultData.length;
+                    }
                 }
                 else {
                     if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
@@ -568,14 +577,17 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         },
         setPaggingData: function (paggingData, data, settings) {
             if (settings.usePagging) {
-                if (settings.totalRecordsProperty === null) {
-                    if (data.hasOwnProperty("totalRecords"))
-                        paggingData.totalRecords = data.totalRecords;
+                var totalRecords = 0;
+                if (typeof data !== "undefined" && data !== null) {
+                    if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null && data.hasOwnProperty(settings.dataResultProperty))
+                        totalRecords = data[settings.dataResultProperty].length;
+                    else if (data.hasOwnProperty("result"))
+                        totalRecords = data.result.length;
                     else
-                        paggingData.totalRecords = data.length;
+                        totalRecords = data.length;
                 }
-                else if (data.hasOwnProperty(settings.totalRecordsProperty))
-                    paggingData.totalRecords = data[settings.totalRecordsProperty];
+
+                paggingData.totalRecords = totalRecords;
             }
 
             return paggingData;
@@ -1053,7 +1065,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 paggingData.currIndex = 0;
                 paggingData.currPageGroupNum = 0;
                 elem.data("gridView:pagging", paggingData);
-                $("[gridViewId=" + gridViewId + "]").gridView("drawPager");
+                $(settings.tableGridPager).empty();
             });
         }
     };
