@@ -24,6 +24,8 @@
         function btnDoExec_OnClick(src, evt) {
             $("#tblGrid").gridView(
             {
+                usePagging: true,
+                usePageNumber: false,
                 childGrid: {
                     dataSourceType:"json",
                     dataSource: [
@@ -75,7 +77,7 @@
                     showPreview: true
                     //,width:
                 }],
-                onRowSelect: function (selItem) {
+                onRowSelect: function (row, gridViewId, selItem) {
                     alert("Id: \"" + selItem.Id + "\"\nHiddenValue: \"" + selItem.HiddenValue + "\"");
 
                 }
@@ -88,7 +90,6 @@
     <input type="button" value="Ejecutar" id="btnDoExec" onclick="btnDoExec_OnClick(this, event)"/>
     <br /><br />
     <table id="tblGrid">
-    
     </table>
     <br /><br />
 

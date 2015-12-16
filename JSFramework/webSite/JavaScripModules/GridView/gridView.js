@@ -3,7 +3,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-11-04 1628 - v4.2.0.0
+Código:         | GridView - 2015-12-15 1717 - v4.3.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -17,37 +17,17 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.2.0.0
+Versión:        | v4.3.0.0
 ----------------------------------------------------------------
-Fecha:          | 2015-11-04 1628
+Fecha:          | 2015-12-15 17:17
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla por la cual, cuando una columna estaba 
-configurada como Visible = false, no ejecuta el dataEval configurado.
-- Se agregó el nuevo evento searchResultPreProcessing, que permite
-definir una función a la cual se le pasará el resultado de la búsqueda, 
-previo al dibujado de la grilla, y que permitirá modificar el resultado. 
-Es decir, permitirá un pre-procesamiento de los datos previo al dibujado.
-- Se modificó la lógica de procesamiento de los resultados de un webService, 
-para que, si existe configurada una "dataResultProperty" se tome
-el set de resultados a dibujar de esa propiedad, en el objeto devuelto por
-el webService. Si no existiera esa configuración, se intenta obtener los datos
-de la propiedad "result", si esta propiedad no existiera, se consideran al mismo 
-objeto como el contenedor de los datos a dibujar.
-- Se corrigió una falla por la cual, a una columna configurada con controles 
-configuados, pero sin dataFieldName, no le estaba agregando las clases oddColumn o evenColumn
-- Se corrigió el dibujado de los controles, cuando no existía un cssClass definido, se estaba colocando
-null en el html del control.
-- Se modificó la lógica de dibujado de las columnas del encabezado para que,
-si una columna está configurada como invisible, SÍ se dibuje la columna del 
-encabezado, pero oculta.
-- Se corrigió una falla por la cual, a una columna sin dataFieldName, o una
-columna con un dataFieldName no incluído en el set de resultado, no se le estaba
-aplicando la configuración de Visibilidad.
-- Se modificó la lógica, para que, a una columna sin dataFieldName, o 
-con dataFieldName no incluído en el set de resultados, se le aplique
-también el "dataEval", de manera que permita al desarrollador, asignarle
-un valor por defecto.
+- Se modificó el componente para que la funcionalidad de paginación
+sea una especie de handler (un objeto con comportamiento común)
+- Se agregó la posibilidad de configurar la paginación de la grilla
+de manera que permita la usada hasta el momento, 'default', o la 
+nueva paginación "backforward" que sólo permite navegar hacia 
+atrás o adelante, las páginas.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -127,6 +107,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         useJQueryUI: true,
         allowSelection: true,
         usePagging: true,
+        paggingNavigationMode: 'default', //'default', 'backforward'
         pagerPosition: "down", //"up"|"down"
         pageSize: 20,
         pagesShown: 10,
@@ -229,6 +210,394 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
         noResultsCaption: ". : No se encontraron registros : .",
         noResultsClass: "tdNoRecords"
     };
+
+    var defaultPager = {
+        movePrevPage: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            if (paggingData.currIndex > 0) {
+                var fromIndex = paggingData.currIndex;
+                var toIndex = paggingData.currIndex - 1;
+                //Si está definido el evento de cambio de página, ejecuta el mismo
+                if (settings.onPaggingIndexChange instanceof Function) {
+                    var isLastPage = (toIndex === (paggingData.pageAmm - 1));
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
+                        return;
+                }
+                paggingData.currIndex--;
+                elem.data("gridView:pagging", paggingData);
+                if ((paggingData.currIndex - 1) <= (paggingData.currPageGroupNum * settings.pagesShown))
+                    this.movePrevPageGroup(gridViewId);
+                $(elem).gridView("doSearch", paggingData.currIndex);
+
+                if (settings.onPageIndexChanged instanceof Function)
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+            }
+        },
+        moveNextPage: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            if ((paggingData.currIndex + 1) < paggingData.pageAmm) {
+                var fromIndex = paggingData.currIndex;
+                var toIndex = paggingData.currIndex + 1;
+
+                //Si está definido el evento de cambio de página, ejecuta el mismo
+                if (settings.onPaggingIndexChange instanceof Function) {
+                    var isLastPage = (toIndex === (paggingData.pageAmm - 1));
+
+                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
+                        return;
+                }
+                paggingData.currIndex++;
+                var nextPage = paggingData.currIndex + 1;
+                elem.data("gridView:pagging", paggingData);
+                if ((nextPage <= paggingData.pageAmm) && (nextPage > ((paggingData.currPageGroupNum + 1) * settings.pagesShown)))
+                    this.moveNextPageGroup(gridViewId);
+                $(elem).gridView("doSearch", paggingData.currIndex);
+
+                if (settings.onPageIndexChanged instanceof Function)
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+            }
+        },
+        moveToPage: function (pageIndex) {
+            var gridViewId;
+            if (arguments.length === 0)
+                return;
+
+            //Si se recibe más de un argumento, el primero es siempre el GridViewId.
+            //y el 2º el pageIndex.
+            if (arguments.length > 1) {
+                gridViewId = arguments[0];
+                pageIndex = arguments[1];
+            }
+                //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
+            else if ($tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                throw new Error("No se ha indicado el control de grilla sobre el cual operar");
+
+            if (isNaN(pageIndex))
+                throw new Error("El pageIndex debe ser un número");
+
+            pageIndex = parseFloat(pageIndex);
+
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            if (pageIndex < 0 || pageIndex >= paggingData.pageAmm)
+                throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
+
+            var fromIndex = paggingData.currIndex;
+            var toIndex = pageIndex;
+            //Si está definido el evento de cambio de página, ejecuta el mismo
+            if (settings.onPaggingIndexChange instanceof Function) {
+                var isLastPage = (toIndex === (paggingData.pageAmm - 1));
+
+                if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
+                    return;
+            }
+
+            $(elem).gridView("doSearch", pageIndex);
+
+            if (settings.onPageIndexChanged instanceof Function)
+                //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+        },
+        movePrevPageGroup: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            if (paggingData.currPageGroupNum > 0) {
+                paggingData.currPageGroupNum--;
+                elem.data("gridView:pagging", paggingData);
+                $(elem).gridView("drawPager");
+            }
+        },
+        moveNextPageGroup: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            if (((paggingData.currPageGroupNum + 1) * settings.pagesShown) < paggingData.pageAmm) {
+                paggingData.currPageGroupNum++;
+                elem.data("gridView:pagging", paggingData);
+                $(elem).gridView("drawPager");
+            }
+        },
+        moveFirstPageGroup: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            paggingData.currPageGroupNum = 0;
+            elem.data("gridView:pagging", paggingData);
+
+            $(elem).gridView("drawPager");
+        },
+        moveLastPageGroup: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            var rest = (paggingData.pageAmm % settings.pagesShown);
+            paggingData.currPageGroupNum = ((paggingData.pageAmm - rest) / settings.pagesShown) - (rest === 0 ? 1 : 0);
+            elem.data("gridView:pagging", paggingData);
+            $(elem).gridView("drawPager");
+        },
+        setPaggingData: function (paggingData, data, settings) {
+            if (settings.usePagging) {
+                if (settings.totalRecordsProperty === null) {
+                    if (data.hasOwnProperty("totalRecords"))
+                        paggingData.totalRecords = data.totalRecords;
+                    else
+                        paggingData.totalRecords = data.length;
+                }
+                else {
+                    if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
+                        alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
+                        return;
+                    }
+                    else
+                        paggingData.totalRecords = data[settings.totalRecordsProperty];
+                }
+                //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
+                //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
+                var rest = (paggingData.totalRecords % settings.pageSize);
+                paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
+            }
+
+            return paggingData;
+        },
+        drawPager: function (gridViewId) {
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
+            if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize){
+                var pageNumbers = "";
+                var prod = paggingData.currPageGroupNum * settings.pagesShown;
+                for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
+                    var css = "";
+                    if (paggingData.currIndex === icount)
+                        css = " selected";
+                    var spaces = "";
+                    for (var amm = icount.toString().length; amm < 3; amm++)
+                        spaces = spaces + "&nbsp;";
+
+                    pageNumbers = pageNumbers + "<span class='pageNumber" + css + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveToPage(" + icount + ");'>" + (icount + 1) + "</span>" + spaces;
+                }
+                var tblFooter = $(settings.tableGridPager);
+                tblFooter.empty();
+                if (paggingData.pageAmm > 0) {
+                    if (settings.showRecordsFound) {
+                        if (settings.recordsFoundsLabel.indexOf("{0}") < 0)
+                            settings.recordsFoundsLabel = settings.recordsFoundsLabel + " <span class='spTotalRecords'>{0}</span>";
+                        tblFooter.append("<tr><td class='tdRecordsFounds' colspan='8'>" + settings.recordsFoundsLabel.replace("{0}", paggingData.totalRecords) + "</td></tr>");
+                    }
+
+                    var htmlPager = "";
+                    htmlPager = "<tr>" +
+                        "<td class='tdCurrPage'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</td>";
+                    var pagesGroupAmm = (paggingData.pageAmm / settings.pagesShown);
+                    if (pagesGroupAmm > 1) {
+                        if (settings.showFirstPageButton)
+                            htmlPager += "<td class='tdFirstPageGroup'><span class='MovePageGroup spFirstPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveFirstPageGroup(\"" + gridViewId + "\");'>|<</span></td>";
+
+                        htmlPager += "<td class='tdPrevPageGroup'><span class='MovePageGroup spPrevPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPageGroup(\"" + gridViewId + "\");'><<</span></td>";
+                    }
+
+                    htmlPager = htmlPager + "<td class='tdPrev'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage(\"" + gridViewId + "\");'><</span></td>" +
+                                            "<td class='tdPageNumbers'><div class='divPageNumbers' >" + pageNumbers + "</div></td>" +
+                                            "<td class='tdNext'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></td>";
+                    if (pagesGroupAmm > 1) {
+                        htmlPager += "<td class='tdNextPageGroup'><span class='MovePageGroup spNextPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPageGroup(\"" + gridViewId + "\");'>>></span></td>";
+
+                        if (settings.showLastPageButton)
+                            htmlPager += "<td class='tdLastPageGroup'><span class='MovePageGroup spLastPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveLastPageGroup(\"" + gridViewId + "\");'>>|</span></td>";
+                    }
+
+                    htmlPager += "</tr>";
+
+                    tblFooter.append(htmlPager);
+                }
+            }
+        }
+    };
+
+    var backForwardPager = {
+        movePrevPage: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            if (paggingData.currIndex > 0) {
+                var fromIndex = paggingData.currIndex;
+                var toIndex = paggingData.currIndex - 1;
+                //Si está definido el evento de cambio de página, ejecuta el mismo
+                if (settings.onPaggingIndexChange instanceof Function) {
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, false) === false)
+                        return;
+                }
+                paggingData.currIndex--;
+                elem.data("gridView:pagging", paggingData);
+                $(elem).gridView("doSearch", paggingData.currIndex);
+
+                if (settings.onPageIndexChanged instanceof Function)
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+            }
+        },
+        moveNextPage: function () {
+            var gridViewId;
+            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                gridViewId = arguments[0];
+
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            var fromIndex = paggingData.currIndex;
+            var toIndex = fromIndex + 1;
+            if (paggingData.totalRecords > 0) {
+                //Si está definido el evento de cambio de página, ejecuta el mismo
+                if (settings.onPaggingIndexChange instanceof Function) {
+                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, false) === false)
+                        return;
+                }
+                paggingData.currIndex++;
+                var nextPage = paggingData.currIndex + 1;
+                elem.data("gridView:pagging", paggingData);
+                $(elem).gridView("doSearch", paggingData.currIndex);
+                if (settings.onPageIndexChanged instanceof Function)
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+            }
+        },
+        moveToPage: function (pageIndex) {
+            var gridViewId;
+            if (arguments.length === 0)
+                return;
+
+            //Si se recibe más de un argumento, el primero es siempre el GridViewId.
+            //y el 2º el pageIndex.
+            if (arguments.length > 1) {
+                gridViewId = arguments[0];
+                pageIndex = arguments[1];
+            }
+                //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
+            else if ($tempthis !== null && $tempthis.length > 0)
+                gridViewId = $tempthis.attr("gridViewId");
+            else
+                throw new Error("No se ha indicado el control de grilla sobre el cual operar");
+
+            if (isNaN(pageIndex))
+                throw new Error("El pageIndex debe ser un número");
+
+            pageIndex = parseFloat(pageIndex);
+
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            if (pageIndex < 0)
+                throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
+
+            var fromIndex = paggingData.currIndex;
+            var toIndex = pageIndex;
+            if (toIndex < fromIndex || paggingData.totalRecords > 0) {
+                //Si está definido el evento de cambio de página, ejecuta el mismo
+                if (settings.onPaggingIndexChange instanceof Function) {
+                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, false) === false)
+                        return;
+                }
+
+                $(elem).gridView("doSearch", pageIndex);
+
+                if (settings.onPageIndexChanged instanceof Function)
+                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
+                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
+            }
+        },
+        moveFirstPage: function () {
+            moveToPage(0);
+        },
+        moveLastPage: function () {
+            //No se puede saber la última página.
+        },
+        setPaggingData: function (paggingData, data, settings) {
+            if (settings.usePagging) {
+                if (settings.totalRecordsProperty === null) {
+                    if (data.hasOwnProperty("totalRecords"))
+                        paggingData.totalRecords = data.totalRecords;
+                    else
+                        paggingData.totalRecords = data.length;
+                }
+                else if (data.hasOwnProperty(settings.totalRecordsProperty))
+                    paggingData.totalRecords = data[settings.totalRecordsProperty];
+            }
+
+            return paggingData;
+        },
+        drawPager: function (gridViewId) {
+            var elem = $("[gridViewId=" + gridViewId + "]");
+            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var paggingData = $.extend({}, elem.data("gridView:pagging"));
+
+            var pageNumbers = "";
+            var tblFooter = $(settings.tableGridPager);
+            tblFooter.empty();
+            var htmlPager = "";
+            htmlPager = "<tr>";
+            htmlPager = htmlPager + "<td class='tdPrev'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage();'><</span></td>" +
+                                    "<td class='tdCurrPage'>Página actual: " + (paggingData.currIndex + 1) + "</td>" + 
+                                    "<td class='tdNext'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage();'>></span></td>";
+            htmlPager += "</tr>";
+            tblFooter.append(htmlPager);
+        }
+    };
+
     var privateMethods =
         {
             getEvenOddColumnClass: function (colIndex, prefix) {
@@ -602,14 +971,31 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                         childGridRow.hide();
                     }
                 }
+            },
+            getPageHandler: function (settings) {
+                var retVal;
+                if (settings.usePagging)
+                    if (settings.paggingNavigationMode == 'backforward')
+                        retVal = backForwardPager;
+                    else
+                        retVal = defaultPager;
+
+                return retVal;
             }
         };
-    var methods = {
-        isChildGrid: function (gridViewId) {
-            var $gridViewId = $("[gridViewId=" + gridViewId + "]");
-            return $gridViewId.attr("gridview_rowType") === "childGrid";
-        },
-        childGridView: {
+    function Methods(pagerHandler) {
+
+        if ($tempthis !== null) {
+            //si no lo recibe por parámetro, intenta obtener el handler de paginación de la configuración.
+            if (typeof pagerHandler === "undefined" && $tempthis.length === 1) {
+                var settings = $.extend({}, $default, $tempthis.data("gridviewconfig"));
+                pagerHandler = privateMethods.getPageHandler(settings);
+            }
+        }
+
+        this.pager = pagerHandler;
+
+        this.childGridView = {
             //Devuelve el TR de la fila de datos, de la grilla padre asociada.
             getRowContainer: function (childGridViewId) {
                 var $this;
@@ -627,15 +1013,31 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 var parentRow = getParentRow(childGridViewId);
                 return parentRow.data("itemData");
             }
-        },
-        cleanSearch: function () {
-            var gridViewId;
-            if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                gridViewId = $tempthis.attr("gridViewId");
-            else
-                gridViewId = arguments[0];
-            var elem = $("[gridViewId=" + gridViewId + "]");
-            if (elem.length > 0) {
+        };
+    };
+
+    Methods.prototype.isChildGrid = function (gridViewId) {
+        var $gridViewId = $("[gridViewId=" + gridViewId + "]");
+        return $gridViewId.attr("gridview_rowType") === "childGrid";
+    };
+    
+    Methods.prototype.cleanSearch = function () {
+        var gridViewId;
+        var elems;
+        if (arguments.length === 0 && $tempthis !== null && $tempthis.length == 1) {
+            gridViewId = $tempthis.attr("gridViewId");
+            elems = $("[gridViewId=" + gridViewId + "]");
+        }
+        else if (arguments.length >= 1) {
+            gridViewId = arguments[0];
+            elems = $("[gridViewId=" + gridViewId + "]");
+        }
+        else
+            elems = $tempthis;
+
+        if (elems !== null && elems.length > 0) {
+            $.each(elems, function (index, item) {
+                var elem = $(item);
                 var settings = $.extend({}, $default, elem.data("gridviewconfig"));
                 var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
@@ -652,245 +1054,82 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 paggingData.currPageGroupNum = 0;
                 elem.data("gridView:pagging", paggingData);
                 $("[gridViewId=" + gridViewId + "]").gridView("drawPager");
-            }
-        },
-        pager: {
-            movePrevPage: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-
-                if (paggingData.currIndex > 0) {
-                    var fromIndex = paggingData.currIndex;
-                    var toIndex = paggingData.currIndex - 1;
-                    //Si está definido el evento de cambio de página, ejecuta el mismo
-                    if (settings.onPaggingIndexChange instanceof Function) {
-                        var isLastPage = (toIndex === (paggingData.pageAmm - 1));
-                        //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
-                        if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
-                            return;
-                    }
-                    paggingData.currIndex--;
-                    elem.data("gridView:pagging", paggingData);
-                    if ((paggingData.currIndex - 1) <= (paggingData.currPageGroupNum * settings.pagesShown))
-                        this.movePrevPageGroup(gridViewId);
-                    $(elem).gridView("doSearch", paggingData.currIndex);
-
-                    if (settings.onPageIndexChanged instanceof Function)
-                        //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
-                        settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
-                }
-            },
-            moveNextPage: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-                if ((paggingData.currIndex + 1) < paggingData.pageAmm) {
-                    var fromIndex = paggingData.currIndex;
-                    var toIndex = paggingData.currIndex + 1;
-
-                    //Si está definido el evento de cambio de página, ejecuta el mismo
-                    if (settings.onPaggingIndexChange instanceof Function) {
-                        var isLastPage = (toIndex === (paggingData.pageAmm - 1));
-
-                        if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
-                            return;
-                    }
-                    paggingData.currIndex++;
-                    var nextPage = paggingData.currIndex + 1;
-                    elem.data("gridView:pagging", paggingData);
-                    if ((nextPage <= paggingData.pageAmm) && (nextPage > ((paggingData.currPageGroupNum + 1) * settings.pagesShown)))
-                        this.moveNextPageGroup(gridViewId);
-                    $(elem).gridView("doSearch", paggingData.currIndex);
-
-                    if (settings.onPageIndexChanged instanceof Function)
-                        //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
-                        settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
-                }
-            },
-            moveToPage: function (pageIndex) {
-                var gridViewId;
-                if (arguments.length === 0)
-                    return;
-
-                //Si se recibe más de un argumento, el primero es siempre el GridViewId.
-                //y el 2º el pageIndex.
-                if (arguments.length > 1) {
-                    gridViewId = arguments[0];
-                    pageIndex = arguments[1];
-                }
-                    //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
-                else if ($tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    throw new Error("No se ha indicado el control de grilla sobre el cual operar");
-
-                if (isNaN(pageIndex))
-                    throw new Error("El pageIndex debe ser un número");
-
-                pageIndex = parseFloat(pageIndex);
-
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-
-                if (pageIndex < 0 || pageIndex >= paggingData.pageAmm)
-                    throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
-
-                var fromIndex = paggingData.currIndex;
-                var toIndex = pageIndex;
-                //Si está definido el evento de cambio de página, ejecuta el mismo
-                if (settings.onPaggingIndexChange instanceof Function) {
-                    var isLastPage = (toIndex === (paggingData.pageAmm - 1));
-
-                    if (settings.onPaggingIndexChange(gridViewId, fromIndex, toIndex, isLastPage) === false)
-                        return;
-                }
-
-                $(elem).gridView("doSearch", pageIndex);
-
-                if (settings.onPageIndexChanged instanceof Function)
-                    //Se ejecuta el evento y si el evento devolvió false, entonces se cancela el movimiento de la página
-                    settings.onPageIndexChanged(gridViewId, paggingData.currIndex);
-            },
-            movePrevPageGroup: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-                if (paggingData.currPageGroupNum > 0) {
-                    paggingData.currPageGroupNum--;
-                    elem.data("gridView:pagging", paggingData);
-                    $(elem).gridView("drawPager");
-                }
-            },
-            moveNextPageGroup: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-                if (((paggingData.currPageGroupNum + 1) * settings.pagesShown) < paggingData.pageAmm) {
-                    paggingData.currPageGroupNum++;
-                    elem.data("gridView:pagging", paggingData);
-                    $(elem).gridView("drawPager");
-                }
-            },
-            moveFirstPageGroup: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-
-                paggingData.currPageGroupNum = 0;
-                elem.data("gridView:pagging", paggingData);
-
-                $(elem).gridView("drawPager");
-            },
-            moveLastPageGroup: function () {
-                var gridViewId;
-                if (arguments.length === 0 && $tempthis !== null && $tempthis.length > 0)
-                    gridViewId = $tempthis.attr("gridViewId");
-                else
-                    gridViewId = arguments[0];
-                var elem = $("[gridViewId=" + gridViewId + "]");
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-                var paggingData = $.extend({}, elem.data("gridView:pagging"));
-
-                var rest = (paggingData.pageAmm % settings.pagesShown);
-                paggingData.currPageGroupNum = ((paggingData.pageAmm - rest) / settings.pagesShown) - (rest === 0 ? 1 : 0);
-                elem.data("gridView:pagging", paggingData);
-                $(elem).gridView("drawPager");
-            }
-        },
-        addRow: function (rowData) {
-            this.insertRow(rowData, 'last');
-        },
-        insertRow: function (rowData, atPosition) {
-            var gridViewId;
-            var elem;
-            if (arguments.length === 0)
-                return;
-
-            if (arguments.length === 2 && $tempthis !== null && $tempthis.length > 0) {
-                gridViewId = $tempthis.attr("gridViewId");
-                elem = $tempthis;
-            }
-            else {
-                gridViewId = arguments[0];
-                rowData = arguments[1];
-                atPosition = arguments[2];
-                elem = $("[gridViewId=" + gridViewId + "]");
-            }
-
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-
-            var lastRowIndex = $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:last").attr("gridView_rowIndex");
-            var rowIndex = parseFloat(lastRowIndex) + 1;
-
-            if (settings.onRowDataBounding instanceof Function) {
-                var result = settings.onRowDataBounding(gridViewId, rowData, rowIndex);
-                if (typeof result !== "undefined" && result !== null)
-                    rowData = result;
-            }
-
-            var $row = privateMethods.newRow(rowData, gridViewId, rowIndex, settings);
-
-            if (settings.onRowSelect instanceof Function && settings.allowSelection) {
-
-                //En selectionMode=='cell' la fila sólo selecciona presionando sobre el botón de selección, por lo que s registra el evento en el mismo.
-                if (typeof settings.selectionMode !== "undefined" && settings.selectionMode !== null && settings.selectionMode.toLowerCase() === 'cell') {
-                    $(".selectionCell", $row).click(function (evt) {
-                        settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
-                    });
-                }
-                    //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
-                else {
-                    $("TD.gridViewCell:not(.controls_container)", $row).click(function (evt) {
-                        settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
-                    });
-                }
-            }
-
-            if (atPosition === "last")
-                $(settings.tableGridBody, elem).append($row);//se agrega la fila
-            else if (atPosition === "first")
-                $(settings.tableGridBody, elem).prepend($row);//se agrega la fila
-            else if (!isNaN(atPosition))
-                $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:eq(" + atPosition + ")").before($row);//se agrega la fila
-            else
-                throw new Error("El atPosition debe ser un número o \"last\" o \"first\"");
-
-            if (settings.onRowDataBound instanceof Function)
-                settings.onRowDataBound($row, gridViewId, rowData, rowIndex);
+            });
         }
+    };
+
+    Methods.prototype.addRow = function (rowData) {
+        this.insertRow(rowData, 'last');
+    };
+    Methods.prototype.insertRow = function (rowData, atPosition) {
+        var gridViewId;
+        var elem;
+        if (arguments.length === 0)
+            return;
+
+        if (arguments.length === 2 && $tempthis !== null && $tempthis.length > 0) {
+            gridViewId = $tempthis.attr("gridViewId");
+            elem = $tempthis;
+        }
+        else {
+            gridViewId = arguments[0];
+            rowData = arguments[1];
+            atPosition = arguments[2];
+            elem = $("[gridViewId=" + gridViewId + "]");
+        }
+
+        var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+
+        var lastRowIndex = $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:last").attr("gridView_rowIndex");
+        var rowIndex = parseFloat(lastRowIndex) + 1;
+
+        if (settings.onRowDataBounding instanceof Function) {
+            var result = settings.onRowDataBounding(gridViewId, rowData, rowIndex);
+            if (typeof result !== "undefined" && result !== null)
+                rowData = result;
+        }
+
+        var $row = privateMethods.newRow(rowData, gridViewId, rowIndex, settings);
+
+        if (settings.onRowSelect instanceof Function && settings.allowSelection) {
+
+            //En selectionMode=='cell' la fila sólo selecciona presionando sobre el botón de selección, por lo que s registra el evento en el mismo.
+            if (typeof settings.selectionMode !== "undefined" && settings.selectionMode !== null && settings.selectionMode.toLowerCase() === 'cell') {
+                $(".selectionCell", $row).click(function (evt) {
+                    settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
+                });
+            }
+                //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
+            else {
+                $("TD.gridViewCell:not(.controls_container)", $row).click(function (evt) {
+                    settings.onRowSelect($(this).parent("tr"), gridViewId, $(this).parent("tr").data("itemData"));
+                });
+            }
+        }
+
+        if (atPosition === "last")
+            $(settings.tableGridBody, elem).append($row);//se agrega la fila
+        else if (atPosition === "first")
+            $(settings.tableGridBody, elem).prepend($row);//se agrega la fila
+        else if (!isNaN(atPosition))
+            $(settings.tableGridBody, elem).children("TR[gridview_rowType=row]:eq(" + atPosition + ")").before($row);//se agrega la fila
+        else
+            throw new Error("El atPosition debe ser un número o \"last\" o \"first\"");
+
+        if (settings.onRowDataBound instanceof Function)
+            settings.onRowDataBound($row, gridViewId, rowData, rowIndex);
     };
 
     var guiid = 0;
     $.fn.gridView = function (options, executeSearch) {
         if (typeof options === "undefined") {
+            if (this !== null && this.length > 0) {
+                if (typeof this.attr("gridViewId") === "undefined" || this.attr("gridViewId") === "")
+                    throw "La gridView no fue debidamente inicializada";
+            }
+
             $tempthis = this;
-            return methods;
+            return new Methods();
         }
 
         if (typeof options === "string" && options !== "") {
@@ -907,7 +1146,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                     doSearch(gridViewId, pageIndex);
                 }
                 else if (options.toLowerCase() === "drawpager") {
-                    drawPager(gridViewId);
+                    (new Methods(privateMethods.getPageHandler(settings))).pager.drawPager(gridViewId);
                 }
                 else if ((options.toLowerCase() === "dorefresh") || (options.toLowerCase() === "refresh")) {
                     doRefresh(gridViewId);
@@ -965,7 +1204,6 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 .data("gridView:pagging", $paggingData)
                 .attr("gridViewId", gridViewId);
 
-
             if (drawHeader(gridViewId) && executeSearch)
                 doSearch(gridViewId, 0);
         }
@@ -985,8 +1223,7 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 alert("Los parámetros de búsqueda son incorrectos.");
                 return;
             }
-
-            methods.cleanSearch(gridViewId);
+            (new Methods(privateMethods.getPageHandler(settings))).cleanSearch(gridViewId);
             var eventResult;
             if (settings.onBeforeSearch instanceof Function) {
                 eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize, gridViewId);
@@ -1032,66 +1269,13 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
             }
 
         }
+
         function doRefresh(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             elem.gridView("doSearch", paggingData.currIndex);
         }
-
-        function drawPager(gridViewId) {
-            var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
-            var paggingData = $.extend({}, elem.data("gridView:pagging"));
-
-            var pageNumbers = "";
-            var prod = paggingData.currPageGroupNum * settings.pagesShown;
-            for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
-                var css = "";
-                if (paggingData.currIndex === icount)
-                    css = " selected";
-                var spaces = "";
-                for (var amm = icount.toString().length; amm < 3; amm++)
-                    spaces = spaces + "&nbsp;";
-
-                pageNumbers = pageNumbers + "<span class='pageNumber" + css + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveToPage(" + icount + ");'>" + (icount + 1) + "</span>" + spaces;
-            }
-            var tblFooter = $(settings.tableGridPager);
-            tblFooter.empty();
-            if (paggingData.pageAmm > 0) {
-                if (settings.showRecordsFound) {
-                    if (settings.recordsFoundsLabel.indexOf("{0}") < 0)
-                        settings.recordsFoundsLabel = settings.recordsFoundsLabel + " <span class='spTotalRecords'>{0}</span>";
-                    tblFooter.append("<tr><td class='tdRecordsFounds' colspan='8'>" + settings.recordsFoundsLabel.replace("{0}", paggingData.totalRecords) + "</td></tr>");
-                }
-
-                var htmlPager = "";
-                htmlPager = "<tr>" +
-                    "<td class='tdCurrPage'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</td>";
-                var pagesGroupAmm = (paggingData.pageAmm / settings.pagesShown);
-                if (pagesGroupAmm > 1) {
-                    if (settings.showFirstPageButton)
-                        htmlPager += "<td class='tdFirstPageGroup'><span class='MovePageGroup spFirstPageGroup' onclick='$().gridView().pager.moveFirstPageGroup(\"" + gridViewId + "\");'>|<</span></td>";
-
-                    htmlPager += "<td class='tdPrevPageGroup'><span class='MovePageGroup spPrevPageGroup' onclick='$().gridView().pager.movePrevPageGroup(\"" + gridViewId + "\");'><<</span></td>";
-                }
-
-                htmlPager = htmlPager + "<td class='tdPrev'><span class='MovePage spPrev' onclick='$().gridView().pager.movePrevPage(\"" + gridViewId + "\");'><</span></td>" +
-                                        "<td class='tdPageNumbers'><div class='divPageNumbers' >" + pageNumbers + "</div></td>" +
-                                        "<td class='tdNext'><span class='MovePage spNext' onclick='$().gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></td>";
-                if (pagesGroupAmm > 1) {
-                    htmlPager += "<td class='tdNextPageGroup'><span class='MovePageGroup spNextPageGroup' onclick='$().gridView().pager.moveNextPageGroup(\"" + gridViewId + "\");'>>></span></td>";
-
-                    if (settings.showLastPageButton)
-                        htmlPager += "<td class='tdLastPageGroup'><span class='MovePageGroup spLastPageGroup' onclick='$().gridView().pager.moveLastPageGroup(\"" + gridViewId + "\");'>>|</span></td>";
-                }
-
-                htmlPager += "</tr>";
-
-                tblFooter.append(htmlPager);
-            }
-        }
-
 
         function drawProcessingIcon(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
@@ -1404,38 +1588,14 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             else
                                 data = [];
                         }
-
-                        if (settings.totalRecordsProperty === null) {
-                            if (data.hasOwnProperty("totalRecords"))
-                                paggingData.totalRecords = data.totalRecords;
-                            else
-                                paggingData.totalRecords = data.length;
-                        }
-                        else {
-                            if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
-                                alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
-                                return;
-                            }
-                            else
-                                paggingData.totalRecords = data[settings.totalRecordsProperty];
-                        }
-                        //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
-                        //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
-                        if (settings.usePagging) {
-                            var rest = (paggingData.totalRecords % settings.pageSize);
-                            paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
-                        }
+                        var methods = new Methods(privateMethods.getPageHandler(settings));
+                        methods.pager.setPaggingData(paggingData, data, settings);
 
                         $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
-
                         //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                         //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
-                        if (settings.usePagging) {
-                            //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
-                            if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
-                                drawPager(gridViewId);
-                        }
-
+                        if (settings.usePagging) 
+                            methods.pager.drawPager(gridViewId);
 
                         var resultData;
                         if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
@@ -1514,15 +1674,12 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                 if (typeof data !== "undefined" && data !== null) {
 
                     paggingData.totalRecords = data.length;
+                    $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
+
                     //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                     //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                     if (settings.usePagging) {
-                        var rest = (paggingData.totalRecords % settings.pageSize);
-                        paggingData.pageAmm = ((paggingData.totalRecords - rest) / settings.pageSize) + ((rest === 0) ? 0 : 1);
-
-                        //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
-                        if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize)
-                            drawPager(gridViewId);
+                        (new Methods(privateMethods.getPageHandler(settings))).pager.drawPager(gridViewId);
 
                         //Se realiza la paginación de los datos.
                         if (data !== null && data.length > 0) {
@@ -1530,7 +1687,6 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
                             data = data.slice(lowerBound, lowerBound + settings.pageSize);
                         }
                     }
-                    $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
                     drawResults(gridViewId, data);
                 }
             } catch (error) {
@@ -1557,6 +1713,38 @@ trata de un template siempre pega el mismo ID. (Gon Oviedo)
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-11-04 1628 - v4.2.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-11-04 1628
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla por la cual, cuando una columna estaba 
+configurada como Visible = false, no ejecuta el dataEval configurado.
+- Se agregó el nuevo evento searchResultPreProcessing, que permite
+definir una función a la cual se le pasará el resultado de la búsqueda, 
+previo al dibujado de la grilla, y que permitirá modificar el resultado. 
+Es decir, permitirá un pre-procesamiento de los datos previo al dibujado.
+- Se modificó la lógica de procesamiento de los resultados de un webService, 
+para que, si existe configurada una "dataResultProperty" se tome
+el set de resultados a dibujar de esa propiedad, en el objeto devuelto por
+el webService. Si no existiera esa configuración, se intenta obtener los datos
+de la propiedad "result", si esta propiedad no existiera, se consideran al mismo 
+objeto como el contenedor de los datos a dibujar.
+- Se corrigió una falla por la cual, a una columna configurada con controles 
+configuados, pero sin dataFieldName, no le estaba agregando las clases oddColumn o evenColumn
+- Se corrigió el dibujado de los controles, cuando no existía un cssClass definido, se estaba colocando
+null en el html del control.
+- Se modificó la lógica de dibujado de las columnas del encabezado para que,
+si una columna está configurada como invisible, SÍ se dibuje la columna del 
+encabezado, pero oculta.
+- Se corrigió una falla por la cual, a una columna sin dataFieldName, o una
+columna con un dataFieldName no incluído en el set de resultado, no se le estaba
+aplicando la configuración de Visibilidad.
+- Se modificó la lógica, para que, a una columna sin dataFieldName, o 
+con dataFieldName no incluído en el set de resultados, se le aplique
+también el "dataEval", de manera que permita al desarrollador, asignarle
+un valor por defecto.
 ================================================================
 Código:         | GridView - 2015-06-25 0827 - v4.1.2.0
 Autor:          | Seba Bustos
