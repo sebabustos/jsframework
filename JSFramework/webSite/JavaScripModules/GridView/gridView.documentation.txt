@@ -1,0 +1,151 @@
+﻿Estructura HTML de un GridView
+div[class='gridView'] (container)
+	Header
+	 div[gridview_element='tbHeader'][class='ui-widget-header header'] (THEAD)
+	   div[gridview_rowType='header'][class='gridRow'] (TR)
+		 div[class='gridCell gridViewCellHeader EvenOddColumn (childExpandedHeader|childColapsedHeader)'][gridview_cellType='expandAll'] (TD - expand child grid)
+		 div[class='gridCell gridViewCellHeader EvenOddColumn'][gridview_cellType='showRowNumber_header'] (TD - row number)
+		 div[class='gridCell gridViewCellHeader EvenOddColumn refreshButtonContainer'][gridview_cellType='refresh'] (TD - refresh)
+		 div[class='gridCell gridViewCellHeader EvenOddColumn'][gridview_cellType='headerControl'] (TD - headerControls)
+		 div[class='gridCell gridViewCellHeader EvenOddColumn'][gridview_cellType='headerCell'] (TD - column header)
+
+
+	Body
+	 div[gridview_element='tbBody'][class='ui-widget-content body'] (TBODY)
+	   div[class='gridRow'][gridview_rowType='processingContainer'] (TR - mientras se está ejecutando un procesamiento.)
+		 div[class='gridCell gridViewCell tdProcessing'][gridview_cellType='processingCell'] (TD - processing)
+	   div[class='gridRow'][gridview_rowType='message'] (TR - cuando hay un mensaje que mostrar)
+		 div[class='gridCell gridViewCell messageCell'][gridview_cellType='messageCell'] (TD - message)
+	   div[class='gridRow gridViewRow gridViewRowAlternate'][gridview_rowType='row'] (TR)
+		 div[class='gridCell EvenOddColumn (childExpanded|childColapsed)'][gridview_cellType='childExpand'] (TD -  expand child grid )
+		 div[class='gridCell EvenOddColumn rowNumber'][gridview_cellType='rowNumber'] (TD - row Number)
+		 div[class='gridCell EvenOddColumn selectionCell'][gridview_cellType='selection'] (TD - selección)
+		 div[class='gridCell gridViewCell cssClass EvenOddColumn controls_container'][gridview_cellType='data'][preview='preview'] (TD - column data)
+			div[class='divCellData|divPreview']
+	   div[class='gridRow childGridRowContainer'][gridview_rowType='childGrid'] (TR - fila contenedora de grilla hija)
+		 div[class='gridCell childGridEmptyCell'][gridview_cellType='childGridEmptyCell'] (TD - espacio en blanco)
+		 div[class='gridCell childGridCellContainer'][gridview_cellType='childGridCell' ] (TD - celda contenedora de grilla hija)
+		   div[gridViewType='childGridView'] (TABLE - grilla hija)
+
+
+
+	Footer
+	  div[class='footer'][gridview_element='tbFooter'] (TFOOT)
+	  DefaultPager:
+		   div[class='footerRow'][gridview_element='recordsFoundContainer'] (TR)
+			  div[class='footerCell tdRecordsFounds'][gridview_element='recordsFound'] (TD - "se encontraron...")
+		   div[class='footerRow pagerNavigationContainer defaultPager'][gridview_element='pagerNavigationContainer'] (TR)
+			  div[class='footerCell tdCurrPage'][gridview_element='currentPageLabel'] (TD - "pág desde hasta")
+			  div[class='footerCell tdFirstPageGroup'][gridview_element='firsGroupNavigation']  (TD - "|<")
+			  div[class='footerCell tdPrevPageGroup'][gridview_element='prevGroupNavigation'] (TD - "<<")
+			  div[class='footerCell tdPrev'][gridview_element='prevNavigation'] (TD - "<")
+			  div[class='footerCell tdPageNumbers'][gridview_element='pageNumber'] (TD - #)
+			  div[class='footerCell tdNext'][gridview_element='nextNavigation'] (TD - ">")
+			  div[class='footerCell tdNextPageGroup'][gridview_element='nextGroupNavigation'] (TD - "<<")
+			  div[class='footerCell tdLastPageGroup'][gridview_element='lastGroupNavigation']  (TD - "|<")
+	  BackForwardPager:
+		   div[class='footerRow pagerNavigationContainer backForwardPager'][gridview_element='pagerNavigationContainer'] (TR)
+			  div[class='footerCell tdPrev'][gridview_element='prevNavigation'] (TD - "<")
+			  div[class='footerCell tdCurrPage'][gridview_element='currentPageLabel'] (TD - #)
+			  div[class='footerCell tdNext'][gridview_element='nextNavigation'] (TD - ">")
+
+
+
+Estructura CSS:
+.gridView
+{}
+.gridView .gridRow
+{}
+.gridView .gridRow .gridCell
+{}
+.gridView .gridRow .evenColumn
+{}
+.gridView .gridRow .oddColumn
+{}
+
+
+.gridView .header
+{}
+.gridView .header .gridRow
+{}
+.gridView .header .gridRow .gridCell
+{}
+.gridView .header .gridRow .evenColumn
+{}
+.gridView .header .gridRow .oddColumn
+{}
+.gridView .header .gridRow .gridViewCellHeader
+{}
+.gridView .header .gridRow .childColapsedHeader
+{}
+.gridView .header .gridRow .childExpandedHeader
+{}
+
+
+.gridView .body
+{}
+.gridView .body .gridRow
+{}
+.gridView .body .gridRow .gridCell
+{}
+.gridView .body .gridRow .evenColumn
+{}
+.gridView .body .gridRow .oddColumn
+{}
+.gridView .body .gridRow .rowNumber
+{}
+.gridView .body .gridRow .selectionCell
+{}
+.gridView .body .gridRow .controls_container
+{}
+.gridView .body .gridRow .gridViewCell
+{}
+.gridView .body .gridRow .tdProcessing
+{}
+.gridView .body .gridRow .messageCell
+{}
+.gridView .body .gridViewRow
+{}
+.gridView .body .gridViewRowAlternate
+{}
+.gridView .body .childGridRowContainer
+{}
+.gridView .body .childGridRowContainer .childGridEmptyCell
+{}
+.gridView .body .childGridRowContainer .childGridCellContainer
+{}
+
+.gridView .divFooterContainer
+{}
+.gridView .divFooterContainer .footer
+{}
+.gridView .divFooterContainer .footer .footerRow
+{}
+.gridView .divFooterContainer .footer .footerRow .footerCell
+{}
+.gridView .divFooterContainer .footer .footerRow .tdRecordsFounds
+{}
+.gridView .divFooterContainer .footer .footerRow .tdRecordsFounds
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdCurrPage
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdFirstPageGroup
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdPrevPageGroup
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdPrev
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdPageNumbers
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdNext
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdNextPageGroup
+{}
+.gridView .divFooterContainer .footer .pagerNavigationContainer .tdLastPageGroup
+{}
+.gridView .divFooterContainer .footer .defaultPager
+{}
+.gridView .divFooterContainer .footer .backForwardPager
+{}

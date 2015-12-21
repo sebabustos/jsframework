@@ -24,8 +24,9 @@
         function btnDoExec_OnClick(src, evt) {
             $("[name='tblGrid']").gridView(
             {
-                dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                dataSource: '../../WebServices/gridView.asmx/SearchValuesSort',
                 allowSelection: false,
+                allowSorting:true,
                 refreshImage: "images/refresh-icon.png",
                 usePagging: true,
                 usePageNumber:false,
@@ -68,14 +69,16 @@
                     dataFieldName: "Id", /*=> req.*/
                     description: "Código",
                     visible: true,
-                    includeInResult: true
+                    includeInResult: true,
+                    sortable: true
                     //,width:
                 },
                 {
                     dataFieldName: "Description", /*=> req.*/
                     description: "Descripción",
                     visible: true,
-                    includeInResult: false
+                    includeInResult: false,
+                    sortable: true
                     //,width:
                 },
                 {
@@ -94,20 +97,20 @@
                     var html = $("#divLogConsole").html();
                     html = html + ("<div>Clean Search " + gridViewId + "</div>");
                     $("#divLogConsole").html(html);
-                    return window.confirm("cleanSearch");
+                    //return window.confirm("cleanSearch");
                 },
                 onBeforeSearch: function (pageIndex, pageSize, gridViewId) {
                     $("#divLogConsole").html();
                     var html = $("#divLogConsole").html();
                     html = html + ("<div>Before Search " + gridViewId + "</div>");
                     $("#divLogConsole").html(html);
-                    return window.confirm("Before Search");
+                    //return window.confirm("Before Search");
                 },
                 onBeforeDraw: function (gridViewId) {
                     var html = $("#divLogConsole").html();
                     html = html + ("<div>Before Draw</div>");
                     $("#divLogConsole").html(html);
-                    return window.confirm("Before Draw");
+                    //return window.confirm("Before Draw");
                 },
                 onError: function (jqXHR, textStatus, errorThrown) {
                     var html = $("#divLogConsole").html();

@@ -11,6 +11,7 @@
 
     <script src="gridView.js" type="text/javascript"></script>
     <link href="css/gridView.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/ui-lightness/jquery-ui-1.8.17.custom.css" rel="stylesheet" type="text/css" />
     <style>
         .customCell {
             background-color:yellow;
@@ -25,27 +26,38 @@
             $("#tblGrid").gridView(
             {
                 usePagging: true,
-                paggingNavigationMode:'backforward',
+                useJQueryUI: false,
+                allowSorting: true,
+                sortColumn: null,
+                sortDirection: 'ASC',
+                paggingNavigationMode: 'backforward',
+                //refreshImage: "images/refresh-icon.png",
                 childGrid: {
+                    allowExpandAll:true,
                     dataSourceType:"json",
-                    dataSource: [
-                        {Id:0,Descripcion:'Sub Item 0'},
-                        {Id:1,Descripcion:'Sub Item 1'},
-                        {Id:2,Descripcion:'Sub Item 2'},
-                        {Id:3,Descripcion:'Sub Item 3'}
-                    ],
+                    dataSource: function (settings, paggingData, parentGridRowData) {
+
+                        return [
+                            { Id: 0, Descripcion: 'Sub Item 0 - ' + parentGridRowData.Id },
+                            { Id: 1, Descripcion: 'Sub Item 1 - ' + parentGridRowData.Id },
+                            { Id: 2, Descripcion: 'Sub Item 2 - ' + parentGridRowData.Id },
+                            { Id: 3, Descripcion: 'Sub Item 3 - ' + parentGridRowData.Id }
+                        ]
+                    },
                     columns:
                     [{
                         dataFieldName:"Id",
-                        description:"Cód"
+                        description: "Cód",
+                        visible:true
                     },
                     {
-                        dataFieldName:"Description",
-                        description:"Dato"
+                        dataFieldName:"Descripcion",
+                        description: "Dato",
+                        visible: true
                     }
                     ]
                 },
-                dataSource: '../../WebServices/gridView.asmx/SearchValues',
+                dataSource: '../../WebServices/gridView.asmx/SearchValuesSort',
                 getFilterData: function () { return { filterData: $("#txtFilterData").val() }; },
                 columns: [{
                     dataFieldName: "Id", /*=> req.*/
@@ -59,13 +71,14 @@
                     dataFieldName: "Description", /*=> req.*/
                     description: "Descripción",
                     visible: true,
-                    includeInResult: false
+                    includeInResult: false,
+                    sortable: true
                     //,width:
                 },
                 {
                     dataFieldName: "HiddenValue", /*=> req.*/
                     //description: "Descripción",
-                    visible: true,
+                    visible: false,
                     includeInResult: true
                     //,width:
                 },
