@@ -3,7 +3,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-12-21 1206 - v4.4.0.0
+Código:         | GridView - 2015-12-22 1238 - v4.4.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -17,27 +17,13 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.4.0.0
+Versión:        | v4.4.1.0
 ----------------------------------------------------------------
-Fecha:          | 2015-12-21 12:06
+Fecha:          | 2015-12-22 12:38
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de configurar el ordenamiento de los
-datos al presionar sobre el encabezado de la columna.
-- Se modificó el diseño de la grilla para incluir un contendor principal "div",
-un encabezado, un body y un footer. Cambiando la estructura y jerarquía de controles.
-- Se modificó para que el control usado para dibujar la grilla, si no fuera un DIV, 
-se reemplace por un div que será el contenedor principal, y el table será contenido dentro
-del body.
-- Se eliminaron las configuraciones "tableGridBody" "tableGridPager"
-- Se modificó la ruta por defecto del "ajaxLoaderImage" 
-- Se cambió el nombre del evento "onPaggingIndexChange" por "onPageIndexChanging"
-- Se redefinieron algunas clases de estilos.
-- Se modificaron los "..." del botón de selección, por el unicode: "&#x2023;"
-- Se reemplazó la imagen por defecto del botón refresh, por el unicode: "&#x21BA;"
-- Se modificó el "+" y "-" de los botones para expandir y contraer una grilla hija,
- por los unicode: "&#x271A"; y "&#x2796;", respectivamente
-
+- Se corrigió una falla que existía cuando no se deshabilitaba la
+paginación en el componente.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -617,7 +603,7 @@ grilla agregada es una gridView en sí misma.
                     var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
 
                     if (evt.keyCode !== 7 && (pageNro > 0) && (pageNro != paggingData.currIndex)) {
-                        var methods = new Methods(privateMethods.getPageHandler(settings));
+                        var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                         methods.pager.moveToPage($gridView.attr("gridViewId"), pageNro);
                     }
                     else
@@ -1041,11 +1027,17 @@ grilla agregada es una gridView en sí misma.
             }
         };
     //#region Methods Object
-    function Methods(pagerHandler) {
-        if ($tempthis !== null) {
+    function Methods(pagerHandler, gridViewId) {
+        var $gridView;
+        if (typeof gridViewId !== "undefined" && gridViewId !== null)
+            $gridView = $("[gridViewId=" + gridViewId + "]");
+        else if (typeof $tempthis !== "undefined" && $tempthis !== null)
+            $gridView = $tempthis;
+
+        if (typeof $gridView !== "undefined" && $gridView !== null) {
             //si no lo recibe por parámetro, intenta obtener el handler de paginación de la configuración.
-            if (typeof pagerHandler === "undefined" && $tempthis.length === 1) {
-                var settings = $.extend({}, $default, $tempthis.data("gridviewconfig"));
+            if (typeof pagerHandler === "undefined" && $gridView.length === 1) {
+                var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
                 pagerHandler = privateMethods.getPageHandler(settings);
             }
         }
@@ -1216,7 +1208,7 @@ grilla agregada es una gridView en sí misma.
                     doSearch(gridViewId, pageIndex);
                 }
                 else if (options.toLowerCase() === "drawpager") {
-                    (new Methods(privateMethods.getPageHandler(settings))).pager.drawPager(gridViewId);
+                    (new Methods(privateMethods.getPageHandler(settings), gridViewId)).pager.drawPager(gridViewId);
                 }
                 else if ((options.toLowerCase() === "dorefresh") || (options.toLowerCase() === "refresh")) {
                     doRefresh(gridViewId);
@@ -1325,7 +1317,7 @@ grilla agregada es una gridView en sí misma.
                 alert("Los parámetros de búsqueda son incorrectos.");
                 return;
             }
-            var methods = new Methods(privateMethods.getPageHandler(settings));
+            var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
             methods.cleanSearch(gridViewId);
             var eventResult;
             if (settings.onBeforeSearch instanceof Function) {
@@ -1490,7 +1482,7 @@ grilla agregada es una gridView en sí misma.
                                 childGridCell.html("&#x2796;");
                         }
                     }
-                    var method = new Methods();
+                    var method = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                     method.childGridView.expandAllChildGrids(gridViewId);
                 }
 
@@ -1763,7 +1755,7 @@ grilla agregada es una gridView en sí misma.
                             else
                                 data = [];
                         }
-                        var methods = new Methods(privateMethods.getPageHandler(settings));
+                        var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                         methods.pager.setPaggingData(paggingData, data, settings);
 
                         $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
@@ -1857,7 +1849,7 @@ grilla agregada es una gridView en sí misma.
                     //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
                     //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
                     if (settings.usePagging) {
-                        (new Methods(privateMethods.getPageHandler(settings))).pager.drawPager(gridViewId);
+                        (new Methods(privateMethods.getPageHandler(settings), gridViewId)).pager.drawPager(gridViewId);
 
                         //Se realiza la paginación de los datos.
                         if (data !== null && data.length > 0) {
@@ -1893,6 +1885,28 @@ grilla agregada es una gridView en sí misma.
 ================================================================
                     HISTORIAL DE VERSIONES
 ================================================================
+Código:         | GridView - 2015-12-21 1206 - v4.4.0.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-12-21 12:06
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de configurar el ordenamiento de los
+datos al presionar sobre el encabezado de la columna.
+- Se modificó el diseño de la grilla para incluir un contendor principal "div",
+un encabezado, un body y un footer. Cambiando la estructura y jerarquía de controles.
+- Se modificó para que el control usado para dibujar la grilla, si no fuera un DIV, 
+se reemplace por un div que será el contenedor principal, y el table será contenido dentro
+del body.
+- Se eliminaron las configuraciones "tableGridBody" "tableGridPager"
+- Se modificó la ruta por defecto del "ajaxLoaderImage" 
+- Se cambió el nombre del evento "onPaggingIndexChange" por "onPageIndexChanging"
+- Se redefinieron algunas clases de estilos.
+- Se modificaron los "..." del botón de selección, por el unicode: "&#x2023;"
+- Se reemplazó la imagen por defecto del botón refresh, por el unicode: "&#x21BA;"
+- Se modificó el "+" y "-" de los botones para expandir y contraer una grilla hija,
+ por los unicode: "&#x271A"; y "&#x2796;", respectivamente
+ ================================================================
+
 Código:         | GridView - 2015-12-15 1717 - v4.3.0.0
 Autor:          | Seba Bustos
 Fecha:          | 2015-12-15 17:17
