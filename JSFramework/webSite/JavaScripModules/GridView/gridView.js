@@ -3,7 +3,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2015-12-22 1238 - v4.4.1.0
+Código:         | GridView - 2016-04-06 1653 - v5.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -17,13 +17,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v4.4.1.0
+Versión:        | v5.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2015-12-22 12:38
+Fecha:          | 2016-04-06 16:53
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla que existía cuando no se deshabilitaba la
-paginación en el componente.
+- Se corrigió una falla que existía cuando se deshabilitaba la
+paginación en el componente, por la cual intentaba acceder al 
+pager el cual no se estaba inicializando.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1353,7 +1354,7 @@ grilla agregada es una gridView en sí misma.
             }
             if (settings.allowSorting) {
                 if (!dataFilter.hasOwnProperty("sortColumn"))
-                    dataFilter.sortColumn = (typeof sortConfig.column === "undefined"?null:sortConfig.column);
+                    dataFilter.sortColumn = (typeof sortConfig.column === "undefined" ? null : sortConfig.column);
                 if (!dataFilter.hasOwnProperty("sortDirection"))
                     dataFilter.sortDirection = (typeof sortConfig.sortDirection === "undefined" ? null : sortConfig.sortDirection);
             }
@@ -1756,7 +1757,8 @@ grilla agregada es una gridView en sí misma.
                                 data = [];
                         }
                         var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
-                        methods.pager.setPaggingData(paggingData, data, settings);
+                        if (settings.usePagging)
+                            methods.pager.setPaggingData(paggingData, data, settings);
 
                         $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
                         //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
@@ -1884,6 +1886,14 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2015-12-22 1238 - v4.4.1.0
+Autor:          | Seba Bustos
+Fecha:          | 2015-12-22 12:38
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla que existía cuando no se deshabilitaba la
+paginación en el componente.
 ================================================================
 Código:         | GridView - 2015-12-21 1206 - v4.4.0.0
 Autor:          | Seba Bustos
