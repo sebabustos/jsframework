@@ -34,8 +34,8 @@
                         cursor: pointer;
                     }
 
-                    .gridView .gridViewBody .tbGridView .tbHeader .gridRow .cellSortable .sortArrow{
-                    }
+                        .gridView .gridViewBody .tbGridView .tbHeader .gridRow .cellSortable .sortArrow {
+                        }
 
                     .gridView .gridViewBody .tbGridView .tbHeader .gridRow .evenColumn {
                     }
@@ -45,11 +45,12 @@
 
                     .gridView .gridViewBody .tbGridView .tbHeader .gridRow .refreshButtonContainer {
                     }
-                    .gridView .gridViewBody .tbGridView .tbHeader .gridRow .refreshButtonContainer .gridViewRefreshIcon{
-                        cursor:pointer;
-                    }
 
-                    .gridView .gridViewBody .tbGridView .tbHeader .gridRow .gridView .gridViewBodyCellHeader {
+                        .gridView .gridViewBody .tbGridView .tbHeader .gridRow .refreshButtonContainer .gridViewRefreshIcon {
+                            cursor: pointer;
+                        }
+
+                    .gridView .gridViewBody .tbGridView .tbHeader .gridRow .gridViewCellHeader {
                         padding: 4px 6px 4px 6px;
                         font-size: 10pt;
                     }
@@ -106,13 +107,13 @@
                     .gridView .gridViewBody .tbGridView .tbBody .gridRow .controls_container {
                     }
 
-                    .gridView .gridViewBody .tbGridView .tbBody .gridRow .gridView .gridViewBodyCell {
+                    .gridView .gridViewBody .tbGridView .tbBody .gridRow .gridViewCell {
                     }
 
-                .gridView .gridViewBody .tbGridView .tbBody .gridView .gridViewBodyRow {
+                .gridView .gridViewBody .tbGridView .tbBody .gridViewRow {
                 }
 
-                .gridView .gridViewBody .tbGridView .tbBody .gridView .gridViewBodyRowAlternate {
+                .gridView .gridViewBody .tbGridView .tbBody .gridViewRowAlternate {
                 }
 
                 .gridView .gridViewBody .tbGridView .tbBody .childGridRowContainer {
@@ -139,8 +140,9 @@
             }
 
     .gridView .processingContainer .processingLabel {
-        height:10px;
+        height: 10px;
     }
+
         .gridView .processingContainer .processingLabel .stepController {
             font-size: 24pt;
         }
