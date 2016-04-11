@@ -79,6 +79,8 @@
                 }
                 diagCont = null;
                 $("[webDialogId='divDialogCourtain_" + id + "']").remove();
+                //limpia el contenido del iframe antes de borrarlo. Esto soluciona un error que genera el IE, cuando se intenta eliminar.
+                $("[webDialogId='iframe_" + id + "']", dialogWindow)[0].src = "about:blank";
                 $("[webDialogId='iframe_" + id + "']", dialogWindow).remove();
                 dialogWindow.remove();
                 var result = true;
@@ -399,7 +401,7 @@
 ================================================================
                            VERSIÓN
 ================================================================
-Código:       | webDialog - 2014-11-06 1455 - 2.0.0.0
+Código:       | webDialog - 2016-04-11 1611 - 5.0.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -413,29 +415,19 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v2.0.0.0
+Versión:      | v5.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2015-04-27 17:27
+Fecha:        | 2016-04-11 16:11
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de definir un "notificationType" al diálogo.
-Lo que dibujará una imagen, según el tipo de notificación. Imágenes
-configuradas.
-    Propiedades nuevas:
-      notificationType: 0, //None ($.webDialog.notificationTypes)
-      notificationTypeImages: {
-          error: null,
-          warning: null,
-          information: null
-      }
-    Neva Enumeracion:
-      $.webDialog.notificationTypes: { None: 0, Information: 1, Warning: 2, Error: 3 },
-
-- Se agregó la posibilidad de habilitar un "auto-cerrado" del diálogo, 
-con un contador de 3 segundos: 
-    Propiedad nueva:
-      autoCloseWindow: false,
-
+- Se corrigió un error que se genera cuando se utiliza el tipo URL, 
+donde se muestra un iframe. El IE, generaba un error cuando en el onload
+de la página, se intentaba cerrar el webDialog (por ejemplo haciendo un 
+window.parent.CloseDialog(){ $("dialog").webDialog("close");})
+  Se modificó el código del método "close" para que fuerce el source
+del iframe a "about:blank" antes de removerlo.
+- Se cambió el versionamiento del control, para que el primer índice
+indique la antigüedad del control (Ej: 5.0... son 5 años de antigüedad)
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -456,6 +448,28 @@ FUNCIONALIDADES
 -
 ================================================================
                 HISTORIAL DE VERSIONES
+================================================================
+Código:       | webDialog - 2014-11-06 1455 - 2.0.0.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de definir un "notificationType" al diálogo.
+Lo que dibujará una imagen, según el tipo de notificación. Imágenes
+configuradas.
+    Propiedades nuevas:
+      notificationType: 0, //None ($.webDialog.notificationTypes)
+      notificationTypeImages: {
+          error: null,
+          warning: null,
+          information: null
+      }
+    Neva Enumeracion:
+      $.webDialog.notificationTypes: { None: 0, Information: 1, Warning: 2, Error: 3 },
+
+- Se agregó la posibilidad de habilitar un "auto-cerrado" del diálogo, 
+con un contador de 3 segundos: 
+    Propiedad nueva:
+      autoCloseWindow: false,
 ================================================================
 Código:       | webDialog - 2014-11-06 1455 - 1.1.3.0
 Autor:        | Sebastián Bustos
