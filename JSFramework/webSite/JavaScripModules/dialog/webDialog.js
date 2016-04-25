@@ -25,7 +25,7 @@
             warning: null,
             information: null
         }
-    }
+    };
 
 
     $.fn.center = function (doAutoScroll) {
@@ -58,7 +58,7 @@
                 "left": scrollLeft
             }
         };
-    }
+    };
     var webDialogsIds = 0;
     //función iframe y text
     $.webDialog = {
@@ -80,8 +80,11 @@
                 diagCont = null;
                 $("[webDialogId='divDialogCourtain_" + id + "']").remove();
                 //limpia el contenido del iframe antes de borrarlo. Esto soluciona un error que genera el IE, cuando se intenta eliminar.
-                $("[webDialogId='iframe_" + id + "']", dialogWindow)[0].src = "about:blank";
-                $("[webDialogId='iframe_" + id + "']", dialogWindow).remove();
+                var $iframe = $("[webDialogId='iframe_" + id + "']", dialogWindow);
+                if ($iframe.length > 0) {
+                    $iframe[0].src = "about:blank";
+                    $iframe.remove();
+                }
                 dialogWindow.remove();
                 var result = true;
                 if (arguments.length > 1 && typeof arguments[1] === "function") {
@@ -281,7 +284,7 @@
                     $(window).resize(function () {
                         dialogContainer.center(settings.autoScroll);
                         var webDialogId = dialogContainer.attr("webDialogId");
-                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]")
+                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]");
 
                         var scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
                         var scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
@@ -293,7 +296,7 @@
                     }).scroll(function () {
                         dialogContainer.center(settings.autoScroll);
                         var webDialogId = dialogContainer.attr("webDialogId");
-                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]")
+                        var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]");
 
                         var scrollLeft = (window.pageXOffset || document.documentElement.scrollLeft) - (document.documentElement.clientLeft || 0);
                         var scrollTop = (window.pageYOffset || document.documentElement.scrollTop) - (document.documentElement.clientTop || 0);
@@ -370,7 +373,7 @@
 
             return dialogContainer;
         }
-    }
+    };
 
     $.fn.webDialog = function (options) {
         var settings = $.extend({}, $default);
@@ -395,13 +398,13 @@
         settings.type = "control";
         $.webDialog.show(settings);
         return this;
-    }
+    };
 })(jQuery);
 /*
 ================================================================
                            VERSIÓN
 ================================================================
-Código:       | webDialog - 2016-04-11 1611 - 5.0.0.0
+Código:       | webDialog - 2016-04-25 1646 - 5.1.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -415,19 +418,16 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v5.0.0.0
+Versión:      | v5.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2016-04-11 16:11
+Fecha:        | 2016-04-25 16:46
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error que se genera cuando se utiliza el tipo URL, 
-donde se muestra un iframe. El IE, generaba un error cuando en el onload
-de la página, se intentaba cerrar el webDialog (por ejemplo haciendo un 
-window.parent.CloseDialog(){ $("dialog").webDialog("close");})
-  Se modificó el código del método "close" para que fuerce el source
-del iframe a "about:blank" antes de removerlo.
-- Se cambió el versionamiento del control, para que el primer índice
-indique la antigüedad del control (Ej: 5.0... son 5 años de antigüedad)
+- Se corrigió un error agregado en la última actualización (frame 
+con about:blank) por la cual, cuando se cerraba el dialog, y el 
+mismo no poseía un iframe, se generaba un error. Se agregó 
+la verificación de que exista el iframe, antes de realizar la 
+asignación.
 ================================================================
 FUNCIONALIDADES
 ================================================================
@@ -448,6 +448,22 @@ FUNCIONALIDADES
 -
 ================================================================
                 HISTORIAL DE VERSIONES
+================================================================
+================================================================
+                           VERSIÓN
+================================================================
+Código:       | webDialog - 2016-04-11 1611 - 5.0.0.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió un error que se genera cuando se utiliza el tipo URL, 
+donde se muestra un iframe. El IE, generaba un error cuando en el onload
+de la página, se intentaba cerrar el webDialog (por ejemplo haciendo un 
+window.parent.CloseDialog(){ $("dialog").webDialog("close");})
+  Se modificó el código del método "close" para que fuerce el source
+del iframe a "about:blank" antes de removerlo.
+- Se cambió el versionamiento del control, para que el primer índice
+indique la antigüedad del control (Ej: 5.0... son 5 años de antigüedad)
 ================================================================
 Código:       | webDialog - 2014-11-06 1455 - 2.0.0.0
 Autor:        | Sebastián Bustos
