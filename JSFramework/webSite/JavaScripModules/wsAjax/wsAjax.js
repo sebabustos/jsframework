@@ -58,7 +58,7 @@ JSFramework.Commons.wsAjax = {
                         OnRequestSuccess(result, this, status, XMLHttpRequest);
                     }
                 }
-                , error: OnRequestError
+                , error: OnRequestError/*function (jqXHR, textStatus, errorThrown)*/
                 , context: context
                 , contentType: "application/json; charset=utf-8"
             //,timeout
