@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2016-04-26 1227 - v5.1.0.0
+Código:         | GridView - 2016-08-11 0942 - v5.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,13 +16,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v5.1.0.0
+Versión:        | v5.2.0.0
 ----------------------------------------------------------------
-Fecha:          | 2016-04-26 12:27
+Fecha:          | 2016-08-11 09:42
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla por la cual, no se estaba paginando cuando
-el dataSource era del tipo json (ya sea objeto, función, etc)
+- Se modificó el default Pagger, para siempre muestre la cantidad
+de registros, cuando está habilitado, aún cuando no hubieran 
+múltiples páginas de resultados.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -410,8 +411,18 @@ grilla agregada es una gridView en sí misma.
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
-            //sólo muestra la consola de paginación si la cantidad de resultados supera la página definida.
-            if (paggingData.totalRecords > 0 && paggingData.totalRecords > settings.pageSize) {
+            if (paggingData.totalRecords > 0) {
+                var $pagerContainer = $("[gridview_element=pagerContainer]", elem);
+                $pagerContainer.empty();
+                //la cantidad de registro se muestra siempre, si está habilitada.
+                if (settings.showRecordsFound) {
+                    if (settings.recordsFoundsLabel.indexOf("{0}") < 0)
+                        settings.recordsFoundsLabel = settings.recordsFoundsLabel + " <span class='spTotalRecords'>{0}</span>";
+                    $pagerContainer.append("<div class='pagerRow' gridview_element='recordsFoundContainer'><div class='pagerCell tdRecordsFounds'  gridview_element='recordsFound' colspan='8'>" + settings.recordsFoundsLabel.replace("{0}", paggingData.totalRecords) + "</div></div>");
+                }
+
+                //sólo muestra la consola de navegación si la cantidad de resultados supera la página definida.
+                if (paggingData.totalRecords > settings.pageSize) {
                 var pageNumbers = "";
                 var prod = paggingData.currPageGroupNum * settings.pagesShown;
                 for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
@@ -424,15 +435,8 @@ grilla agregada es una gridView en sí misma.
 
                     pageNumbers = pageNumbers + "<span class='pageNumber" + css + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveToPage(" + icount + ");'>" + (icount + 1) + "</span>" + spaces;
                 }
-                var $pagerContainer = $("[gridview_element=pagerContainer]", elem);
-                $pagerContainer.empty();
-                if (paggingData.pageAmm > 0) {
-                    if (settings.showRecordsFound) {
-                        if (settings.recordsFoundsLabel.indexOf("{0}") < 0)
-                            settings.recordsFoundsLabel = settings.recordsFoundsLabel + " <span class='spTotalRecords'>{0}</span>";
-                        $pagerContainer.append("<div class='pagerRow' gridview_element='recordsFoundContainer'><div class='pagerCell tdRecordsFounds'  gridview_element='recordsFound' colspan='8'>" + settings.recordsFoundsLabel.replace("{0}", paggingData.totalRecords) + "</div></div>");
-                    }
 
+                if (paggingData.pageAmm > 0) {
                     var htmlPager = "";
                     htmlPager = "<div class='pagerRow pagerNavigationContainer defaultPager' gridview_element='pagerNavigationContainer'>" +
                         "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</div>";
@@ -459,6 +463,7 @@ grilla agregada es una gridView en sí misma.
                     $pagerContainer.append(htmlPager);
                 }
             }
+        }
         }
     };
 

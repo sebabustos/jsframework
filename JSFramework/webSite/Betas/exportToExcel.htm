@@ -1,0 +1,32 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Consumo de Web Service</title>
+    <script src="../references/jquery.min.js" type="text/javascript"></script>
+    <script src="../references/jquery-ui.custom.min.js" type="text/javascript"></script>
+    <script src="../references/CodeCanvas.js" type="text/javascript"></script>
+    <link href="../css/CodeCanvas.css" rel="stylesheet" type="text/css" />
+    <link href="../css/general.css" rel="stylesheet" type="text/css" />
+    <link href="../css/jqueryui_otro/jquery-ui-1.8.2.custom.css" rel="stylesheet" type="text/css" />
+    <script src="exportToExcel.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(window).ready(function () {
+            $(".code").formatCode();
+        })
+
+        function btnDoExec_OnClick(src, evt) {
+            $.downloadFile({URL:"../webServices/DownloadFile.ashx"});
+        }
+    </script>
+</head>
+<body>
+<fieldset>
+    <legend>Descarga</legend>
+    <input id="btnDoExec" onclick="btnDoExec_OnClick(this, event)" value="Descargar" type="button" />
+    <br />
+    <textarea class="code">
+    </textarea>
+</fieldset>
+<br />
+</body>
+</html>
