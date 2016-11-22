@@ -1,4 +1,6 @@
-﻿(function ($) {
+﻿/*!webDialog - 2016-11-22 1322 - 5.2.0.0
+https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/dialog*/
+(function ($) {
     var $default = {
         dialogId: null,
         content: null,
@@ -138,7 +140,7 @@
             }
 
             if (typeof settings.notificationType === "undefined")
-                settings.notificationType = this.notificationTypes.None;
+                settings.notificationType = $.webDialog.notificationTypes.None;
 
             //Se crea el div del dialog mismo.
             var dialogContainer = $("<div id='divDialogWindow_" + currentId + "' webDialogId='" + currentId + "' title='" + settings.title + "' class='modalDialog'></div>");
@@ -146,17 +148,17 @@
             var dialogContent = $("<div class='webDialogContent' style='height:85%'></div>");
 
             var notificationImg = null, jqNotificationIcon = "";
-            if (settings.notificationType == this.notificationTypes.Information) {
+            if (settings.notificationType == $.webDialog.notificationTypes.Information) {
                 notificationImg = settings.notificationTypeImages.information;
                 if (settings.useJQueryUI)
                     jqNotificationIcon = "<span class='ui-icon ui-icon-info' />";
             }
-            else if (settings.notificationType == this.notificationTypes.Warning) {
+            else if (settings.notificationType == $.webDialog.notificationTypes.Warning) {
                 notificationImg = settings.notificationTypeImages.warning;
                 if (settings.useJQueryUI)
                     jqNotificationIcon = "<span class='ui-icon ui-icon-notice' />";
             }
-            else if (settings.notificationType == this.notificationTypes.Error) {
+            else if (settings.notificationType == $.webDialog.notificationTypes.Error) {
                 notificationImg = settings.notificationTypeImages.error;
                 if (settings.useJQueryUI)
                     jqNotificationIcon = "<span class='ui-icon ui-icon-alert' />";
@@ -218,7 +220,7 @@
 
                 dialogContainer.data("webDialog_config", options);
                 dialogContainer.append(titleBar);
-                if (settings.notificationType === this.notificationTypes.None)
+                if (settings.notificationType === $.webDialog.notificationTypes.None)
                     dialogContainer.append(dialogContent);
                 else {
                     var $divNotification = $("<div class='dialogNotification'></div>");
@@ -239,13 +241,13 @@
 
                 if (settings.useJQueryUI) {
                     var jqTitleClass = "";
-                    if (settings.notificationType == this.notificationTypes.Information) {
+                    if (settings.notificationType == $.webDialog.notificationTypes.Information) {
                         jqTitleClass = "ui-state";
                     }
-                    else if (settings.notificationType == this.notificationTypes.Warning) {
+                    else if (settings.notificationType == $.webDialog.notificationTypes.Warning) {
                         jqTitleClass = "ui-state-highlight";
                     }
-                    else if (settings.notificationType == this.notificationTypes.Error) {
+                    else if (settings.notificationType == $.webDialog.notificationTypes.Error) {
                         jqTitleClass = "ui-state-error";
                     }
 
@@ -404,7 +406,7 @@
 ================================================================
                            VERSIÓN
 ================================================================
-Código:       | webDialog - 2016-04-25 1646 - 5.1.0.0
+Código:       | webDialog - 2016-11-22 1322 - 5.2.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -418,18 +420,16 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v5.1.0.0
+Versión:      | v5.2.0.0
 ----------------------------------------------------------------
-Fecha:        | 2016-04-25 16:46
+Fecha:        | 2016-11-22 13:22
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error agregado en la última actualización (frame 
-con about:blank) por la cual, cuando se cerraba el dialog, y el 
-mismo no poseía un iframe, se generaba un error. Se agregó 
-la verificación de que exista el iframe, antes de realizar la 
-asignación.
+- Se corrigió un error en el uso de las notificationTypes, se 
+  modificó el acceso "this.notificationTypes" 
+  por "$.webDialogs.notificationTypes"
 ================================================================
-FUNCIONALIDADES
+                    FUNCIONALIDADES
 ================================================================
 - mostrar en un dialog una página (iframe)           (función)
 - mostrar en un dialog un texto                      (función)
@@ -449,8 +449,17 @@ FUNCIONALIDADES
 ================================================================
                 HISTORIAL DE VERSIONES
 ================================================================
-================================================================
                            VERSIÓN
+================================================================
+Código:       | webDialog - 2016-04-25 1646 - 5.1.0.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió un error agregado en la última actualización (frame 
+con about:blank) por la cual, cuando se cerraba el dialog, y el 
+mismo no poseía un iframe, se generaba un error. Se agregó 
+la verificación de que exista el iframe, antes de realizar la 
+asignación.
 ================================================================
 Código:       | webDialog - 2016-04-11 1611 - 5.0.0.0
 Autor:        | Sebastián Bustos
