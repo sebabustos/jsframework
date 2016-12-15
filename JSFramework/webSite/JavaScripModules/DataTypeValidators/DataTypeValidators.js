@@ -1,4 +1,6 @@
-﻿/*
+﻿/*! DataTypeValidators - 2016-12-15 - v3.2.1.0
+https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
+/*
 Especificaciones:
 - Hacer un DataTypeValidator("remove") para quitar la lógica de validación.
 - Permitir desactivar el script de inicialización automático.
@@ -632,7 +634,7 @@ Especificaciones:
                 var dataType = $this.attr("DataType").toLowerCase();
                 var settings = {};
                 if (typeof DateTypeValidatorGetSettings === "function")
-                    settings = DateTypeValidatorGetSettings(dataType);
+                    settings = DateTypeValidatorGetSettings(dataType, this);
                 var validRegex = $this.attr("validDataRegex");
                 if (typeof validRegex !== "undefined" && validRegex !== null && validRegex !== "")
                     settings = $.extend(settings, { "validDataRegex": validRegex });
@@ -657,7 +659,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2015-09-29 - v3.2.0.0
+Código:       | DataTypeValidators - 2016-12-15 - v3.2.1.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -676,23 +678,13 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v3.2.0.0
+Versión:      | v3.2.1.0
 ----------------------------------------------------------------
-Fecha:        | 2015-09-29
+Fecha:        | 2015-12-15 13:05
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la nueva variable publicMethods, que contendrá el 
- listado de métodos accesibles.
- - Se agregó la posibilidad de llamar al plugin, y ejecutar los
- métodos públicos.
- - Se agregó el nuevo método público "isValid", que permitirá 
- ejecutar las validaciones, configuradas en el contro, a demanda, 
- lo que aplicará las validaciones sobre el valor que tenga el control 
- e indicará si el dato contenido cumple con la configuración 
- del tipo de dato.
-  Ej: $("miControl").DataTypeValidator().isValid();
- - Se agregó el nuevo método público "remove" que permite la remoción
- del validator del control.
+ - Se modificó la llamada al método DateTypeValidatorGetSettings, 
+ para agregar el parámetro this.
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -713,6 +705,23 @@ Cambios de la Versión:
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2015-09-29 - v3.2.0.0
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se agregó la nueva variable publicMethods, que contendrá el 
+ listado de métodos accesibles.
+ - Se agregó la posibilidad de llamar al plugin, y ejecutar los
+ métodos públicos.
+ - Se agregó el nuevo método público "isValid", que permitirá 
+ ejecutar las validaciones, configuradas en el contro, a demanda, 
+ lo que aplicará las validaciones sobre el valor que tenga el control 
+ e indicará si el dato contenido cumple con la configuración 
+ del tipo de dato.
+  Ej: $("miControl").DataTypeValidator().isValid();
+ - Se agregó el nuevo método público "remove" que permite la remoción
+ del validator del control.
 ================================================================
 Código:       | DataTypeValidators - 2015-05-07 - v3.1.2.0
 Autor:        | Sebastián Bustos Argañaraz
