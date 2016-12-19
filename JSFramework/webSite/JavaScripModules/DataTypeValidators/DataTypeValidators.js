@@ -1,4 +1,4 @@
-﻿/*! DataTypeValidators - 2016-12-15 - v3.2.1.0
+﻿/*! DataTypeValidators - 2016-12-15 - v3.2.2.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
 /*
 Especificaciones:
@@ -332,7 +332,7 @@ Especificaciones:
                 var currencyRegex = allowCurrency ? "[\\$]{0,1}" : "";
                 var decimalRegex = settings.allowDecimals ? "([" + commaSep + "]{0,1}(\\d)+||(\\d)*)" : "";
                 var negativesRegex = settings.allowNegativesValues ? "[-]{0,1}" : "";
-                var integerRegex = allowThousandSeparator ? "(\\d{1,3}(" + thouSep + "\\d{3})*)" : "(\\d+)";
+                var integerRegex = allowThousandSeparator ? "(\\d{1,3}([" + thouSep + "]{0,1}\\d{3})*)" : "(\\d+)";
 
                 validDataRegex = "^" + negativesRegex + currencyRegex + integerRegex + decimalRegex + "$";
                 regConfig = "gi";
@@ -659,7 +659,7 @@ Especificaciones:
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2016-12-15 - v3.2.1.0
+Código:       | DataTypeValidators - 2016-12-19 - v3.2.2.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -678,13 +678,13 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v3.2.1.0
+Versión:      | v3.2.2.0
 ----------------------------------------------------------------
-Fecha:        | 2015-12-15 13:05
+Fecha:        | 2015-12-19 12:33
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se modificó la llamada al método DateTypeValidatorGetSettings, 
- para agregar el parámetro this.
+ - Se corrigió la expresión regular que valida el ingreso de separador
+ de miles, para que no sea requerido el separador de miles, sino opcional.
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -705,6 +705,13 @@ Cambios de la Versión:
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2016-12-15 - v3.2.1.0
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se modificó la llamada al método DateTypeValidatorGetSettings, 
+ para agregar el parámetro this.
 ================================================================
 Código:       | DataTypeValidators - 2015-09-29 - v3.2.0.0
 Autor:        | Sebastián Bustos Argañaraz
