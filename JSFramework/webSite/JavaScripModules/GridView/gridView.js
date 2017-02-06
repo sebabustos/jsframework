@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2016-08-11 0942 - v5.2.0.0
+Código:         | GridView - 2017-02-06 1743- v6.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,14 +16,17 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v5.2.0.0
+Versión:        | v6.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2016-08-11 09:42
+Fecha:          | 2017-02-06 17:43
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se modificó el default Pagger, para siempre muestre la cantidad
-de registros, cuando está habilitado, aún cuando no hubieran 
-múltiples páginas de resultados.
+- Se modificó el backforwardPager, para que no muestre los controles
+de paginación si no existen resultados, que muestre sólo la flecha
+de avance si se está ubicado en la primera página y sólo la de 
+retroceso si se está ubicado en la última página.
+- Se corrigió un error detectado en la paginación backforward, cuando
+se intentaba navegar a una página específica.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -423,47 +426,47 @@ grilla agregada es una gridView en sí misma.
 
                 //sólo muestra la consola de navegación si la cantidad de resultados supera la página definida.
                 if (paggingData.totalRecords > settings.pageSize) {
-                var pageNumbers = "";
-                var prod = paggingData.currPageGroupNum * settings.pagesShown;
-                for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
-                    var css = "";
-                    if (paggingData.currIndex === icount)
-                        css = " selected";
-                    var spaces = "";
-                    for (var amm = icount.toString().length; amm < 3; amm++)
-                        spaces = spaces + "&nbsp;";
+                    var pageNumbers = "";
+                    var prod = paggingData.currPageGroupNum * settings.pagesShown;
+                    for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
+                        var css = "";
+                        if (paggingData.currIndex === icount)
+                            css = " selected";
+                        var spaces = "";
+                        for (var amm = icount.toString().length; amm < 3; amm++)
+                            spaces = spaces + "&nbsp;";
 
-                    pageNumbers = pageNumbers + "<span class='pageNumber" + css + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveToPage(" + icount + ");'>" + (icount + 1) + "</span>" + spaces;
-                }
-
-                if (paggingData.pageAmm > 0) {
-                    var htmlPager = "";
-                    htmlPager = "<div class='pagerRow pagerNavigationContainer defaultPager' gridview_element='pagerNavigationContainer'>" +
-                        "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</div>";
-                    var pagesGroupAmm = (paggingData.pageAmm / settings.pagesShown);
-                    if (pagesGroupAmm > 1) {
-                        if (settings.showFirstPageButton)
-                            htmlPager += "<div class='pagerCell tdFirstPageGroup' gridview_element='firsGroupNavigation'><span class='MovePageGroup spFirstPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveFirstPageGroup(\"" + gridViewId + "\");'>|<</span></div>";
-
-                        htmlPager += "<div class='pagerCell tdPrevPageGroup' gridview_element='prevGroupNavigation'><span class='MovePageGroup spPrevPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPageGroup(\"" + gridViewId + "\");'><<</span></div>";
+                        pageNumbers = pageNumbers + "<span class='pageNumber" + css + "' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveToPage(" + icount + ");'>" + (icount + 1) + "</span>" + spaces;
                     }
 
-                    htmlPager = htmlPager + "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage(\"" + gridViewId + "\");'><</span></div>" +
-                                            "<div class='pagerCell tdPageNumbers' gridview_element='pageNumber'><div class='divPageNumbers' >" + pageNumbers + "</div></div>" +
-                                            "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></div>";
-                    if (pagesGroupAmm > 1) {
-                        htmlPager += "<div class='pagerCell tdNextPageGroup' gridview_element='nextGroupNavigation'><span class='MovePageGroup spNextPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPageGroup(\"" + gridViewId + "\");'>>></span></div>";
+                    if (paggingData.pageAmm > 0) {
+                        var htmlPager = "";
+                        htmlPager = "<div class='pagerRow pagerNavigationContainer defaultPager' gridview_element='pagerNavigationContainer'>" +
+                            "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</div>";
+                        var pagesGroupAmm = (paggingData.pageAmm / settings.pagesShown);
+                        if (pagesGroupAmm > 1) {
+                            if (settings.showFirstPageButton)
+                                htmlPager += "<div class='pagerCell tdFirstPageGroup' gridview_element='firsGroupNavigation'><span class='MovePageGroup spFirstPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveFirstPageGroup(\"" + gridViewId + "\");'>|<</span></div>";
 
-                        if (settings.showLastPageButton)
-                            htmlPager += "<div class='pagerCell tdLastPageGroup' gridview_element='lastGroupNavigation'><span class='MovePageGroup spLastPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveLastPageGroup(\"" + gridViewId + "\");'>>|</span></div>";
+                            htmlPager += "<div class='pagerCell tdPrevPageGroup' gridview_element='prevGroupNavigation'><span class='MovePageGroup spPrevPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPageGroup(\"" + gridViewId + "\");'><<</span></div>";
+                        }
+
+                        htmlPager = htmlPager + "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage(\"" + gridViewId + "\");'><</span></div>" +
+                                                "<div class='pagerCell tdPageNumbers' gridview_element='pageNumber'><div class='divPageNumbers' >" + pageNumbers + "</div></div>" +
+                                                "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></div>";
+                        if (pagesGroupAmm > 1) {
+                            htmlPager += "<div class='pagerCell tdNextPageGroup' gridview_element='nextGroupNavigation'><span class='MovePageGroup spNextPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPageGroup(\"" + gridViewId + "\");'>>></span></div>";
+
+                            if (settings.showLastPageButton)
+                                htmlPager += "<div class='pagerCell tdLastPageGroup' gridview_element='lastGroupNavigation'><span class='MovePageGroup spLastPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveLastPageGroup(\"" + gridViewId + "\");'>>|</span></div>";
+                        }
+
+                        htmlPager += "</div>";
+
+                        $pagerContainer.append(htmlPager);
                     }
-
-                    htmlPager += "</div>";
-
-                    $pagerContainer.append(htmlPager);
                 }
             }
-        }
         }
     };
 
@@ -603,6 +606,7 @@ grilla agregada es una gridView en sí misma.
                     else
                         pageNro = 1;
                     var $gridView = $this.parents("[gridViewId]:first");
+                    var gridViewId = $gridView.attr("gridViewId");
                     var paggingData = $.extend({}, $gridView.data("gridView:pagging"));
                     var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
 
@@ -626,21 +630,24 @@ grilla agregada es una gridView en sí misma.
             var elem = $("[gridViewId=" + gridViewId + "]");
             var settings = $.extend({}, $default, elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
+            if (paggingData.currIndex > 0 || (paggingData.totalRecords > 0 && paggingData.totalRecords >= settings.pageSize)) {
+                var pageNumbers = "";
+                var $pagerContainer = $("[gridview_element=pagerContainer]", elem);
+                $pagerContainer.empty();
+                var htmlPager = "";
+                htmlPager = "<div class='pagerRow pagerNavigationContainer backForwardPager' gridview_element='pagerNavigationContainer'>";
+                if (paggingData.currIndex > 0)
+                    htmlPager += "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage();'><</span></div>"
+                htmlPager += "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página actual: <span class='pageIndexNavigate' gridview_element='currentPageNumber'>" + (paggingData.currIndex + 1) + "</span></div>"
+                if (paggingData.totalRecords > 0)
+                    htmlPager += "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage();'>></span></div>";
+                htmlPager += "</div>";
+                $pagerContainer.append(htmlPager);
 
-            var pageNumbers = "";
-            var $pagerContainer = $("[gridview_element=pagerContainer]", elem);
-            $pagerContainer.empty();
-            var htmlPager = "";
-            htmlPager = "<div class='pagerRow pagerNavigationContainer backForwardPager' gridview_element='pagerNavigationContainer'>";
-            htmlPager = htmlPager + "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage();'><</span></div>" +
-                                    "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página actual: <span class='pageIndexNavigate' gridview_element='currentPageNumber'>" + (paggingData.currIndex + 1) + "</span></div>" +
-                                    "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage();'>></span></div>";
-            htmlPager += "</div>";
-            $pagerContainer.append(htmlPager);
-
-            $("[gridview_element=currentPageNumber]", $pagerContainer).click(function (evt) {
-                $("[gridViewId=" + gridViewId + "]").gridView().pager.toggleGoTo($(this), evt);
-            });
+                $("[gridview_element=currentPageNumber]", $pagerContainer).click(function (evt) {
+                    $("[gridViewId=" + gridViewId + "]").gridView().pager.toggleGoTo($(this), evt);
+                });
+            }
         }
     };
 
@@ -1891,6 +1898,14 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2016-08-11 0942 - v5.2.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se modificó el default Pagger, para siempre muestre la cantidad
+de registros, cuando está habilitado, aún cuando no hubieran 
+múltiples páginas de resultados.
 ================================================================
 Código:         | GridView - 2016-04-06 1653 - v5.0.0.0
 Autor:          | Seba Bustos
