@@ -2,7 +2,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-02-06 1743- v6.0.0.0
+Código:         | GridView - 2017-02-06 1754- v6.0.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -16,17 +16,13 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v6.0.0.0
+Versión:        | v6.0.1.0
 ----------------------------------------------------------------
-Fecha:          | 2017-02-06 17:43
+Fecha:          | 2017-02-06 17:54
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se modificó el backforwardPager, para que no muestre los controles
-de paginación si no existen resultados, que muestre sólo la flecha
-de avance si se está ubicado en la primera página y sólo la de 
-retroceso si se está ubicado en la última página.
 - Se corrigió un error detectado en la paginación backforward, cuando
-se intentaba navegar a una página específica.
+se intentaba navegar a la página 1, no estaba funcionando.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -292,7 +288,7 @@ grilla agregada es una gridView en sí misma.
                 throw new Error("No se ha indicado el control de grilla sobre el cual operar");
 
             if (isNaN(pageIndex))
-                throw new Error("El pageIndex debe ser un número");
+                throw new Error("El pageIndex debe ser un n&uacutemero");
 
             pageIndex = parseFloat(pageIndex);
 
@@ -301,7 +297,7 @@ grilla agregada es una gridView en sí misma.
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (pageIndex < 0 || pageIndex >= paggingData.pageAmm)
-                throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
+                throw new Error("El &iacutendice indicado est&aacute fuera del intervalo de p&aacuteginas v&aacutelidas");
 
             var fromIndex = paggingData.currIndex;
             var toIndex = pageIndex;
@@ -396,7 +392,7 @@ grilla agregada es una gridView en sí misma.
                 }
                 else {
                     if (!data.hasOwnProperty(settings.totalRecordsProperty)) {
-                        alert("El resultado de la búsqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
+                        alert("El resultado de la b&uacutesqueda no posee la propiedad \"" + settings.totalRecordsProperty + "\".");
                         return;
                     }
                     else
@@ -442,7 +438,7 @@ grilla agregada es una gridView en sí misma.
                     if (paggingData.pageAmm > 0) {
                         var htmlPager = "";
                         htmlPager = "<div class='pagerRow pagerNavigationContainer defaultPager' gridview_element='pagerNavigationContainer'>" +
-                            "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</div>";
+                            "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>P&aacutegina " + (paggingData.currIndex + 1) + " de " + paggingData.pageAmm + "</div>";
                         var pagesGroupAmm = (paggingData.pageAmm / settings.pagesShown);
                         if (pagesGroupAmm > 1) {
                             if (settings.showFirstPageButton)
@@ -544,7 +540,7 @@ grilla agregada es una gridView en sí misma.
                 throw new Error("No se ha indicado el control de grilla sobre el cual operar");
 
             if (isNaN(pageIndex))
-                throw new Error("El pageIndex debe ser un número");
+                throw new Error("El pageIndex debe ser un n&uacutemero");
 
             pageIndex = parseFloat(pageIndex);
 
@@ -553,7 +549,7 @@ grilla agregada es una gridView en sí misma.
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (pageIndex < 0)
-                throw new Error("El índice indicado está fuera del intervalo de páginas válidas");
+                throw new Error("El &iacutendice indicado est&aacute fuera del intervalo de p&aacuteginas v&aacutelidas");
 
             var fromIndex = paggingData.currIndex;
             var toIndex = pageIndex;
@@ -610,7 +606,7 @@ grilla agregada es una gridView en sí misma.
                     var paggingData = $.extend({}, $gridView.data("gridView:pagging"));
                     var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
 
-                    if (evt.keyCode !== 7 && (pageNro > 0) && (pageNro != paggingData.currIndex)) {
+                    if (evt.keyCode !== 7 && (pageNro >= 0) && (pageNro != paggingData.currIndex)) {
                         var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                         methods.pager.moveToPage($gridView.attr("gridViewId"), pageNro);
                     }
@@ -638,7 +634,7 @@ grilla agregada es una gridView en sí misma.
                 htmlPager = "<div class='pagerRow pagerNavigationContainer backForwardPager' gridview_element='pagerNavigationContainer'>";
                 if (paggingData.currIndex > 0)
                     htmlPager += "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage();'><</span></div>"
-                htmlPager += "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>Página actual: <span class='pageIndexNavigate' gridview_element='currentPageNumber'>" + (paggingData.currIndex + 1) + "</span></div>"
+                htmlPager += "<div class='pagerCell tdCurrPage' gridview_element='currentPageLabel'>P&aacutegina actual: <span class='pageIndexNavigate' gridview_element='currentPageNumber'>" + (paggingData.currIndex + 1) + "</span></div>"
                 if (paggingData.totalRecords > 0)
                     htmlPager += "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage();'>></span></div>";
                 htmlPager += "</div>";
@@ -1187,7 +1183,7 @@ grilla agregada es una gridView en sí misma.
         else if (!isNaN(atPosition))
             $("[gridview_element=tbBody]", elem).children("[gridview_rowType=row]:eq(" + atPosition + ")").before($row);//se agrega la fila
         else
-            throw new Error("El atPosition debe ser un número o \"last\" o \"first\"");
+            throw new Error("El atPosition debe ser un n&uacutemero o \"last\" o \"first\"");
 
         if (settings.onRowDataBound instanceof Function)
             settings.onRowDataBound($row, gridViewId, rowData, rowIndex);
@@ -1225,7 +1221,7 @@ grilla agregada es una gridView en sí misma.
                     doRefresh(gridViewId);
                 }
                 else {
-                    alert("El método invocado no es válido");
+                    alert("El m&eacutetodo invocado no es v&aacutelido");
 
                 }
             });
@@ -1319,13 +1315,13 @@ grilla agregada es una gridView en sí misma.
             var sortConfig = $.extend({}, elem.data("gridView:sortConfig"));
 
             if (isNaN(pageIndex))
-                throw new Error("El pageIndex debe ser un número");
+                throw new Error("El pageIndex debe ser un n&uacutemero");
 
             pageIndex = parseFloat(pageIndex);
 
             paggingData.currIndex = pageIndex;
             if (pageIndex === "") {
-                alert("Los parámetros de búsqueda son incorrectos.");
+                alert("Los par&aacutemetros de b&uacutesqueda son incorrectos.");
                 return;
             }
             var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
@@ -1802,7 +1798,7 @@ grilla agregada es una gridView en sí misma.
                     isSuccess = false;
                     status = "error";
                     messageError = errorThrown;
-                    drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. <br/> Intente nuevamente más tarde.");
+                    drawMessage(gridViewId, "Se produjo un error al intentar realizar la b&uacutesqueda. <br/> Intente nuevamente m&aacutes tarde.");
                     if (settings.onError !== null && settings.onError instanceof Function)
                         settings.onError(jqXHR, textStatus, errorThrown);
                     if (settings.onComplete !== null && settings.onComplete instanceof Function)
@@ -1874,8 +1870,8 @@ grilla agregada es una gridView en sí misma.
                     drawResults(gridViewId, data);
                 }
             } catch (error) {
-                var msg = "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message;
-                drawMessage(gridViewId, "Se produjo un error al intentar realizar la búsqueda. El error: " + error.message);
+                var msg = "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message;
+                drawMessage(gridViewId, "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message);
 
                 isSuccess = false;
                 status = "error";
@@ -1898,6 +1894,17 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-02-06 1743- v6.0.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se modificó el backforwardPager, para que no muestre los controles
+de paginación si no existen resultados, que muestre sólo la flecha
+de avance si se está ubicado en la primera página y sólo la de 
+retroceso si se está ubicado en la última página.
+- Se corrigió un error detectado en la paginación backforward, cuando
+se intentaba navegar a una página específica.
 ================================================================
 Código:         | GridView - 2016-08-11 0942 - v5.2.0.0
 Autor:          | Seba Bustos
