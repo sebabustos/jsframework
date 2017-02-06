@@ -1,4 +1,6 @@
-﻿/*
+﻿/*! GridView - 2017-02-06 1754- v6.0.1.0 
+https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
+/*
 ================================================================
                             VERSIÓN
 ================================================================
