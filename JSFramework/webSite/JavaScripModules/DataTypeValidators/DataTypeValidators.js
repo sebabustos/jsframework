@@ -1,21 +1,98 @@
-﻿/*! DataTypeValidators - 2016-12-15 - v3.2.2.0
+﻿/*! DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
 /*
-Especificaciones:
-- Hacer un DataTypeValidator("remove") para quitar la lógica de validación.
+================================================================
+                            VERSIÓN
+================================================================
+Código:       | DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
+----------------------------------------------------------------
+Nombre:       | DataTypeValidators
+----------------------------------------------------------------
+Tipo:         | PLUGIN 
+----------------------------------------------------------------
+Descripción:  | Permite configurar los controles para que 
+              | acepten determinados tipos de datos.
+			  | Asocia al control un comportamiento y restricciones
+			  | en función del tipo de dato configurado.
+			  | Permite configurar manualmente cada control, utilizando
+			  | directamente el plugin de jquery y además
+			  | al agregarse la referencia attacha al evento ready
+			  | del document, un código que lee todos los controles
+			  | con el atributo "datatype" y asocia automáticamente
+			  | el validator correspondiente al control.
+----------------------------------------------------------------
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Versión:      | v4.0.0.0
+----------------------------------------------------------------
+Fecha:        | 2017-02-16 15:15
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se modificaron los atributos que agrega y lee el plugin para que
+ al control, para agregarles el prefijo "data-validator"
+  Eh: <input type='text' dataType='date' ===> <input type='text' data-validator-datatype='date'
+  Nota: Se mantuvo la compatibilidad con las formas anteriores pero 
+  se recomienda su modificación
+- Se agregó la posibilidad de configurar, como atributo del html
+cualquier elemento de configuración del DataTypeValidator, respetando
+el siguiente format: data-validator-xxx => donde xxx es el atributo, 
+todo en minúscula. Los atributos permitidos son todos los enumerados en "FUNCIONALIDADES"
+- Se agregó la posibilidad de deshabilitar la validación en el "onfocusout"
+- Se agregó la posiblidad de llamar al plugin, con un selector jquery
+vacío, que permita ejecutar métodos para todos los validators configurados:
+    Ej: $().DataTypeValidator().areValids() => valida todos los controles y 
+                                               devuelve true|false, según si 
+                                               son todos válidos o existe 
+                                               alguno  inválido
+        $().DataTypeValidator().execute() => ejecuta las validaciones de 
+                                        todos los validators (como si se hiciera
+                                        el focusout)
+- Se corrigió un error que se generaba, cuando se configuraba una 
+ expresión regular con las barras (ej: /{expresión}/)
+ ================================================================
+                       FUNCIONALIDADES
+================================================================
+- Plugin de jquery que, según el tipo de dato definido:
+    - No permite ingresar caracteres no válidos según el tipo
+    - valide lo ingresado según el tipo de dato configurado al perder el foco
+- Script que automáticamente lea un atributo e inicialice el plugin para los controles.
+- Permite la siguiente configuración:
+    dataType: '*':  * cualquier caracter
+					alphabetic  => sólo letras [a-z A-Z] áÁ éÉ íÍ óÓ úÚ üÜ
+					numeric    => sólo números [0-9] - , .
+                    integer   => sólo números [0-9]
+					currency    => números decimales [0-9] - , . $
+					date     => los caracteres necesarios para una fecha [0-9] /
+					regex    => que cumpla con la expresión regular definida
+    dateformat: null => string, permite indicar el formato admitido de la fecha (ej: "dd/MM/yyyy HH:mm")
+    includeTime: true => true|false, si no se define un dateFormat, permite configurar si el validador de tipo fecha, admite el ingreso de hora y minutos ( HH:mm)
+    useJQueryDatepicker: true => true|false, permite habilitar o deshabilitar el plugin de datepicker de jquery, para los validadores del tipo fecha.
+    datePickerSettings: {} => permite pisar la configuración por defecto, o agregar, al datepicker de jquery.
+    allowCurrency: false => true|false, permite habilitar o deshabilitar el ingreso del caracter "$" en un validador del tipo numérico.
+    allowThousandSeparator: false => true|false, permite habilitar o deshabilitar el ingreso del caracter de separador de miles en un validador del tipo numérico.
+    allowDecimals: true => true|false, permite habilitar o deshabilitar el ingreso de decimales en un validador del tipo numérico.
+    allowNegativesValues: true => true|false, permite habilitar o deshabilitar el ingreso del signo "menos" en un validador del tipo numérico.
+    allowedChars: null => string, permite configurar los caracteres permitidos en un control, para los validadores del tipo genérico y alfabéticos
+    specialChars: null => string, permite configurar caracteres, adicionales, permitidos en un control, para los validadores del tipo genérico y alfabéticos
+    validDataRegex: null => string, permite definir una expresión regular que se evaluará para validar los datos ingresados, para los validadores del tipo genérico, alfabéticos y numéricos
+    allowNumbers: true => true|false, permite habilitar el ingreso de números en un validador del tipo alfabético.
+    commaSeparators: null => string o array de strings, el/los caracteres que se utilizarán como separador de decimales en los validadores del tipo numérico. Si se incluyen varios se permitirá cualquiera de ellos.
+    thousandSeparators: null => string o array de strings, el/los caracteres que se utilizarán como separador de miles en los validadores del tipo numérico. Si se incluyen varios se permitirá cualquiera de ellos.
+    invalidDataCss: 'invalidData' => string, clase de estilo que se le asignará al control, cuando el dato ingresado sea inválido.
+    invalidMessageCss: 'default' => string, clase de estilo asignado al div que muestra el mensaje de dato inválido. (Si se configura 'default' utiliza el estilo por defecto del plugin)
+    showInvalidMessage: true => true|false, permite habilitar o deshabilitar el uso del mensaje de dato inválido.
+    invalidDataMessage: "El dato ingresado es inválido" => string, permite configurar el texto a mostrar en el mensaje de dato inválido.
+    enableValidateOnFocusOut: true => true|false, permite habilitar o deshabilitar la ejecución e la valiación de datos al perder el foco del control.
+ - Permite configurar los siguientes eventos:
+     onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
+     onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
+================================================================
+                       POSIBLES MEJORAS
+================================================================
 - Permitir desactivar el script de inicialización automático.
-
 - una función que se pueda hacer validate(myString, tipoDato) 
     Ej: 
       $.validate("12345", numeric|currency|string|"abc...XYZ");
-
-- un plugin de jquery que:
-    - No permita ingresar caracteres no válidos según el tipo
-    - valide la longitud del texto
-    - valide lo ingresado según el tipo de dato configurado al perder el foco
-
-- un script que automáticamente lea un atributo e inicialice el plugin para los controles.
-
 */
 (function ($) {
     "use strict"
@@ -54,8 +131,17 @@ Especificaciones:
         showInvalidMessage: true,
         onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
         onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
-        invalidDataMessage: "El dato ingresado es inválido"
+        invalidDataMessage: "El dato ingresado es inválido",
+        enableValidateOnFocusOut: true
     }
+    var $defaultMessageCss = {
+        borderWidth: 1,
+        borderStyle: "solid",
+        borderColor: "#CCCCCC",
+        borderRadius: "5px 5px",
+        backgroundColor: "#FF8C8C",
+        color: "#FFFFFF"
+    };
     var internalMethods = {
         getAllowedChars: function (settings) {
             var allowedChars = settings.allowedChars;
@@ -133,13 +219,14 @@ Especificaciones:
                     if (validDataRegex[0] === "/")
                         //Se quita el primer / si existe
                         validDataRegex = validDataRegex.slice(1);
-                    if ((end = validDataRegex.lastIndexOf("/")) > 0) {
-                        //Se quita la parte de configuración y se guarda
+                    if ((end = validDataRegex.lastIndexOf("/")) >= 0) {
+                        //Se extrae la parte de configuración 
                         regConfig = validDataRegex.slice(end);
-                        //se quita el / final de la expresión regular.
+                        //se quita el / al comienzo de la configuración.
                         regConfig = regConfig.slice(1);
-                        //la expresión en sí misma.
-                        validDataRegex = validDataRegex(0, end);
+                        //se quita el / final de la expresión regular
+                        //para obtener la expresión en sí misma, sin configuración
+                        validDataRegex = validDataRegex.substring(0, end);
                     }
                 }
 
@@ -149,7 +236,6 @@ Especificaciones:
             return retVal;
         }
     }
-
     var alphabeticDataTypeValidator = {
         ValidateInput: function (keyCode, currValue, settings) {
             var specialChars = settings.specialChars;
@@ -399,7 +485,7 @@ Especificaciones:
 
                 validDataRegex = dateFormat;
                 validDataRegex = validDataRegex.replace(/dd/g, "([0-9]{1,2})");
-                validDataRegex = validDataRegex.replace(/mm/g, "([0-9]{1,2})");
+                validDataRegex = validDataRegex.replace(/MM/g, "([0-9]{1,2})");
                 validDataRegex = validDataRegex.replace(/yyyy/g, "([0-9]{4})");
                 validDataRegex = validDataRegex.replace(/HH/g, "([0-9]{1,2})");
                 validDataRegex = validDataRegex.replace(/hh/g, "([0-9]{1,2})");
@@ -419,15 +505,15 @@ Especificaciones:
         initValidator: function ($this, $default, options, dataTypeObject) {
             var settings = $.extend({}, $default, options);
             var dataType = options.dataType;
-
-            if (typeof $this.attr("ValidatorId") === "undefined" || $this.attr("ValidatorId") === "") {
+            var validatorId = $this.data("validator-id");
+            if (typeof validatorId === "undefined" || validatorId === "" || validatorId === null) {
                 var elemId = $this[0].id;
                 if (typeof elemId === "undefined" || elemId === "") {
                     elemId = guid;
                     guid++
                 }
 
-                $this.attr("ValidatorId", elemId);
+                $this.attr("data-validator-id", elemId);
             }
 
             $this.data("DataTypeValidatorConfig", options);
@@ -437,7 +523,7 @@ Especificaciones:
                 //si se presiona una tecla sobre el control, y está configurado el mensaje de validación, se oculta el mensaje.
                 if (settings.showInvalidMessage) {
                     $this.removeClass(settings.invalidDataCss);
-                    $("#InvalidMessage" + $this.attr("ValidatorId")).remove();
+                    $("#InvalidMessage" + $this.data("validator-id")).remove();
                 }
 
                 var isValid = dataTypeObject.ValidateInput(evt.which, $this.val(), settings);
@@ -453,48 +539,14 @@ Especificaciones:
                          if (evt.which === 8 || evt.which === 46) {
                              var $this = $(this);
                              $this.removeClass(settings.invalidDataCss);
-                             $("#InvalidMessage" + $this.attr("ValidatorId")).remove();
+                             $("#InvalidMessage" + $this.data("validator-id")).remove();
                          }
-                     }
-                 })
-                 .on("focusout.datatypevalidator", function () {
-                     var $this = $(this);
-                     if ($this.val() !== "" && !dataTypeObject.ValidateData($this.val(), settings)) {
-                         $this.addClass(settings.invalidDataCss);
-                         if (settings.showInvalidMessage) {
-                             var elemId = $this.attr("ValidatorId");
-                             $("#InvalidMessage" + elemId).remove();
-                             //si el usuario sobreescribe el css message se usa ese, aunque este sea vacío, pero si no sobreescribe coloca
-                             //por defecto "invalidMessage"
-                             var cssMessage = settings.invalidMessageCss === 'default' ? "" : settings.invalidMessageCss;
-                             //si existe definido un CSS para el mensaje, se coloca la clase específica según el tipo de dato, sino no.
-                             var cssDataTypeMessage = (cssMessage !== '' && typeof cssMessage !== "undefined") ? " " + dataType + cssMessage : "";
-
-                             var invalidMsg = $("<div id='InvalidMessage" + elemId + "' class='" + cssMessage + cssDataTypeMessage + "' >" + settings.invalidDataMessage + "</div>");
-                             $this.parent().append(invalidMsg);
-                             var pos = $this.position();
-                             invalidMsg.css({
-                                 position: "absolute",
-                                 top: (pos.top - ($this.height() - ($this.height() / 10))),
-                                 left: pos.left
-                             });
-
-                             if (settings.invalidMessageCss === 'default') {
-                                 invalidMsg.css({
-                                     borderWidth: 1,
-                                     borderStyle: "solid",
-                                     borderColor: "#CCCCCC",
-                                     borderRadius: "5px 5px",
-                                     backgroundColor: "#FF8C8C",
-                                     color: "#FFFFFF"
-                                 });
-                             }
-
-                         }
-                         if (typeof settings.onValidationFailed === "function")
-                             settings.onValidationFailed($this);
                      }
                  });
+            if (settings.enableValidateOnFocusOut)
+                $this.on("focusout.datatypevalidator", function () {
+                    methods.validate($(this), settings, dataTypeObject);
+                });
 
             if ((dataType === "date" || dataType === "datetime") && settings.useJQueryDatepicker) {
                 var $defaultDatePickerSetting = {
@@ -515,6 +567,52 @@ Especificaciones:
                 $this.datepicker(datePickSett);
             }
         },
+        validate: function ($this, settings, dataTypeObject) {
+            if (typeof $this !== "undefined" && $this !== null && $this.length > 0) {
+                if ($this.val() !== "") {
+                    if (typeof settings === "undefined" || settings === null) {
+                        var options = $this.data("DataTypeValidatorConfig");
+                        settings = $.extend({}, $default, options);
+                    }
+                    if (typeof dataTypeObject === "undefined" || dataTypeObject === null) {
+                        var dataTypeObject;
+                        if ((settings.dataType === "numeric") || (settings.dataType === "integer") || (settings.dataType === "currency")) dataTypeObject = numericDataTypeValidator;
+                        else if (settings.dataType === "alphabetic") dataTypeObject = alphabeticDataTypeValidator;
+                        else if (settings.dataType === "date") dataTypeObject = dateDataTypeValidator;
+                        else dataTypeObject = genericDataTypeValidator;
+                    }
+                    if (!dataTypeObject.ValidateData($this.val(), settings)) {
+                        $this.addClass(settings.invalidDataCss);
+                        if (settings.showInvalidMessage) {
+                            var elemId = $this.data("validator-id");
+                            $("#InvalidMessage" + elemId).remove();
+                            //si el usuario sobreescribe el css message se usa ese, aunque este sea vacío, pero si no sobreescribe coloca
+                            //por defecto "invalidMessage"
+                            var cssMessage = settings.invalidMessageCss === 'default' ? "" : settings.invalidMessageCss;
+                            //si existe definido un CSS para el mensaje, se coloca la clase específica según el tipo de dato, sino no.
+                            var cssDataTypeMessage = (cssMessage !== '' && typeof cssMessage !== "undefined") ? " " + settings.dataType + cssMessage : "";
+
+                            var invalidMsg = $("<div id='InvalidMessage" + elemId + "' class='" + cssMessage + cssDataTypeMessage + "' >" + settings.invalidDataMessage + "</div>");
+                            $this.parent().append(invalidMsg);
+                            var pos = $this.position();
+                            invalidMsg.css({
+                                position: "absolute",
+                                top: (pos.top - ($this.height() - ($this.height() / 10))),
+                                left: pos.left
+                            });
+
+                            if (settings.invalidMessageCss === 'default') {
+                                invalidMsg.css($defaultMessageCss);
+                            }
+
+                        }
+                        if (typeof settings.onValidationFailed === "function")
+                            settings.onValidationFailed($this);
+                    }
+                }
+            }
+            else alert("Error - el objeto recibido no es válido. [DataTypeValidators - validate]");
+        },
         setGenericValidator: function (options, $this) {
             methods.initValidator($this, $default, options, genericDataTypeValidator);
         },
@@ -524,15 +622,12 @@ Especificaciones:
             options = $.extend({ allowCurrency: true, allowThousandSeparator: true }, options);
             methods.initValidator($this, $default, options, numericDataTypeValidator);
         },
-
         setNumericValidator: function (options, $this) {
             methods.initValidator($this, $default, options, numericDataTypeValidator);
         },
-
         setAlphabeticValidator: function (options, $this) {
             methods.initValidator($this, $default, options, alphabeticDataTypeValidator);
         },
-
         setDateValidator: function (options, $this) {
             methods.initValidator($this, $default, options, dateDataTypeValidator);
         }
@@ -569,14 +664,37 @@ Especificaciones:
                 var options = $this.data("DataTypeValidatorConfig");
                 var settings = $.extend({}, $default, options);
                 $this.off(".datatypevalidator");
-                $this.removeAttr("ValidatorId");
+                $this.data("validator-id", null);
                 $this.data("DataTypeValidatorConfig", null);
-                var dataType = $this.attr("dataType");
+                var dataType = $this.data("validator-datatype").toLowerCase();
+
                 if (dataType === "date" && settings.useJQueryDatepicker)
                     $this.datepicker("destroy");
             }
+        },
+        validate: function ($this) {
+            methods.validate($this);
         }
     };
+    //metodos que permiten manejo grupales, por ejemplo
+    //ejecutar todas las validaciones de todos los controles
+    //con validators inicializados.
+    var groupPublicMethods = {
+        areValids: function () {
+            var areAllValids = true;
+            $("[data-validator-id]").each(function () {
+                if (!(areAllValids = publicMethods.isValid($(this))))
+                    return false;
+            });
+
+            return areAllValids;
+        },
+        executeValidators: function () {
+            $("[data-validator-id]").each(function () {
+                methods.validate($(this));
+            });
+        }
+    }
 
     ///Plugin, este permite configurar los data type validators para un control o un conjunto de controles a partir del resultado de un selector 
     ///jquery
@@ -586,8 +704,7 @@ Especificaciones:
                 options = { dataType: options };
 
             var settings = $.extend({}, $default, options);
-
-            $this.attr("DataType", settings.dataType);
+            $this.data("validator-datatype", settings.dataType);
 
             if (settings.dataType === "numeric")
                 methods.setNumericValidator(options, $this);
@@ -608,14 +725,18 @@ Especificaciones:
 
         //si se ejecuto el selector sin parámetros, $(), el selector no devolvió ningún control, o bien el control 
         //ya fue inicializado con un validador, se devuelve el "publicMethods" para la ejecución de datos.
-        if ((this.length <= 0) || (this.length === 1 && (typeof this.attr("ValidatorId") !== "undefined" && this.attr("ValidatorId") !== ""))) {
+        if ((this.length <= 0) || (this.length === 1 && (typeof this.data("validator-id") !== "undefined" && this.data("validator-id") !== ""))) {
+            var returnMethods = publicMethods;
+            if (this.length <= 0)
+                returnMethods = $.extend(groupPublicMethods);
             $tempthis = this.length == 1 ? this : arguments[0];//si viene de un control, y este fue inicializado, se coloca este como contexto, sino se asume que el control es el primer parámetro.
-            return publicMethods;
+
+            return returnMethods;
         }
         else {
             this.each(function (index, item) {
                 var $item = $(item);
-                if (typeof $item.attr("ValidatorId") === "undefined" || $item.attr("ValidatorId") === "")
+                if (typeof $item.data("validator-id") === "undefined" || $item.data("validator-id") === "")
                     init($item);
             });
         }
@@ -629,79 +750,64 @@ Especificaciones:
     function Init() {
         $(document).ready(function () {
             //busca todos los controles que tengan el atributo "DataType"
-            $("[DataType]").each(function (index) {
+            var $listControls = $("[data-validator-datatype]");
+            if ($listControls.length <= 0)
+                $listControls = $("[DataType]");
+
+            $listControls.each(function (index) {
                 var $this = $(this);
-                var dataType = $this.attr("DataType").toLowerCase();
-                var settings = {};
+                var dataType = $this.data("validator-datatype");
+                if (typeof dataType === "undefined")
+                    dataType = $this.attr("DataType");
+                dataType = dataType.toLowerCase();
+
+                var options = {};
                 if (typeof DateTypeValidatorGetSettings === "function")
-                    settings = DateTypeValidatorGetSettings(dataType, this);
+                    options = DateTypeValidatorGetSettings(dataType, this);
+
                 var validRegex = $this.attr("validDataRegex");
                 if (typeof validRegex !== "undefined" && validRegex !== null && validRegex !== "")
-                    settings = $.extend(settings, { "validDataRegex": validRegex });
+                    options = $.extend(options, { "validDataRegex": validRegex });
 
                 var allowedChars = $this.attr("allowedChars");
-                if (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars !== "") {
-                    allowedChars = (allowedChars.replace("0-9", "0123456789")
-                                               .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
-                                               .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
-                    settings = $.extend(settings, { "allowedChars": allowedChars });
+                if (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars !== "")
+                    options = $.extend(options, { "allowedChars": allowedChars });
+
+                options = $.extend(options, { "dataType": dataType });
+                //lee cualquier propiedad del control que estuviera configurada en él 
+                for (var index in $default) {
+                    var dataAttr = $this.data("validator-" + index.toLocaleLowerCase());
+                    if (typeof dataAttr !== "undefined" && dataAttr !== null) {
+                        if (index == "onValidationFailed" || index == "onInvalidKeyPress") {
+                            if (dataAttr !== "") {
+                                if ((dataAttr.indexOf("function") == 0))
+                                    dataAttr = eval("dataAttr");
+                                else {
+                                    if (index == "onValidationFailed")
+                                        dataAttr = window[dataAttr];
+                                    else if (index == "onInvalidKeyPress")
+                                        dataAttr = window[dataAttr];
+
+                                }
+                            }
+                        }
+                        options[index] = dataAttr;
+                    }
                 }
-                var options = $.extend(settings, { "dataType": dataType });
+                if (typeof options["allowedChars"] !== "undefined")
+                {
+                    options["allowedChars"] = (options["allowedChars"].replace("0-9", "0123456789")
+                           .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
+                           .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
+                }
 
                 $this.DataTypeValidator(options);
             });
         });
     }
-
     Init();
 })(jQuery);
 /*
-================================================================
-                            VERSIÓN
-================================================================
-Código:       | DataTypeValidators - 2016-12-19 - v3.2.2.0
-----------------------------------------------------------------
-Nombre:       | DataTypeValidators
-----------------------------------------------------------------
-Tipo:         | PLUGIN 
-----------------------------------------------------------------
-Descripción:  | Permite configurar los controles para que 
-              | acepten determinados tipos de datos.
-			  | Asocia al control un comportamiento y restricciones
-			  | en función del tipo de dato configurado.
-			  | Permite configurar manualmente cada control, utilizando
-			  | directamente el plugin de jquery y además
-			  | al agregarse la referencia attacha al evento ready
-			  | del document, un código que lee todos los controles
-			  | con el atributo "datatype" y asocia automáticamente
-			  | el validator correspondiente al control.
-----------------------------------------------------------------
-Autor:        | Sebastián Bustos Argañaraz
-----------------------------------------------------------------
-Versión:      | v3.2.2.0
-----------------------------------------------------------------
-Fecha:        | 2015-12-19 12:33
-----------------------------------------------------------------
-Cambios de la Versión:
- - Se corrigió la expresión regular que valida el ingreso de separador
- de miles, para que no sea requerido el separador de miles, sino opcional.
-================================================================
-                       FUNCIONALIDADES
-================================================================
-- Plugin de jquery que, según el tipo de dato definido:
-    - No permite ingresar caracteres no válidos según el tipo
-    - valide lo ingresado según el tipo de dato configurado al perder el foco
-- Script que automáticamente lea un atributo e inicialice el plugin para los controles.
-================================================================
-                       POSIBLES MEJORAS
-================================================================
-- Hacer un DataTypeValidator("remove") para quitar la lógica de validación.
-- Permitir desactivar el script de inicialización automático.
-- una función que se pueda hacer validate(myString, tipoDato) 
-    Ej: 
-      $.validate("12345", numeric|currency|string|"abc...XYZ");
-- valide la longitud del texto
-
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
