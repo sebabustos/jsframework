@@ -1,5 +1,5 @@
-﻿/*!webDialog - 2016-11-22 1322 - 5.2.0.0
-https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/dialog*/
+﻿/*! webDialog - 2017-02-23 1121 - 6.0.0.0
+https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/dialog */
 (function ($) {
     var $default = {
         dialogId: null,
@@ -345,19 +345,19 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
                 }
 
                 if (settings.autoCloseWindow === true) {
-                    var $countDown = $("[countDownTimer]", $webDialog);
+                    var $countDown = $("[countDownTimer]", dialogContainer);
                     var initialTimer = 3000;
                     if ($countDown.length > 0)
-                        initialTimer = parseFloat(countDown.attr("countDownTimer"));
+                        initialTimer = parseFloat($countDown.attr("countDownTimer"));
 
                     var interval = window.setInterval(
                       function () {
                           var $webDialog = $("[webDialogId=" + currentId + "]");
-                          var countDown = $("[countDownTimer]", $webDialog);
-                          var timer = parseFloat(countDown.attr("countDownTimer"));
+                          var $countDown = $("[countDownTimer]", $webDialog);
+                          var timer = parseFloat($countDown.attr("countDownTimer"));
                           timer--;
-                          countDown.attr("countDownTimer", timer.toString());
-                          countDown.text(timer.toString());
+                          $countDown.attr("countDownTimer", timer.toString());
+                          $countDown.text(timer.toString());
                       }
                     , 999);/*cada 1 segundo para actualizar el texto*/
                     dialogContainer.attr("autoCloseIntervalId", interval);
@@ -406,7 +406,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
 ================================================================
                            VERSIÓN
 ================================================================
-Código:       | webDialog - 2016-11-22 1322 - 5.2.0.0
+Código:       | webDialog - 2017-02-23 1121 - 6.0.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -420,14 +420,13 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v5.2.0.0
+Versión:      | v6.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2016-11-22 13:22
+Fecha:        | 2017-02-23 1121
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error en el uso de las notificationTypes, se 
-  modificó el acceso "this.notificationTypes" 
-  por "$.webDialogs.notificationTypes"
+- Se corrigió un error que existía cuando se habilitaba el autoCloseWindow
+y el content el div ya contenía un atributo "countDownTimer" incluído.
 ================================================================
                     FUNCIONALIDADES
 ================================================================
@@ -450,6 +449,14 @@ Cambios de la Versión:
                 HISTORIAL DE VERSIONES
 ================================================================
                            VERSIÓN
+================================================================
+Código:       | webDialog - 2016-11-22 1322 - 5.2.0.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió un error en el uso de las notificationTypes, se 
+  modificó el acceso "this.notificationTypes" 
+  por "$.webDialogs.notificationTypes"
 ================================================================
 Código:       | webDialog - 2016-04-25 1646 - 5.1.0.0
 Autor:        | Sebastián Bustos
