@@ -1,4 +1,7 @@
-﻿if (typeof JSFramework === "undefined" || JSFramework === null)
+﻿/*! wsAjax - 2015-12-02 1354 - v3.1.0.0
+https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/wsAjax */
+
+if (typeof JSFramework === "undefined" || JSFramework === null)
     var JSFramework = {}
 if (typeof JSFramework.Commons === "undefined" || JSFramework.Commons === null)
     JSFramework.Commons = {}
