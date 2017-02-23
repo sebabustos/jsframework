@@ -1,10 +1,10 @@
-﻿/*! GridView - 2017-02-06 1754- v6.0.1.0 
+﻿/*! GridView - 2017-02-23 1118- v6.1.0.0 
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-02-06 1754- v6.0.1.0
+Código:         | GridView - 2017-02-23 1118- v6.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -23,8 +23,13 @@ Versión:        | v6.0.1.0
 Fecha:          | 2017-02-06 17:54
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error detectado en la paginación backforward, cuando
-se intentaba navegar a la página 1, no estaba funcionando.
+- Se agregó la posibilidad de configurar un método del cual se 
+obtendrá la configuración por defecto, permitiendo así, sobrescribir
+la configuración por defecto del componente en todo un site.
+    Ej: function GridView_GetConfiguration()
+        {
+            return {ajaxLoaderImage: "../Images/indicator.gif"};
+        }
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -207,6 +212,14 @@ grilla agregada es una gridView en sí misma.
         noResultsClass: "tdNoRecords"
     };
 
+    function getDefaults() {
+        var retVal = $default;
+        if (typeof window.GridView_GetConfiguration !== "undefined" && window.GridView_GetConfiguration !== null)
+            retVal = $.extend({}, retVal, window.GridView_GetConfiguration($default));
+
+        return retVal;
+    }
+
     var defaultPager = {
         movePrevPage: function () {
             var gridViewId;
@@ -215,7 +228,7 @@ grilla agregada es una gridView en sí misma.
             else
                 gridViewId = arguments[0];
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (paggingData.currIndex > 0) {
@@ -247,7 +260,7 @@ grilla agregada es una gridView en sí misma.
                 gridViewId = arguments[0];
 
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             if ((paggingData.currIndex + 1) < paggingData.pageAmm) {
                 var fromIndex = paggingData.currIndex;
@@ -295,7 +308,7 @@ grilla agregada es una gridView en sí misma.
             pageIndex = parseFloat(pageIndex);
 
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (pageIndex < 0 || pageIndex >= paggingData.pageAmm)
@@ -338,7 +351,7 @@ grilla agregada es una gridView en sí misma.
             else
                 gridViewId = arguments[0];
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             if (((paggingData.currPageGroupNum + 1) * settings.pagesShown) < paggingData.pageAmm) {
                 paggingData.currPageGroupNum++;
@@ -367,7 +380,7 @@ grilla agregada es una gridView en sí misma.
             else
                 gridViewId = arguments[0];
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             var rest = (paggingData.pageAmm % settings.pagesShown);
@@ -410,7 +423,7 @@ grilla agregada es una gridView en sí misma.
         },
         drawPager: function (gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             if (paggingData.totalRecords > 0) {
                 var $pagerContainer = $("[gridview_element=pagerContainer]", elem);
@@ -476,7 +489,7 @@ grilla agregada es una gridView en sí misma.
             else
                 gridViewId = arguments[0];
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (paggingData.currIndex > 0) {
@@ -505,7 +518,7 @@ grilla agregada es una gridView en sí misma.
                 gridViewId = arguments[0];
 
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             var fromIndex = paggingData.currIndex;
             var toIndex = fromIndex + 1;
@@ -547,7 +560,7 @@ grilla agregada es una gridView en sí misma.
             pageIndex = parseFloat(pageIndex);
 
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
             if (pageIndex < 0)
@@ -606,7 +619,7 @@ grilla agregada es una gridView en sí misma.
                     var $gridView = $this.parents("[gridViewId]:first");
                     var gridViewId = $gridView.attr("gridViewId");
                     var paggingData = $.extend({}, $gridView.data("gridView:pagging"));
-                    var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
+                    var settings = $.extend({}, getDefaults(), $gridView.data("gridviewconfig"));
 
                     if (evt.keyCode !== 7 && (pageNro >= 0) && (pageNro != paggingData.currIndex)) {
                         var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
@@ -626,7 +639,7 @@ grilla agregada es una gridView en sí misma.
         },
         drawPager: function (gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             if (paggingData.currIndex > 0 || (paggingData.totalRecords > 0 && paggingData.totalRecords >= settings.pageSize)) {
                 var pageNumbers = "";
@@ -945,19 +958,19 @@ grilla agregada es una gridView en sí misma.
                 var parentSettings;
                 //se obtiene la referencia a la grilla hija
                 var parentGrid = $("[gridViewId=" + gridViewId + "]");
-                parentSettings = $.extend({}, $default, parentGrid.data("gridviewconfig"));
+                parentSettings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig"));
 
                 //se busca si ya existe la grilla hija.
                 var childGridRow = sourceRow.next();
 
                 if (childGridRow.length > 0 && childGridRow.attr("gridview_rowType") === "childGrid" && childGridRow.attr("gridView_rowIndex") === rowIndex.toString()) {
                     var childGrid = $("[gridViewId=" + gridViewId + "_ChildGrid" + rowIndex + "]", childGridRow);
-                    settings = $.extend({}, $default, childGrid.data("gridviewconfig"));
+                    settings = $.extend({}, getDefaults(), childGrid.data("gridviewconfig"));
                 }
                     //si no existe se crea.
                 else {
                     //se obtiene la configuración de grilla hija.
-                    settings = $.extend({}, $default, parentGrid.data("gridviewconfig").childGrid);
+                    settings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig").childGrid);
                     //TODO_SEBA: en el DataSource de la grilla hija se debe poder parsear info. Ej: mandar el itemData de la fila.
 
                     var cellsCount = sourceRow.children("[gridview_cellType]").length - 1;
@@ -1046,7 +1059,7 @@ grilla agregada es una gridView en sí misma.
         if (typeof $gridView !== "undefined" && $gridView !== null) {
             //si no lo recibe por parámetro, intenta obtener el handler de paginación de la configuración.
             if (typeof pagerHandler === "undefined" && $gridView.length === 1) {
-                var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
+                var settings = $.extend({}, getDefaults(), $gridView.data("gridviewconfig"));
                 pagerHandler = privateMethods.getPageHandler(settings);
             }
         }
@@ -1107,7 +1120,7 @@ grilla agregada es una gridView en sí misma.
         if (elems !== null && elems.length > 0) {
             $.each(elems, function (index, item) {
                 var elem = $(item);
-                var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+                var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
                 var paggingData = $.extend({}, elem.data("gridView:pagging"));
 
                 if (settings.onCleanSearch instanceof Function) {
@@ -1147,7 +1160,7 @@ grilla agregada es una gridView en sí misma.
             elem = $("[gridViewId=" + gridViewId + "]");
         }
 
-        var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+        var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
 
         var lastRowIndex = $("[gridview_element=tbBody]", elem).children("[gridview_rowType=row]:last").attr("gridView_rowIndex");
         var rowIndex = parseFloat(lastRowIndex) + 1;
@@ -1212,7 +1225,7 @@ grilla agregada es una gridView en sí misma.
 
             $.each(this, function (index, item) {
                 var gridViewId = $(item).attr("gridViewId");
-                var settings = $.extend({}, $default, $(item).data("gridviewconfig"));
+                var settings = $.extend({}, getDefaults(), $(item).data("gridviewconfig"));
                 if ((options.toLowerCase() === "dosearch") || (options.toLowerCase() === "search")) {
                     doSearch(gridViewId, pageIndex);
                 }
@@ -1262,7 +1275,7 @@ grilla agregada es una gridView en sí misma.
             var itemOptions = $.extend({}, options);
 
             if (typeof itemOptions.useJQueryUI === "undefined" || itemOptions.useJQueryUI === null)
-                itemOptions.useJQueryUI = $default.useJQueryUI;
+                itemOptions.useJQueryUI = getDefaults().useJQueryUI;
             if (typeof target.attr("gridViewType") === "undefined")
                 target.attr("gridViewType", "gridView");
 
@@ -1284,7 +1297,7 @@ grilla agregada es una gridView en sí misma.
                 .append($gridViewFooter);
 
             if (typeof itemOptions.pagerPosition === "undefined" || itemOptions.pagerPosition === null)
-                itemOptions.pagerPosition = $default.pagerPosition;
+                itemOptions.pagerPosition = getDefaults().pagerPosition;
 
             /*Si no se configuro un selector en el pager, se inserta el pager por defecto*/
             var $pagerContainer = "<div class='pagerContainer' gridview_element='pagerContainer'></div>";
@@ -1298,7 +1311,7 @@ grilla agregada es una gridView en sí misma.
                 if (typeof itemOptions.defaultSortDirection !== "undefined" && itemOptions.defaultSortDirection !== null)
                     sortConfig.sortDirection = itemOptions.defaultSortDirection;
                 else
-                    sortConfig.sortDirection = $default.defaultSortDirection;
+                    sortConfig.sortDirection = getDefaults().defaultSortDirection;
             }
 
             target.data("gridviewconfig", itemOptions)
@@ -1312,7 +1325,7 @@ grilla agregada es una gridView en sí misma.
 
         function doSearch(gridViewId, pageIndex) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var paggingData = $.extend({}, elem.data("gridView:pagging"));
             var sortConfig = $.extend({}, elem.data("gridView:sortConfig"));
 
@@ -1387,14 +1400,14 @@ grilla agregada es una gridView en sí misma.
 
         function drawProcessingIcon(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             var columnsAmmount = elem.attr("gridView_columnsAmmount");
             $("[gridview_element=tbBody]", elem).empty();
             $("[gridview_element=gridViewBody]", elem).after("<div class='processingContainer' gridview_rowType='processingContainer'><div class='processingLabel' gridview_cellType='processing' ><img src='" + settings.ajaxLoaderImage + "' /></div></div>");
         }
         function drawMessage(gridViewId, msg, cssClass) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             if (typeof cssClass === "undefined" || cssClass === null)
                 cssClass = "";
             var columnsAmmount = elem.attr("gridView_columnsAmmount");
@@ -1403,7 +1416,7 @@ grilla agregada es una gridView en sí misma.
         }
         function drawHeader(gridViewId) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
 
             $("[gridview_element=tbHeader]:first", elem).empty().append(getRowHeader(elem, settings));
 
@@ -1411,7 +1424,7 @@ grilla agregada es una gridView en sí misma.
         }
         function drawResults(gridViewId, data) {
             var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, $default, elem.data("gridviewconfig"));
+            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
             drawGridView(elem, settings, data);
         }
         //Dibuja las filas y celdas de la grilla 
@@ -1649,7 +1662,7 @@ grilla agregada es una gridView en sí misma.
                             var $this = $(this);
                             var colIndex = $this.attr("columnIndex");
                             var $gridView = $this.parents("[gridViewId]:first");
-                            var settings = $.extend({}, $default, $gridView.data("gridviewconfig"));
+                            var settings = $.extend({}, getDefaults(), $gridView.data("gridviewconfig"));
                             var $row = $this.parents("[gridview_rowType='header']:first");
                             var sortConfig = $gridView.data("gridView:sortConfig");
                             var paggingData = $gridView.data("gridView:pagging");
@@ -1896,6 +1909,13 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-02-06 1754- v6.0.1.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió un error detectado en la paginación backforward, cuando
+se intentaba navegar a la página 1, no estaba funcionando.
 ================================================================
 Código:         | GridView - 2017-02-06 1743- v6.0.0.0
 Autor:          | Seba Bustos
