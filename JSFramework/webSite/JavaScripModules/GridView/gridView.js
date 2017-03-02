@@ -1,10 +1,10 @@
-﻿/*! GridView - 2017-02-23 1118- v6.1.0.0 
+﻿/*! GridView - 2017-03-02 1245 - v6.2.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-02-23 1118- v6.1.0.0
+Código:         | GridView - 2017-03-02 1245 - v6.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -18,18 +18,21 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v6.0.1.0
+Versión:        | v6.2.0.0
 ----------------------------------------------------------------
-Fecha:          | 2017-02-06 17:54
+Fecha:          | 2017-03-02 12:45
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de configurar un método del cual se 
-obtendrá la configuración por defecto, permitiendo así, sobrescribir
-la configuración por defecto del componente en todo un site.
-    Ej: function GridView_GetConfiguration()
-        {
-            return {ajaxLoaderImage: "../Images/indicator.gif"};
-        }
+- Se unificaron los criterios de disparo de eventos en la modalidad
+WS o JSON de la grilla, ya que, cuando se encontraba configurada
+con un datasource del tipo JSON, el evento beforeDraw se ejecutaba
+antes de obtener los datos y no pasaba el set de datos a la grilla.
+- Se agregó el evento searchResultPreProcessing, en la modalidad
+de grilla con tipo de origen de datos JSON.
+- Se reemplazó el uso del eval por $.secureEvalJSON.
+- Se agregó, en la funcion loadDataSourceJson, la lectura de la 
+configuración de la propiedad dataResultProperty, del set de datos
+resultante.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1324,69 +1327,94 @@ grilla agregada es una gridView en sí misma.
         }
 
         function doSearch(gridViewId, pageIndex) {
-            var elem = $("[gridViewId=" + gridViewId + "]");
-            var settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
-            var paggingData = $.extend({}, elem.data("gridView:pagging"));
-            var sortConfig = $.extend({}, elem.data("gridView:sortConfig"));
+            var isSuccess = true, status = "success", messageError = null;
+            var settings = {};
+            try {
+                var elem = $("[gridViewId=" + gridViewId + "]");
+                settings = $.extend({}, getDefaults(), elem.data("gridviewconfig"));
+                var paggingData = $.extend({}, elem.data("gridView:pagging"));
+                var sortConfig = $.extend({}, elem.data("gridView:sortConfig"));
 
-            if (isNaN(pageIndex))
-                throw new Error("El pageIndex debe ser un n&uacutemero");
+                if (isNaN(pageIndex))
+                    throw new Error("El pageIndex debe ser un n&uacutemero");
 
-            pageIndex = parseFloat(pageIndex);
+                pageIndex = parseFloat(pageIndex);
 
-            paggingData.currIndex = pageIndex;
-            if (pageIndex === "") {
-                alert("Los par&aacutemetros de b&uacutesqueda son incorrectos.");
-                return;
-            }
-            var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
-            methods.cleanSearch(gridViewId);
-            var eventResult;
-            if (settings.onBeforeSearch instanceof Function) {
-                eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize, gridViewId);
-                if (typeof eventResult !== "undefined" && !eventResult) {
+                paggingData.currIndex = pageIndex;
+                if (pageIndex === "") {
+                    alert("Los par&aacutemetros de b&uacutesqueda son incorrectos.");
                     return;
                 }
-            }
+                var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
+                methods.cleanSearch(gridViewId);
+                var eventResult;
+                if (settings.onBeforeSearch instanceof Function) {
+                    eventResult = settings.onBeforeSearch(pageIndex, settings.pageSize, gridViewId);
+                    if (typeof eventResult !== "undefined" && !eventResult) {
+                        return;
+                    }
+                }
 
-            //obtiene la información de la fila padre.
-            var parentRowData;
-            if (elem.attr("gridViewType") == "childGridView") {
-                var gridTR = methods.childGridView.getRowContainer(gridViewId);
-                var rowIndex = gridTR.attr("gridView_rowIndex");
-                //obtiene la ROW hija de la grilla padre que contiene a este childGrid
-                var parentRow = gridTR.parents("[gridview_element=tbBody]:first").children("[gridView_rowIndex='" + rowIndex + "'][gridview_rowType=row]");
-                parentRowData = parentRow.data("itemData");
-            }
+                //obtiene la información de la fila padre.
+                var parentRowData;
+                if (elem.attr("gridViewType") == "childGridView") {
+                    var gridTR = methods.childGridView.getRowContainer(gridViewId);
+                    var rowIndex = gridTR.attr("gridView_rowIndex");
+                    //obtiene la ROW hija de la grilla padre que contiene a este childGrid
+                    var parentRow = gridTR.parents("[gridview_element=tbBody]:first").children("[gridView_rowIndex='" + rowIndex + "'][gridview_rowType=row]");
+                    parentRowData = parentRow.data("itemData");
+                }
 
-            var dataFilter;
-            if (typeof parentRowData !== "undefined")
-                dataFilter = settings.getFilterData(parentRowData);
-            else
-                dataFilter = settings.getFilterData();
+                var dataFilter;
+                if (typeof parentRowData !== "undefined")
+                    dataFilter = settings.getFilterData(parentRowData);
+                else
+                    dataFilter = settings.getFilterData();
+                if (typeof dataFilter === "string")
+                    dataFilter = $.secureEvalJSON(dataFilter);
+                if (settings.usePagging) {
+                    if (!dataFilter.hasOwnProperty("pageSize"))
+                        dataFilter.pageSize = settings.pageSize;
+                    if (!dataFilter.hasOwnProperty("pageIndex"))
+                        dataFilter.pageIndex = pageIndex;
+                }
+                if (settings.allowSorting) {
+                    if (!dataFilter.hasOwnProperty("sortColumn"))
+                        dataFilter.sortColumn = (typeof sortConfig.column === "undefined" ? null : sortConfig.column);
+                    if (!dataFilter.hasOwnProperty("sortDirection"))
+                        dataFilter.sortDirection = (typeof sortConfig.sortDirection === "undefined" ? null : sortConfig.sortDirection);
+                }
+                if (settings.showProcessingIndicator)
+                    drawProcessingIcon(gridViewId);
 
-            if (typeof dataFilter === "string")
-                dataFilter = eval("(" + dataFilter + ")");
-            if (settings.usePagging) {
-                if (!dataFilter.hasOwnProperty("pageSize"))
-                    dataFilter.pageSize = settings.pageSize;
-                if (!dataFilter.hasOwnProperty("pageIndex"))
-                    dataFilter.pageIndex = pageIndex;
-            }
-            if (settings.allowSorting) {
-                if (!dataFilter.hasOwnProperty("sortColumn"))
-                    dataFilter.sortColumn = (typeof sortConfig.column === "undefined" ? null : sortConfig.column);
-                if (!dataFilter.hasOwnProperty("sortDirection"))
-                    dataFilter.sortDirection = (typeof sortConfig.sortDirection === "undefined" ? null : sortConfig.sortDirection);
-            }
-            if (settings.showProcessingIndicator)
-                drawProcessingIcon(gridViewId);
+                if (settings.dataSourceType.toLowerCase() === "ws") {
+                    loadDataSourceWS(gridViewId, settings, dataFilter, paggingData, parentRowData);
+                }
+                else if (settings.dataSourceType.toLowerCase() === "json") {
+                    loadDataSourceJSon(gridViewId, settings, paggingData, parentRowData);
+                }
+            } catch (error) {
+                var msg = "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message;
+                if (error.number == -2146827274 || error.message == "Invalid character") {
+                    msg = "El formato del JSON es inválido. Verifique que el mismo tenga los nombres de sus atributos entre comillas dobles.";
+                }
 
-            if (settings.dataSourceType.toLowerCase() === "ws") {
-                loadDataSourceWS(gridViewId, settings, dataFilter, paggingData, parentRowData);
+                drawMessage(gridViewId, msg);
+
+                isSuccess = false;
+                status = "error";
+                messageError = error.message;
+
+                if (settings.onError !== null && settings.onError instanceof Function)
+                    settings.onError(null, msg, error);
             }
-            else if (settings.dataSourceType.toLowerCase() === "json") {
-                loadDataSourceJSon(gridViewId, settings, paggingData, parentRowData);
+            finally {
+                $("[gridview_rowType=processingContainer]", $("[gridViewId=" + gridViewId + "]")).remove();
+                if(typeof settings!=="undefined" && typeof settings.onComplete !=="undefined")
+                {
+                    if (settings.onComplete !== null && settings.onComplete instanceof Function)
+                        settings.onComplete(gridViewId, isSuccess, status, messageError);
+                }
             }
 
         }
@@ -1825,80 +1853,79 @@ grilla agregada es una gridView en sí misma.
             });
         }
         function loadDataSourceJSon(gridViewId, settings, paggingData, parentGridRowData) {
-            var isSuccess = true, status = "success", messageError = null;
+            var data = null;
+            var eventResult;
 
-            try {
-                var data = null;
-                var eventResult;
-                //Se ejecuta el evento OnBeforeDraw si estuviera definido.
-                //El evento puede cancelar el dibujado de la grilla, si tras su ejecución devolviera false.
-                if (settings.onBeforeDraw instanceof Function) {
-                    eventResult = settings.onBeforeDraw(gridViewId);
-                    if (eventResult === false)
-                        return;
+            //Los datos pasados son una referencia a un control (ej: input, hidden, etc...), se intenta obtener el objeto y leer su valor 
+            //Se autodetecta si se debe leer mediante el método "val" o "text" de jQuery.
+            if (settings.dataSourceObject !== null) {
+                var dataString = "{}";
+                if (typeof (dataString = $(settings.dataSourceObject).val()) === "undefined" || dataString === null)
+                    dataString = $(settings.dataSourceObject).text();
+
+                //como se trata de un data source del tipo json, se realiza un eval
+                if (typeof dataString !== "undefined" && dataString !== null) {
+                    data = $.secureEvalJSON(dataString);
                 }
-
-                //Los datos pasados son una referencia a un control (ej: input, hidden, etc...), se intenta obtener el objeto y leer su valor 
-                //Se autodetecta si se debe leer mediante el método "val" o "text" de jQuery.
-                if (settings.dataSourceObject !== null) {
-                    var dataString = "{}";
-                    if (typeof (dataString = $(settings.dataSourceObject).val()) === "undefined" || dataString === null)
-                        dataString = $(settings.dataSourceObject).text();
-
-                    //como se trata de un data source del tipo json, se realiza un eval
-                    if (typeof dataString !== "undefined" && dataString !== null) {
-                        data = eval("(" + dataString + ")");
-                    }
-                }
-                    //Los datos pasado puede ser un texto
-                else if (typeof settings.dataSource === "string") {
-                    data = eval("(" + settings.dataSource + ")");
-                }
-                    //Los datos pasado puede ser un objeto json
-                else if (typeof settings.dataSource === "object") {
-                    data = settings.dataSource;
-                }
-                    //Los datos pasado puede ser un objeto json
-                else if (typeof settings.dataSource === "function") {
-                    data = settings.dataSource(settings, paggingData, parentGridRowData);
-                }
-
-
-                if (typeof data !== "undefined" && data !== null) {
-                    paggingData.totalRecords = data.length;
-                    var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
-                    if (settings.usePagging)
-                        methods.pager.setPaggingData(paggingData, data, settings);
-                    $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
-
-                    //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
-                    //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
-                    if (settings.usePagging) {
-                        (new Methods(privateMethods.getPageHandler(settings), gridViewId)).pager.drawPager(gridViewId);
-
-                        //Se realiza la paginación de los datos.
-                        if (data !== null && data.length > 0) {
-                            var lowerBound = paggingData.currIndex * settings.pageSize;
-                            data = data.slice(lowerBound, lowerBound + settings.pageSize);
-                        }
-                    }
-                    drawResults(gridViewId, data);
-                }
-            } catch (error) {
-                var msg = "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message;
-                drawMessage(gridViewId, "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message);
-
-                isSuccess = false;
-                status = "error";
-                messageError = error.message;
-
-                if (settings.onError !== null && settings.onError instanceof Function)
-                    settings.onError(null, msg, error);
             }
-            finally {
-                $("[gridview_rowType=processingContainer]", $("[gridViewId=" + gridViewId + "]")).remove();
-                if (settings.onComplete !== null && settings.onComplete instanceof Function)
-                    settings.onComplete(gridViewId, isSuccess, status, messageError);
+                //Los datos pasado puede ser un texto
+            else if (typeof settings.dataSource === "string") {
+                data = $.secureEvalJSON(settings.dataSource);
+            }
+                //Los datos pasado puede ser un objeto json
+            else if (typeof settings.dataSource === "object") {
+                data = settings.dataSource;
+            }
+                //Los datos pasado puede ser un objeto json
+            else if (typeof settings.dataSource === "function") {
+                data = settings.dataSource(settings, paggingData, parentGridRowData);
+            }
+
+            //Se ejecuta el evento OnBeforeDraw si estuviera definido.
+            //El evento puede cancelar el dibujado de la grilla, si tras su ejecución devolviera false.
+            if (settings.onBeforeDraw instanceof Function) {
+                eventResult = settings.onBeforeDraw(gridViewId, data);
+                if (eventResult === false)
+                    return;
+            }
+
+            if (settings.searchResultPreProcessing instanceof Function) {
+                eventResult = settings.searchResultPreProcessing(gridViewId, data);
+                if (typeof eventResult !== "undefined" && eventResult !== null)
+                    data = eventResult;
+                else
+                    data = [];
+            }
+
+            var resultData;
+            if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null)
+                resultData = data[settings.dataResultProperty];
+            else if (data.hasOwnProperty("result"))
+                resultData = data.result;
+            else
+                resultData = data;
+
+
+            if (typeof resultData !== "undefined" && resultData !== null) {
+                paggingData.totalRecords = resultData.length;
+                var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
+                if (settings.usePagging)
+                    methods.pager.setPaggingData(paggingData, resultData, settings);
+                $("[gridViewId=" + gridViewId + "]").data("gridView:pagging", paggingData);
+
+                //Sólo si está configurada la paginación se obtiene el totalRecords, se realizan los cálculos para la
+                //paginación y se dibujan los controls, caso contrario se obvia toda esta sección.
+                if (settings.usePagging) {
+                    (new Methods(privateMethods.getPageHandler(settings), gridViewId)).pager.drawPager(gridViewId);
+
+                    //Se realiza la paginación de los datos.
+                    if (resultData !== null && resultData.length > 0) {
+                        var lowerBound = paggingData.currIndex * settings.pageSize;
+                        resultData = resultData.slice(lowerBound, lowerBound + settings.pageSize);
+                    }
+                }
+
+                drawResults(gridViewId, resultData);
             }
         }
 
@@ -1909,6 +1936,18 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-02-23 1118- v6.1.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se agregó la posibilidad de configurar un método del cual se 
+obtendrá la configuración por defecto, permitiendo así, sobrescribir
+la configuración por defecto del componente en todo un site.
+    Ej: function GridView_GetConfiguration()
+        {
+            return {ajaxLoaderImage: "../Images/indicator.gif"};
+        }
 ================================================================
 Código:         | GridView - 2017-02-06 1754- v6.0.1.0
 Autor:          | Seba Bustos
