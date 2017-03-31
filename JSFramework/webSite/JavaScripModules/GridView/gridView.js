@@ -1,10 +1,10 @@
-﻿/*! GridView - 2017-03-02 1245 - v6.2.0.0
+﻿/*! GridView - 2017-03-31 1006 - v6.3.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-03-02 1245 - v6.2.0.0
+Código:         | GridView - 2017-03-31 1006 - v6.3.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -18,21 +18,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v6.2.0.0
+Versión:        | v6.3.0.0
 ----------------------------------------------------------------
-Fecha:          | 2017-03-02 12:45
+Fecha:          | 2017-03-31 10:06
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se unificaron los criterios de disparo de eventos en la modalidad
-WS o JSON de la grilla, ya que, cuando se encontraba configurada
-con un datasource del tipo JSON, el evento beforeDraw se ejecutaba
-antes de obtener los datos y no pasaba el set de datos a la grilla.
-- Se agregó el evento searchResultPreProcessing, en la modalidad
-de grilla con tipo de origen de datos JSON.
-- Se reemplazó el uso del eval por $.secureEvalJSON.
-- Se agregó, en la funcion loadDataSourceJson, la lectura de la 
-configuración de la propiedad dataResultProperty, del set de datos
-resultante.
+- Se corrigió una falla, cuando se configuraba la grilla para
+consumo de WS, por el cual siempre borraba la imagen de loading
+antes de que se completara la llamada ajax.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1409,7 +1402,8 @@ grilla agregada es una gridView en sí misma.
                     settings.onError(null, msg, error);
             }
             finally {
-                $("[gridview_rowType=processingContainer]", $("[gridViewId=" + gridViewId + "]")).remove();
+                if (settings.dataSourceType.toLowerCase() === "json")
+                    $("[gridview_rowType=processingContainer]", $("[gridViewId=" + gridViewId + "]")).remove();
                 if(typeof settings!=="undefined" && typeof settings.onComplete !=="undefined")
                 {
                     if (settings.onComplete !== null && settings.onComplete instanceof Function)
@@ -1936,6 +1930,21 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-03-02 1245 - v6.2.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se unificaron los criterios de disparo de eventos en la modalidad
+WS o JSON de la grilla, ya que, cuando se encontraba configurada
+con un datasource del tipo JSON, el evento beforeDraw se ejecutaba
+antes de obtener los datos y no pasaba el set de datos a la grilla.
+- Se agregó el evento searchResultPreProcessing, en la modalidad
+de grilla con tipo de origen de datos JSON.
+- Se reemplazó el uso del eval por $.secureEvalJSON.
+- Se agregó, en la funcion loadDataSourceJson, la lectura de la 
+configuración de la propiedad dataResultProperty, del set de datos
+resultante.
 ================================================================
 Código:         | GridView - 2017-02-23 1118- v6.1.0.0
 Autor:          | Seba Bustos
