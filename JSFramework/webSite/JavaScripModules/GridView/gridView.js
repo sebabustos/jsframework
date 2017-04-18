@@ -1,10 +1,10 @@
-﻿/*! GridView - 2017-03-31 1006 - v6.3.0.0
+﻿/*! GridView - 2017-04-18 1131 - v6.3.1.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-03-31 1006 - v6.3.0.0
+Código:         | GridView - 2017-04-18 1131 - v6.3.1.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -18,14 +18,14 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v6.3.0.0
+Versión:        | v6.3.1.0
 ----------------------------------------------------------------
-Fecha:          | 2017-03-31 10:06
+Fecha:          | 2017-04-18 11:31
 ----------------------------------------------------------------
 Cambios de la Versión:
 - Se corrigió una falla, cuando se configuraba la grilla para
-consumo de WS, por el cual siempre borraba la imagen de loading
-antes de que se completara la llamada ajax.
+consumo de WS, por el cual se ejecutaba el evento onComplete, 
+antes de que finalizará la ejecución ajax.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1402,12 +1402,12 @@ grilla agregada es una gridView en sí misma.
                     settings.onError(null, msg, error);
             }
             finally {
-                if (settings.dataSourceType.toLowerCase() === "json")
+                if (settings.dataSourceType.toLowerCase() === "json") {
                     $("[gridview_rowType=processingContainer]", $("[gridViewId=" + gridViewId + "]")).remove();
-                if(typeof settings!=="undefined" && typeof settings.onComplete !=="undefined")
-                {
-                    if (settings.onComplete !== null && settings.onComplete instanceof Function)
-                        settings.onComplete(gridViewId, isSuccess, status, messageError);
+                    if (typeof settings !== "undefined" && typeof settings.onComplete !== "undefined") {
+                        if (settings.onComplete !== null && settings.onComplete instanceof Function)
+                            settings.onComplete(gridViewId, isSuccess, status, messageError);
+                    }
                 }
             }
 
@@ -1930,6 +1930,14 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-03-31 1006 - v6.3.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla, cuando se configuraba la grilla para
+consumo de WS, por el cual siempre borraba la imagen de loading
+antes de que se completara la llamada ajax.
 ================================================================
 Código:         | GridView - 2017-03-02 1245 - v6.2.0.0
 Autor:          | Seba Bustos
