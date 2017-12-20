@@ -1,4 +1,4 @@
-﻿/*! webDialog - 2017-02-23 1121 - 6.0.0.0
+﻿/*! webDialog - 2017-12-20 1040 - 6.1.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/dialog */
 (function ($) {
     var $default = {
@@ -66,7 +66,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
     $.webDialog = {
         notificationTypes: { None: 0, Information: 1, Warning: 2, Error: 3 },
         close: function (id) {
-
+            $(window).off(".webDialog");
             if (typeof id !== "undefined" && id !== null) {
                 var dialogWindow = $("[webDialogId='" + id + "']");
                 var diagCont = $(".webDialogContent", dialogWindow);
@@ -201,7 +201,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
                 }
 
                 //Se crea la barra de Título
-                var titleBar = $("<div class='dialogTitleContainer' style='height:5%'>" + jqNotificationIcon + "<span webDialogId='dialogTitle' class='dialogTitle'>" + settings.title + "</span><a href='#' class='dialogTitleButtonBarContainer' webDialogId='buttonBarContainer'></a></div>");
+                var titleBar = $("<div class='dialogTitleContainer' style='height:5%'>" + jqNotificationIcon + "<span webDialogId='dialogTitle' class='dialogTitle'>" + settings.title + "</span><a href='javascript:void();' class='dialogTitleButtonBarContainer' webDialogId='buttonBarContainer'></a></div>");
                 if (settings.showCloseButton)
                     $("[webDialogId='buttonBarContainer']", titleBar).append($("<span webDialogId='closeButton' class='dialogCloseButton' onClick='$.webDialog.close(\"" + currentId + "\");' >cerrar</span>"));
 
@@ -210,7 +210,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
                 if (typeof settings.buttons === "object") {
                     $.each(settings.buttons, function (text, func) {
                         var button = $("<input type='button' webDialog_button='true' value='" + text + "' />");
-                        button.click(function (evt) {
+                        button.on("click.webDialog", function (evt) {
                             func(this, evt, dialogContainer);
                         });
                         footerBar.append(button);
@@ -283,7 +283,8 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
                     dialogContainer.height(settings.height);
                 if (settings.position != null && settings.position == "center") {
                     dialogContainer.center(settings.autoScroll);
-                    $(window).resize(function () {
+                    $(window).off(".webDialog");
+                    $(window).on("resize.webDialog", function () {
                         dialogContainer.center(settings.autoScroll);
                         var webDialogId = dialogContainer.attr("webDialogId");
                         var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]");
@@ -295,7 +296,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
                             height: $(window).height() + scrollTop
                         });
 
-                    }).scroll(function () {
+                    }).on("scroll.webDialog", function () {
                         dialogContainer.center(settings.autoScroll);
                         var webDialogId = dialogContainer.attr("webDialogId");
                         var courtain = $("[webDialogId=divDialogCourtain_" + webDialogId + "][webDialog_controlType=courtain]");
@@ -406,7 +407,7 @@ https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaSc
 ================================================================
                            VERSIÓN
 ================================================================
-Código:       | webDialog - 2017-02-23 1121 - 6.0.0.0
+Código:       | webDialog - 2017-12-20 1040 - 6.1.0.0
 ----------------------------------------------------------------
 Nombre:       | webDialog
 ----------------------------------------------------------------
@@ -420,13 +421,19 @@ Descripción:  | plugin de jquery que permite mostrar en un
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos
 ----------------------------------------------------------------
-Versión:      | v6.0.0.0
+Versión:      | v6.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2017-02-23 1121
+Fecha:        | 2017-12-20 10:40
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error que existía cuando se habilitaba el autoCloseWindow
-y el content el div ya contenía un atributo "countDownTimer" incluído.
+- Se modificó el href de la barra de controles, para que no use el 
+numeral (#) ya que causaba que se escrolle al inicio de la página
+- Se reemplazaron las asignaciones de eventos con jquery, para usar
+el on(xxx, handler).
+- Se agregaron los espacios de nombres a los eventos de controles
+asignados con jquery (ej: on("click.webDialog"...)
+- Se modificó el on close, para que quite los eventos de resize y
+scroll, del window, cuando se cierra el dialog.
 ================================================================
                     FUNCIONALIDADES
 ================================================================
@@ -449,6 +456,14 @@ y el content el div ya contenía un atributo "countDownTimer" incluído.
                 HISTORIAL DE VERSIONES
 ================================================================
                            VERSIÓN
+================================================================
+
+Código:       | webDialog - 2017-02-23 1121 - 6.0.0.0
+Autor:        | Sebastián Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió un error que existía cuando se habilitaba el autoCloseWindow
+y el content el div ya contenía un atributo "countDownTimer" incluído.
 ================================================================
 Código:       | webDialog - 2016-11-22 1322 - 5.2.0.0
 Autor:        | Sebastián Bustos
