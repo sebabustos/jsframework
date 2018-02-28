@@ -1,10 +1,10 @@
-﻿/*! DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
+﻿/*! DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
+Código:       | DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -23,32 +23,19 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v4.0.0.0
+Versión:      | v5.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2017-02-16 15:15
+Fecha:        | 2018-02-28 12:51
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se modificaron los atributos que agrega y lee el plugin para que
- al control, para agregarles el prefijo "data-validator"
-  Eh: <input type='text' dataType='date' ===> <input type='text' data-validator-datatype='date'
-  Nota: Se mantuvo la compatibilidad con las formas anteriores pero 
-  se recomienda su modificación
-- Se agregó la posibilidad de configurar, como atributo del html
-cualquier elemento de configuración del DataTypeValidator, respetando
-el siguiente format: data-validator-xxx => donde xxx es el atributo, 
-todo en minúscula. Los atributos permitidos son todos los enumerados en "FUNCIONALIDADES"
-- Se agregó la posibilidad de deshabilitar la validación en el "onfocusout"
-- Se agregó la posiblidad de llamar al plugin, con un selector jquery
-vacío, que permita ejecutar métodos para todos los validators configurados:
-    Ej: $().DataTypeValidator().areValids() => valida todos los controles y 
-                                               devuelve true|false, según si 
-                                               son todos válidos o existe 
-                                               alguno  inválido
-        $().DataTypeValidator().execute() => ejecuta las validaciones de 
-                                        todos los validators (como si se hiciera
-                                        el focusout)
-- Se corrigió un error que se generaba, cuando se configuraba una 
- expresión regular con las barras (ej: /{expresión}/)
+ - Se corrigió un error detectado por Francisco Gambino, por el cual
+ si un input con tipo de dato fecha, se encuentra en estado inválido, 
+ y luego se selecciona una fecha válida, usando el calendar de jquery,
+ no estaba quitando el mensaje, ni el estilo, de inválido.
+ - Se agregó el nuevo evengo onchange, para detectar los cambios
+ en el control y ejecutar las validaciones de tipo de dato, y la 
+ posibilidad de deshabilitar el uso de este evento con 
+ "enableValidateOnChange = false;"
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -82,7 +69,8 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
     invalidMessageCss: 'default' => string, clase de estilo asignado al div que muestra el mensaje de dato inválido. (Si se configura 'default' utiliza el estilo por defecto del plugin)
     showInvalidMessage: true => true|false, permite habilitar o deshabilitar el uso del mensaje de dato inválido.
     invalidDataMessage: "El dato ingresado es inválido" => string, permite configurar el texto a mostrar en el mensaje de dato inválido.
-    enableValidateOnFocusOut: true => true|false, permite habilitar o deshabilitar la ejecución e la valiación de datos al perder el foco del control.
+    enableValidateOnFocusOut: true => true|false, permite habilitar o deshabilitar la ejecución e la validación de datos al perder el foco del control.
+    enableValidateOnChange: true => true|false, permite habilitar o deshabilitar la ejecución e la validación de datos en el evento onchange del control.
  - Permite configurar los siguientes eventos:
      onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
      onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
@@ -132,7 +120,8 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
         onValidationFailed: function (src) { }, //Se ejecuta cuando se pierde el foco y el dato del control es inválido
         onInvalidKeyPress: function (src, evt) { }, //Se ejecuta cada vez que se presiona una tecla inválida.
         invalidDataMessage: "El dato ingresado es inválido",
-        enableValidateOnFocusOut: true
+        enableValidateOnFocusOut: true,
+        enableValidateOnChange: true
     }
     var $defaultMessageCss = {
         borderWidth: 1,
@@ -548,6 +537,11 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
                     methods.validate($(this), settings, dataTypeObject);
                 });
 
+            if (settings.enableValidateOnChange)
+                $this.on("change.datatypevalidator", function () {
+                    methods.validate($(this), settings, dataTypeObject);
+                });
+
             if ((dataType === "date" || dataType === "datetime") && settings.useJQueryDatepicker) {
                 var $defaultDatePickerSetting = {
                     closeText: "cerrar",
@@ -581,10 +575,10 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
                         else if (settings.dataType === "date") dataTypeObject = dateDataTypeValidator;
                         else dataTypeObject = genericDataTypeValidator;
                     }
+                    var elemId = $this.data("validator-id");
                     if (!dataTypeObject.ValidateData($this.val(), settings)) {
                         $this.addClass(settings.invalidDataCss);
                         if (settings.showInvalidMessage) {
-                            var elemId = $this.data("validator-id");
                             $("#InvalidMessage" + elemId).remove();
                             //si el usuario sobreescribe el css message se usa ese, aunque este sea vacío, pero si no sobreescribe coloca
                             //por defecto "invalidMessage"
@@ -608,6 +602,11 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
                         }
                         if (typeof settings.onValidationFailed === "function")
                             settings.onValidationFailed($this);
+                    }
+                    else {
+                        if (settings.showInvalidMessage)
+                            $("#InvalidMessage" + elemId).remove();
+                        $this.removeClass(settings.invalidDataCss);
                     }
                 }
             }
@@ -811,6 +810,32 @@ vacío, que permita ejecutar métodos para todos los validators configurados:
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se modificaron los atributos que agrega y lee el plugin para que
+ al control, para agregarles el prefijo "data-validator"
+  Eh: <input type='text' dataType='date' ===> <input type='text' data-validator-datatype='date'
+  Nota: Se mantuvo la compatibilidad con las formas anteriores pero 
+  se recomienda su modificación
+- Se agregó la posibilidad de configurar, como atributo del html
+cualquier elemento de configuración del DataTypeValidator, respetando
+el siguiente format: data-validator-xxx => donde xxx es el atributo, 
+todo en minúscula. Los atributos permitidos son todos los enumerados en "FUNCIONALIDADES"
+- Se agregó la posibilidad de deshabilitar la validación en el "onfocusout"
+- Se agregó la posiblidad de llamar al plugin, con un selector jquery
+vacío, que permita ejecutar métodos para todos los validators configurados:
+    Ej: $().DataTypeValidator().areValids() => valida todos los controles y 
+                                               devuelve true|false, según si 
+                                               son todos válidos o existe 
+                                               alguno  inválido
+        $().DataTypeValidator().execute() => ejecuta las validaciones de 
+                                        todos los validators (como si se hiciera
+                                        el focusout)
+- Se corrigió un error que se generaba, cuando se configuraba una 
+ expresión regular con las barras (ej: /{expresión}/)
 ================================================================
 Código:       | DataTypeValidators - 2016-12-15 - v3.2.1.0
 Autor:        | Sebastián Bustos Argañaraz
