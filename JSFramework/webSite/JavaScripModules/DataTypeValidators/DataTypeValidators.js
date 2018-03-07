@@ -1,10 +1,10 @@
-﻿/*! DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
+﻿/*! DataTypeValidators - 2018-03-07 1211 - v5.1.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
+Código:       | DataTypeValidators - 2018-03-07 1211 - v5.1.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -23,19 +23,14 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v5.0.0.0
+Versión:      | v5.1.0.0
 ----------------------------------------------------------------
-Fecha:        | 2018-02-28 12:51
+Fecha:        | 2018-03-07 12:11
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se corrigió un error detectado por Francisco Gambino, por el cual
- si un input con tipo de dato fecha, se encuentra en estado inválido, 
- y luego se selecciona una fecha válida, usando el calendar de jquery,
- no estaba quitando el mensaje, ni el estilo, de inválido.
- - Se agregó el nuevo evengo onchange, para detectar los cambios
- en el control y ejecutar las validaciones de tipo de dato, y la 
- posibilidad de deshabilitar el uso de este evento con 
- "enableValidateOnChange = false;"
+ - Se agregó la posibilidad de configurar la omisión de los espacios
+ al comienzo y final del texto a validar (trim). Quedando por defecto
+ deshabilitado.
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -65,6 +60,7 @@ Cambios de la Versión:
     allowNumbers: true => true|false, permite habilitar el ingreso de números en un validador del tipo alfabético.
     commaSeparators: null => string o array de strings, el/los caracteres que se utilizarán como separador de decimales en los validadores del tipo numérico. Si se incluyen varios se permitirá cualquiera de ellos.
     thousandSeparators: null => string o array de strings, el/los caracteres que se utilizarán como separador de miles en los validadores del tipo numérico. Si se incluyen varios se permitirá cualquiera de ellos.
+    trimmedInput: 'right' => 'left'|'right'|'both'|'none', permite configurar el validador, para que no considere los espacios adelante, atrás, ninguno, a la hora de ejecutar la validación, o bien sí considerarlos.
     invalidDataCss: 'invalidData' => string, clase de estilo que se le asignará al control, cuando el dato ingresado sea inválido.
     invalidMessageCss: 'default' => string, clase de estilo asignado al div que muestra el mensaje de dato inválido. (Si se configura 'default' utiliza el estilo por defecto del plugin)
     showInvalidMessage: true => true|false, permite habilitar o deshabilitar el uso del mensaje de dato inválido.
@@ -111,7 +107,7 @@ Cambios de la Versión:
         specialChars: null,
         validDataRegex: null,
         allowNumbers: true,
-
+        trimmedInput: 'right',
         commaSeparators: null, //el/los caracteres que se utilizarán como separador de decimales. Si se incluyen varios se permitirá cualquiera de ellos.
         thousandSeparators: null,
         invalidDataCss: 'invalidData',
@@ -576,7 +572,15 @@ Cambios de la Versión:
                         else dataTypeObject = genericDataTypeValidator;
                     }
                     var elemId = $this.data("validator-id");
-                    if (!dataTypeObject.ValidateData($this.val(), settings)) {
+                    var stringtoValidate = $this.val();
+                    if (typeof settings.trimmedInput !== "undefined" && settings.trimmedInput !== null && settings.trimmedInput !== "none") {
+                        if (settings.trimmedInput.toLowerCase() == "right" || settings.trimmedInput.toLowerCase() == "both")
+                            stringtoValidate = stringtoValidate.replace(/ +$/g, '');
+                        if (settings.trimmedInput.toLowerCase() == "left" || settings.trimmedInput.toLowerCase() == "both")
+                            stringtoValidate = stringtoValidate.replace(/^ +/, '');
+                    }
+
+                    if (!dataTypeObject.ValidateData(stringtoValidate, settings)) {
                         $this.addClass(settings.invalidDataCss);
                         if (settings.showInvalidMessage) {
                             $("#InvalidMessage" + elemId).remove();
@@ -793,8 +797,7 @@ Cambios de la Versión:
                         options[index] = dataAttr;
                     }
                 }
-                if (typeof options["allowedChars"] !== "undefined")
-                {
+                if (typeof options["allowedChars"] !== "undefined") {
                     options["allowedChars"] = (options["allowedChars"].replace("0-9", "0123456789")
                            .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
                            .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
@@ -810,6 +813,19 @@ Cambios de la Versión:
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se corrigió un error detectado por Francisco Gambino, por el cual
+ si un input con tipo de dato fecha, se encuentra en estado inválido, 
+ y luego se selecciona una fecha válida, usando el calendar de jquery,
+ no estaba quitando el mensaje, ni el estilo, de inválido.
+ - Se agregó el nuevo evengo onchange, para detectar los cambios
+ en el control y ejecutar las validaciones de tipo de dato, y la 
+ posibilidad de deshabilitar el uso de este evento con 
+ "enableValidateOnChange = false;"
 ================================================================
 Código:       | DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
 Autor:        | Sebastián Bustos Argañaraz
