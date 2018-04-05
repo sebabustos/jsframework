@@ -1,10 +1,10 @@
-﻿/*! GridView - 2018-04-05 1128 - v7.0.0.0
+﻿/*! GridView - 2018-04-05 1400 - v7.1.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2018-04-05 1128 - v7.0.0.0
+Código:         | GridView - 2018-04-05 1400 - v7.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -20,14 +20,14 @@ Autor:          | Seba Bustos
 ----------------------------------------------------------------
 Versión:        | v7.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2018-04-05 11:28
+Fecha:          | 2018-04-05 14:00
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se modificaron las llamadas a onError, que ejecuta el componente
-internamente, para que respete la firma del error de ajax:
-(jqXHR, status, messageError) y agregué además un 4o parámetro
-opcional: [errorObject] el cual es el objeto manejado por el catch
-de un bloque try.
+- Se corrigió un error que se daba en el paginador cuando el 
+listado con el resultado de la búsqueda era nulo.
+- Se modificó el código de serialización y deserealización de 
+objetos JSON, para que intente utilizar el código nativo (JSON.xxx)
+en caso de no funcionar utilizar la antigua dependencia jquery.json.min.js
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -590,12 +590,15 @@ grilla agregada es una gridView en sí misma.
             if (settings.usePagging) {
                 var totalRecords = 0;
                 if (typeof data !== "undefined" && data !== null) {
+                    var dataResults;
                     if (typeof settings.dataResultProperty !== "undefined" && settings.dataResultProperty !== null && data.hasOwnProperty(settings.dataResultProperty))
-                        totalRecords = data[settings.dataResultProperty].length;
+                        dataResults = data[settings.dataResultProperty];
                     else if (data.hasOwnProperty("result"))
-                        totalRecords = data.result.length;
+                        dataResults = data.result;
                     else
-                        totalRecords = data.length;
+                        dataResults = data;
+                    if (typeof dataResults !== "undefined" && dataResults !== null)
+                        totalRecords = dataResults.length;
                 }
 
                 paggingData.totalRecords = totalRecords;
@@ -1366,7 +1369,7 @@ grilla agregada es una gridView en sí misma.
                 else
                     dataFilter = settings.getFilterData();
                 if (typeof dataFilter === "string")
-                    dataFilter = $.secureEvalJSON(dataFilter);
+                    dataFilter = JSONConvert(dataFilter);
                 if (settings.usePagging) {
                     if (!dataFilter.hasOwnProperty("pageSize"))
                         dataFilter.pageSize = settings.pageSize;
@@ -1774,12 +1777,11 @@ grilla agregada es una gridView en sí misma.
             }
             var isSuccess = true, status = "success", messageError = null;
 
-
             $.ajax({
                 async: settings.ajaxConfig.async,
                 type: settings.ajaxConfig.type,
                 url: wsUrl,
-                data: $.toJSON(dataFilter),
+                data: JSONConvert(dataFilter),
                 dataType: settings.ajaxConfig.dataType,
                 contentType: settings.ajaxConfig.contentType,
                 success: function (data, textStatus, jqXHR) {
@@ -1848,6 +1850,25 @@ grilla agregada es una gridView en sí misma.
                 }
             });
         }
+        /*data puede ser el string a deserealizar o el json a serializar.*/
+        function JSONConvert(data) {
+            var retVal;
+            if ('JSON' in window && 'parse' in JSON && 'stringify' in JSON) {
+                //intenta realizar la operación con el objeto JSON nantivo.
+                if (typeof data == "String")
+                    retVal = JSON.parse(data);
+                else
+                    retVal = JSON.stringify(data);
+            }
+            else {
+                //si esto falla intenta hacerlo 
+                if (typeof data == "String")
+                    retVal = JSONConvert(data);
+                else
+                    retVal = $.toJSON(data);
+            }
+            return retVal;
+        }
         function loadDataSourceJSon(gridViewId, settings, paggingData, parentGridRowData) {
             var data = null;
             var eventResult;
@@ -1861,12 +1882,12 @@ grilla agregada es una gridView en sí misma.
 
                 //como se trata de un data source del tipo json, se realiza un eval
                 if (typeof dataString !== "undefined" && dataString !== null) {
-                    data = $.secureEvalJSON(dataString);
+                    data = JSONConvert(dataString);
                 }
             }
                 //Los datos pasado puede ser un texto
             else if (typeof settings.dataSource === "string") {
-                data = $.secureEvalJSON(settings.dataSource);
+                data = JSONConvert(settings.dataSource);
             }
                 //Los datos pasado puede ser un objeto json
             else if (typeof settings.dataSource === "object") {
@@ -1932,6 +1953,16 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2018-04-05 1128 - v7.0.0.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se modificaron las llamadas a onError, que ejecuta el componente
+internamente, para que respete la firma del error de ajax:
+(jqXHR, status, messageError) y agregué además un 4o parámetro
+opcional: [errorObject] el cual es el objeto manejado por el catch
+de un bloque try.
 ================================================================
 Código:         | GridView - 2017-04-18 1131 - v6.3.1.0
 Autor:          | Seba Bustos
