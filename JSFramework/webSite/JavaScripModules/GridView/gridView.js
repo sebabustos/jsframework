@@ -1,10 +1,10 @@
-﻿/*! GridView - 2017-04-18 1131 - v6.3.1.0
+﻿/*! GridView - 2018-04-05 1128 - v7.0.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2017-04-18 1131 - v6.3.1.0
+Código:         | GridView - 2018-04-05 1128 - v7.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -18,14 +18,16 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v6.3.1.0
+Versión:        | v7.0.0.0
 ----------------------------------------------------------------
-Fecha:          | 2017-04-18 11:31
+Fecha:          | 2018-04-05 11:28
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió una falla, cuando se configuraba la grilla para
-consumo de WS, por el cual se ejecutaba el evento onComplete, 
-antes de que finalizará la ejecución ajax.
+- Se modificaron las llamadas a onError, que ejecuta el componente
+internamente, para que respete la firma del error de ajax:
+(jqXHR, status, messageError) y agregué además un 4o parámetro
+opcional: [errorObject] el cual es el objeto manejado por el catch
+de un bloque try.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -1399,7 +1401,7 @@ grilla agregada es una gridView en sí misma.
                 messageError = error.message;
 
                 if (settings.onError !== null && settings.onError instanceof Function)
-                    settings.onError(null, msg, error);
+                    settings.onError(null, status, messageError, error);
             }
             finally {
                 if (settings.dataSourceType.toLowerCase() === "json") {
@@ -1824,7 +1826,7 @@ grilla agregada es una gridView en sí misma.
                         status = "error";
                         messageError = excep.message;
                         if (settings.onError !== null && settings.onError instanceof Function)
-                            settings.onError(null, messageError, excep);
+                            settings.onError(null, status, messageError, excep);
                     }
                     finally {
                         if (settings.onComplete !== null && settings.onComplete instanceof Function)
@@ -1930,6 +1932,14 @@ grilla agregada es una gridView en sí misma.
 /*
 ================================================================
                     HISTORIAL DE VERSIONES
+================================================================
+Código:         | GridView - 2017-04-18 1131 - v6.3.1.0
+Autor:          | Seba Bustos
+----------------------------------------------------------------
+Cambios de la Versión:
+- Se corrigió una falla, cuando se configuraba la grilla para
+consumo de WS, por el cual se ejecutaba el evento onComplete, 
+antes de que finalizará la ejecución ajax.
 ================================================================
 Código:         | GridView - 2017-03-31 1006 - v6.3.0.0
 Autor:          | Seba Bustos
