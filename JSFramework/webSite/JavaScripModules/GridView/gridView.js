@@ -1,10 +1,10 @@
-﻿/*! GridView - 2018-04-05 1400 - v7.1.0.0
+﻿/*! GridView - 2018-07-02 1229 - v7.2.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2018-04-05 1400 - v7.1.0.0
+Código:         | GridView - 2018-07-02 1229 - v7.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -18,16 +18,54 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 ----------------------------------------------------------------
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
-Versión:        | v7.0.0.0
-----------------------------------------------------------------
-Fecha:          | 2018-04-05 14:00
-----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error que se daba en el paginador cuando el 
-listado con el resultado de la búsqueda era nulo.
-- Se modificó el código de serialización y deserealización de 
-objetos JSON, para que intente utilizar el código nativo (JSON.xxx)
-en caso de no funcionar utilizar la antigua dependencia jquery.json.min.js
+- Se agregó la posibilidad de configurar como valores de columnas
+fields de propiedades que son objetos del data mapeado,
+con el formato "Prop.Field" y que la grilla resuelva automátivamente
+Ej: 
+{
+    Id :1,
+    Relacion: {
+        Descripcion:"Relación"
+    },
+    OtroObjeto:{
+        OtroObjetoMas:{
+            Nivel2:"Valor";
+        }
+    }
+}
+
+$().gridView({
+    ...
+    Columns:[{
+            description: "Tipo Relación",
+            dataFieldName: "Relacion.Descripcion"
+    },
+    {
+            description: "Nivel 2",
+            dataFieldName: "OtroObjeto.OtroObjetoMas.Nivel2",
+    }]
+    ...
+})
+- Se agregó la posibilidad de definir el tipo de dato de una columna (columnDataType).
+- Se agregó la conversión automática de las columnas de tipo fecha cuando
+estas son valores con el formato '/Date(xxx)/'. Este procesamiento es
+automático, cuando se define la columna como columnDataType:'date'
+Nota: a partir de ese momento, la columna es un objeto DATE, para darle
+formato se puede usar el evento dataEval de la columna.
+Ej:
+{
+    dataFieldName: "Fecha",
+    description: "Fecha",
+    columnDataType:'date',
+    dataEval: function (fieldValue) {
+        if (fieldValue != null)
+            fieldValue = fieldValue.getDate() + "/" + (fieldValue.getMonth() + 1) + "/" + fieldValue.getFullYear();
+
+        return fieldValue;
+    }
+}
+
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -177,6 +215,7 @@ grilla agregada es una gridView en sí misma.
         //  width: "",
         //  description: "",
         //  dataFieldName: "", /*=> req.*/
+        //  columnDataType: 'date', 'numeric','string', 'object'
         //  includeInResult: true,
         //  dataEval: function (){return ... }, --> permite definir una función a la cual se le pasará el valor del datasource y cuyo retorno se utilizará como texto de la celda.
         //  showPreview: false, 
@@ -215,6 +254,29 @@ grilla agregada es una gridView en sí misma.
         if (typeof window.GridView_GetConfiguration !== "undefined" && window.GridView_GetConfiguration !== null)
             retVal = $.extend({}, retVal, window.GridView_GetConfiguration($default));
 
+        return retVal;
+    }
+
+    function isNullOrWhiteSpace(elem) {
+        return (typeof elem === "undefined" || elem === null || $.trim(elem.toString()) === "");
+    };
+    /**
+ * intenta convertir una cadena de fecha en el formato /Date(xxxx)/ - devuelto por un WebMethod, a un objeto fecha de javascript
+ * @param {any} str
+ */
+    function parseAjaxDateTimeToDate(str) {
+        var retVal;
+        var ajaxTypeDateREGEX = /\/Date\((\d*)\)\//;
+        try {
+            var ajaxTypeDateREGEX = /\/Date\((\d*)\)\//;
+            if (!$.isNullOrWhiteSpace(str) && ajaxTypeDateREGEX.test(str))
+                retVal = (new Date(parseInt(str.replace(ajaxTypeDateREGEX, "$1"))));
+            else
+                retVal = null;
+        }
+        catch (excep) {
+            retVal = null;
+        }
         return retVal;
     }
 
@@ -461,8 +523,8 @@ grilla agregada es una gridView en sí misma.
                         }
 
                         htmlPager = htmlPager + "<div class='pagerCell tdPrev' gridview_element='prevNavigation'><span class='MovePage spPrev' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.movePrevPage(\"" + gridViewId + "\");'><</span></div>" +
-                                                "<div class='pagerCell tdPageNumbers' gridview_element='pageNumber'><div class='divPageNumbers' >" + pageNumbers + "</div></div>" +
-                                                "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></div>";
+                            "<div class='pagerCell tdPageNumbers' gridview_element='pageNumber'><div class='divPageNumbers' >" + pageNumbers + "</div></div>" +
+                            "<div class='pagerCell tdNext' gridview_element='nextNavigation'><span class='MovePage spNext' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPage(\"" + gridViewId + "\");'>></span></div>";
                         if (pagesGroupAmm > 1) {
                             htmlPager += "<div class='pagerCell tdNextPageGroup' gridview_element='nextGroupNavigation'><span class='MovePageGroup spNextPageGroup' onclick='$(\"[gridViewId=" + gridViewId + "]\").gridView().pager.moveNextPageGroup(\"" + gridViewId + "\");'>>></span></div>";
 
@@ -628,10 +690,10 @@ grilla agregada es una gridView en sí misma.
                     }
                     else
                         var $label = $("<span class='pageIndexNavigate' gridview_element='currentPageNumber'>" + (paggingData.currIndex + 1) + "</span>")
-                                        .click(function (evt) {
-                                            var $gridView = $(this).parents("[gridViewId]:first");
-                                            $gridView.gridView().pager.toggleGoTo($(this), evt);
-                                        });
+                            .click(function (evt) {
+                                var $gridView = $(this).parents("[gridViewId]:first");
+                                $gridView.gridView().pager.toggleGoTo($(this), evt);
+                            });
                     $this.replaceWith($label);
                 }
             });
@@ -662,7 +724,37 @@ grilla agregada es una gridView en sí misma.
             }
         }
     };
+    function resolveDataFieldValue(data, columnSetting) {
+        var retVal = null;
 
+        if (!isNullOrWhiteSpace(columnSetting)) {
+            var fieldName = columnSetting.dataFieldName;
+            if (!isNullOrWhiteSpace(fieldName)) {
+                //resuelve los sub campos... los campos de propiedades json. Ej: Tipo.Descripcion
+                if (fieldName.indexOf(".") >= 0) {
+                    retVal = data;
+                    var arrProp = fieldName.split(/\./g);
+                    for (var prop in arrProp)
+                        retVal = retVal[arrProp[prop]];
+                }
+                    //Si el campo no contiene punto, intenta obtenerlo directamente del set de resultados (data)
+                else if (data.hasOwnProperty(fieldName)) {
+                    retVal = data[fieldName];
+                }
+                //Si la columna tiene configurada un dataType, intenta generar ese tipo de dato.
+                if (!isNullOrWhiteSpace(retVal) && !isNullOrWhiteSpace(columnSetting.columnDataType)) {
+                    if (columnSetting.columnDataType.toLowerCase() === "date" || columnSetting.columnDataType.toLowerCase() === "datetime") {
+                        var fecha = parseAjaxDateTimeToDate(retVal);
+                        if (!isNullOrWhiteSpace(fecha))
+                            retVal = fecha;
+                    }
+                }
+            }
+        }
+
+
+        return retVal;
+    }
     var privateMethods =
         {
             getEvenOddColumnClass: function (colIndex, prefix) {
@@ -733,34 +825,32 @@ grilla agregada es una gridView en sí misma.
                 var iColCount = 0;
                 //Dibuja las columnas configuradas
                 for (var col in settings.columns) {
-                    var dataField = settings.columns[col].dataFieldName;
+                    var columnSetting = settings.columns[col];
+                    var dataField = columnSetting.dataFieldName;
                     if (typeof dataField === "undefined")
                         dataField = "";
 
-                    var cssClass = settings.columns[col].cssClass;
+                    var cssClass = columnSetting.cssClass;
                     if (typeof cssClass === "undefined" || cssClass === null)
                         cssClass = "";
 
                     var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridCell gridViewCell " + cssClass + "' " + (dataField !== "" ? "dataFieldName='" + dataField + "" : "") + "'></td>");
-                    var colValue = null;
-                    if (data.hasOwnProperty(dataField)) {
-                        colValue = data[dataField];
-                        if (!settings.columns[col].hasOwnProperty("includeInResult") || settings.columns[col].includeInResult === true)
-                            itemData[dataField] = colValue;
-                    }
+                    var colValue = resolveDataFieldValue(data, columnSetting);
+                    if (!columnSetting.hasOwnProperty("includeInResult") || columnSetting.includeInResult === true)
+                        itemData[dataField] = colValue;
 
-                    if (typeof settings.columns[col].dataEval === "function" && settings.columns[col].dataEval !== null)
-                        colValue = settings.columns[col].dataEval(colValue);
+                    if (typeof columnSetting.dataEval === "function" && columnSetting.dataEval !== null)
+                        colValue = columnSetting.dataEval(colValue);
 
                     var isVisible = true;
-                    if (settings.columns[col].hasOwnProperty("visible") && !settings.columns[col].visible) {
+                    if (columnSetting.hasOwnProperty("visible") && !columnSetting.visible) {
                         isVisible = false;
                         cell.hide();
                     }
 
                     //Si la columna tiene definida controles, dibuja los mismos pasando el value correspondiente al dataFieldName (el dataBind)
-                    if (settings.columns[col].hasOwnProperty("Controls") && settings.columns[col].Controls instanceof Array && settings.columns[col].Controls.length > 0) {
-                        var ctrls = this.GetControls(settings.columns[col].Controls, gridViewId, false, idPrefix, colValue);
+                    if (columnSetting.hasOwnProperty("Controls") && columnSetting.Controls instanceof Array && columnSetting.Controls.length > 0) {
+                        var ctrls = this.GetControls(columnSetting.Controls, gridViewId, false, idPrefix, colValue);
                         $.each(ctrls, function (index, item) {
                             item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
                             item.attr("griview_isHeader", "false");
@@ -768,10 +858,10 @@ grilla agregada es una gridView en sí misma.
                         });
                     }
                         //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
-                    else if (settings.columns[col].hasOwnProperty("showPreview") && settings.columns[col].showPreview) {
+                    else if (columnSetting.hasOwnProperty("showPreview") && columnSetting.showPreview) {
                         var css = '';
-                        if (settings.columns[col].hasOwnProperty("previewCellClass") && settings.columns[col].previewCellClass !== null && settings.columns[col].previewCellClass !== "")
-                            css = ' ' + settings.columns[col].previewCellClass;
+                        if (columnSetting.hasOwnProperty("previewCellClass") && columnSetting.previewCellClass !== null && columnSetting.previewCellClass !== "")
+                            css = ' ' + columnSetting.previewCellClass;
 
                         cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
                     }
@@ -977,9 +1067,9 @@ grilla agregada es una gridView en sí misma.
                     var cellsCount = sourceRow.children("[gridview_cellType]").length - 1;
                     //Se crea la fila que va a contener la grilla hija.
                     childGridRow = $("<tr id='" + gridViewId + "_Row_" + rowIndex + "_ChildGrid' gridView_rowIndex='" + rowIndex + "' class='gridRow childGridRowContainer' gridview_rowType='childGrid'>" +
-                                "<td class='gridCell childGridEmptyCell' gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
-                                "<td class='gridCell childGridCellContainer' gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
-                                "</tr>").hide();
+                        "<td class='gridCell childGridEmptyCell' gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
+                        "<td class='gridCell childGridCellContainer' gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
+                        "</tr>").hide();
 
 
                     //se crea la tabla que será la grilla hija.
@@ -1283,10 +1373,10 @@ grilla agregada es una gridView en sí misma.
 
             var $gridViewHeader = $("<div class='gridViewHeader' gridview_element='gridViewHeader'></div>");
             var $gridViewBody = $("<div id='gridViewBody_" + gridViewId + "' gridview_element='gridViewBody' class='gridViewBody'></div>")
-                            .append("<table id='tbGridView_" + gridViewId + "' gridview_element='tbGridView' class='" + (itemOptions.useJQueryUI ? "ui-widget " : "") + "tbGridView'>" +
-                                    "<thead id='tbHeader_" + gridViewId + "' gridview_element='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "tbHeader'></thead>" + /*inserta el header*/
-                                    "<tbody id='tbBody_" + gridViewId + "' gridview_element='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "tbBody'></tbody>" + /*inserta el body*/
-                                    "</table>");
+                .append("<table id='tbGridView_" + gridViewId + "' gridview_element='tbGridView' class='" + (itemOptions.useJQueryUI ? "ui-widget " : "") + "tbGridView'>" +
+                    "<thead id='tbHeader_" + gridViewId + "' gridview_element='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "tbHeader'></thead>" + /*inserta el header*/
+                    "<tbody id='tbBody_" + gridViewId + "' gridview_element='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "tbBody'></tbody>" + /*inserta el body*/
+                    "</table>");
             var $gridViewFooter = $("<div class='gridViewFooter' gridview_element='gridViewFooter'></div>");
 
             //.addClass((itemOptions.useJQueryUI ? "ui-widget " : "") + "gridView")
@@ -1754,13 +1844,13 @@ grilla agregada es una gridView en sí misma.
             if ($("#previewContainer").length > 0)
                 $("#previewContainer").remove();
             var prevCond = $("<div class='previewContainer' id='previewContainer'>" + $(".divPreview", $(src)).html() + "</div>")
-            .css({ position: 'absolute', top: 0, left: 0, width: $(src).width() })
-            .appendTo(src)
-            .position({
-                my: 'middle bottom'
-                , at: 'bottom bottom'
-                , of: $(src)
-            });
+                .css({ position: 'absolute', top: 0, left: 0, width: $(src).width() })
+                .appendTo(src)
+                .position({
+                    my: 'middle bottom'
+                    , at: 'bottom bottom'
+                    , of: $(src)
+                });
         }
 
         function loadDataSourceWS(gridViewId, settings, dataFilter, paggingData, parentGridRowData) {
@@ -1950,464 +2040,3 @@ grilla agregada es una gridView en sí misma.
         return this;
     };
 })(jQuery);
-/*
-================================================================
-                    HISTORIAL DE VERSIONES
-================================================================
-Código:         | GridView - 2018-04-05 1128 - v7.0.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificaron las llamadas a onError, que ejecuta el componente
-internamente, para que respete la firma del error de ajax:
-(jqXHR, status, messageError) y agregué además un 4o parámetro
-opcional: [errorObject] el cual es el objeto manejado por el catch
-de un bloque try.
-================================================================
-Código:         | GridView - 2017-04-18 1131 - v6.3.1.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla, cuando se configuraba la grilla para
-consumo de WS, por el cual se ejecutaba el evento onComplete, 
-antes de que finalizará la ejecución ajax.
-================================================================
-Código:         | GridView - 2017-03-31 1006 - v6.3.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla, cuando se configuraba la grilla para
-consumo de WS, por el cual siempre borraba la imagen de loading
-antes de que se completara la llamada ajax.
-================================================================
-Código:         | GridView - 2017-03-02 1245 - v6.2.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se unificaron los criterios de disparo de eventos en la modalidad
-WS o JSON de la grilla, ya que, cuando se encontraba configurada
-con un datasource del tipo JSON, el evento beforeDraw se ejecutaba
-antes de obtener los datos y no pasaba el set de datos a la grilla.
-- Se agregó el evento searchResultPreProcessing, en la modalidad
-de grilla con tipo de origen de datos JSON.
-- Se reemplazó el uso del eval por $.secureEvalJSON.
-- Se agregó, en la funcion loadDataSourceJson, la lectura de la 
-configuración de la propiedad dataResultProperty, del set de datos
-resultante.
-================================================================
-Código:         | GridView - 2017-02-23 1118- v6.1.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de configurar un método del cual se 
-obtendrá la configuración por defecto, permitiendo así, sobrescribir
-la configuración por defecto del componente en todo un site.
-    Ej: function GridView_GetConfiguration()
-        {
-            return {ajaxLoaderImage: "../Images/indicator.gif"};
-        }
-================================================================
-Código:         | GridView - 2017-02-06 1754- v6.0.1.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió un error detectado en la paginación backforward, cuando
-se intentaba navegar a la página 1, no estaba funcionando.
-================================================================
-Código:         | GridView - 2017-02-06 1743- v6.0.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificó el backforwardPager, para que no muestre los controles
-de paginación si no existen resultados, que muestre sólo la flecha
-de avance si se está ubicado en la primera página y sólo la de 
-retroceso si se está ubicado en la última página.
-- Se corrigió un error detectado en la paginación backforward, cuando
-se intentaba navegar a una página específica.
-================================================================
-Código:         | GridView - 2016-08-11 0942 - v5.2.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificó el default Pagger, para siempre muestre la cantidad
-de registros, cuando está habilitado, aún cuando no hubieran 
-múltiples páginas de resultados.
-================================================================
-Código:         | GridView - 2016-04-06 1653 - v5.0.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla que existía cuando se deshabilitaba la
-paginación en el componente, por la cual intentaba acceder al 
-pager el cual no se estaba inicializando.
-================================================================
-Código:         | GridView - 2015-12-22 1238 - v4.4.1.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-12-22 12:38
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla que existía cuando no se deshabilitaba la
-paginación en el componente.
-================================================================
-Código:         | GridView - 2015-12-21 1206 - v4.4.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-12-21 12:06
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de configurar el ordenamiento de los
-datos al presionar sobre el encabezado de la columna.
-- Se modificó el diseño de la grilla para incluir un contendor principal "div",
-un encabezado, un body y un footer. Cambiando la estructura y jerarquía de controles.
-- Se modificó para que el control usado para dibujar la grilla, si no fuera un DIV, 
-se reemplace por un div que será el contenedor principal, y el table será contenido dentro
-del body.
-- Se eliminaron las configuraciones "tableGridBody" "tableGridPager"
-- Se modificó la ruta por defecto del "ajaxLoaderImage" 
-- Se cambió el nombre del evento "onPaggingIndexChange" por "onPageIndexChanging"
-- Se redefinieron algunas clases de estilos.
-- Se modificaron los "..." del botón de selección, por el unicode: "&#x2023;"
-- Se reemplazó la imagen por defecto del botón refresh, por el unicode: "&#x21BA;"
-- Se modificó el "+" y "-" de los botones para expandir y contraer una grilla hija,
- por los unicode: "&#x271A"; y "&#x2796;", respectivamente
- ================================================================
-
-Código:         | GridView - 2015-12-15 1717 - v4.3.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-12-15 17:17
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificó el componente para que la funcionalidad de paginación
-sea una especie de handler (un objeto con comportamiento común)
-- Se agregó la posibilidad de configurar la paginación de la grilla
-de manera que permita la usada hasta el momento, 'default', o la 
-nueva paginación "backforward" que sólo permite navegar hacia 
-atrás o adelante, las páginas.
-================================================================
-Código:         | GridView - 2015-11-04 1628 - v4.2.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-11-04 1628
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla por la cual, cuando una columna estaba 
-configurada como Visible = false, no ejecuta el dataEval configurado.
-- Se agregó el nuevo evento searchResultPreProcessing, que permite
-definir una función a la cual se le pasará el resultado de la búsqueda, 
-previo al dibujado de la grilla, y que permitirá modificar el resultado. 
-Es decir, permitirá un pre-procesamiento de los datos previo al dibujado.
-- Se modificó la lógica de procesamiento de los resultados de un webService, 
-para que, si existe configurada una "dataResultProperty" se tome
-el set de resultados a dibujar de esa propiedad, en el objeto devuelto por
-el webService. Si no existiera esa configuración, se intenta obtener los datos
-de la propiedad "result", si esta propiedad no existiera, se consideran al mismo 
-objeto como el contenedor de los datos a dibujar.
-- Se corrigió una falla por la cual, a una columna configurada con controles 
-configuados, pero sin dataFieldName, no le estaba agregando las clases oddColumn o evenColumn
-- Se corrigió el dibujado de los controles, cuando no existía un cssClass definido, se estaba colocando
-null en el html del control.
-- Se modificó la lógica de dibujado de las columnas del encabezado para que,
-si una columna está configurada como invisible, SÍ se dibuje la columna del 
-encabezado, pero oculta.
-- Se corrigió una falla por la cual, a una columna sin dataFieldName, o una
-columna con un dataFieldName no incluído en el set de resultado, no se le estaba
-aplicando la configuración de Visibilidad.
-- Se modificó la lógica, para que, a una columna sin dataFieldName, o 
-con dataFieldName no incluído en el set de resultados, se le aplique
-también el "dataEval", de manera que permita al desarrollador, asignarle
-un valor por defecto.
-================================================================
-Código:         | GridView - 2015-06-25 0827 - v4.1.2.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-06-25 08:27
-----------------------------------------------------------------
-Cambios de la Versión:
-- Cuando el datasource era un json, no se estaba cargando el paggingData 
-en el control lo que hacía que no se dibujaran los controles 
-de paginación.
-================================================================
-Código:         | GridView - 2015-06-05 0949 - v4.1.1.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-06-05 09:49
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla que existía a la hora de realizar la
-paginación. No se estaba cargando el paggingData en el control
-lo que hacía que no se dibujaran los controles de paginación.
-================================================================
-Código:         | GridView - 2015-04-24 0832 - v4.1.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-04-24 08:32
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de configurar la imagen de refresh para
-que sea un ícono (un span) o que se dibuje un template (un control
-o selector jquery de un control)
-- Se agregó la clase gridViewRefreshIcon al ícono o imagen de 
-refresh dibujado.
-================================================================
-Código:         | GridView - 2015-03-06 1201 - v4.0.1.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-03-06 12:01
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificó el evento BeforeDraw para que reciba, por parámetro,
-el resultado de la búsqueda (el objeto data)
-- Se agregó la posibilidad de definir una propiedad, del datasource, que se 
-agregará como atributo de cada fila, mediante la configuración rowDataFieldId.
-Es decir, en esta propiedad se podrá indicar quéel nombre del campo de 
-los devueltos por la búsqueda, que se usará como atributo del TR, y cuyo valor
-se guardará en él.
-Ej: rowDataFieldId: 'Id'...
-   <row Id='valor de Id para la fila'...>
-- Se modificó la lógica del evento onGridDrawed, para que también se ejecute
-cuando el resultado no devuelva ningún registro.
-================================================================
-Código:         | GridView - 2015-02-04 1524 - v4.0.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2015-02-04 15:24
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se renombró el atributo donde se guardan los datos de paginación
-de gridView:gagging a gridView:pagging
-- Se agregó el nuevo atributo griview_isHeader (true|false) a
-los controles definidos para cada fila, de manera de poder
-distinguir si el control pertenece al encabezado o no.
-- Se modificó la lógica para que siempre cargue el atributo de 
-los datos de paginación, aún cuando la paginación está deshabilitada
-de manera de poder acceder, princpalmente, al totalRecords.
-================================================================
-Código:         | GridView - 2014-11-18 1721 - v3.2.0.0
-----------------------------------------------------------------
-Nombre:         | GridView
-Autor:          | Seba Bustos
-Fecha:          | 2014-11-18 17:21
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de mostrar o no el Indicator de procesamiento
-================================================================
-Código:         | GridView - 2014-11-17 1546 - v3.1.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2014-11-17 09:08
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó el evento onComplete, que se ejecutará siempre luego de realizar una búsqueda y dibujar la grilla, aún cuando se produjer un error en el dataSource.
-- Se agregó el nuevo método isChildGrid, entre los métodos públicos del control gridView, consumible mediante: $("...").gridView().isChildGrid();
-- Se agregó una propiedad childGridView, a la propiedad methods, devuelta por el gridView, que contiene métodos particulares de las grillas hijas. 
-   Esta propiedad posee 2 métodos:
-      getRowContainer, que devuelve el control fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainer();
-      getRowContainerData, que devuelve el elemento del datasource de la fila asociada a la grilla hija. Su uso: $("...").gridView().childGridView.getRowContainerData();
-- Se modificó el evento onCleanSearch, para agregar, al último, el nuevo parámetro "gridViewId"
-- Se modificó el evento onBeforeSearch, para agregar, al último, el nuevo parámetro "gridViewId"
-- Se modificó la lógica del evento click de selección de una fila y celda, para que no use, en el selector, los objetos TR y TD, sino que realice la búsqueda a partir de los atributos, de manera de poder, a futuro, modificar los controles usados para dibujar la grilla.
-- Se modificó el evento onBeforeDraw, para agregar el parámetro "gridViewId"
-- Se modificó el método loadDataSourceWS para que, tanto en el evento OnError, como en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onComplete
-- Se modificó el método loadDataSourceWS para que, en el evento OnSucces de la llamada ajax al WS configurado, ejecute el evento onError si se produjera algún tipo de excepción.
-- Se modificó el método loadDataSourceJSon para que ejecute el evento onComplete, luego de dibujar la grilla.
-================================================================
-Código:         | GridView - 2014-02-26 0908 - v3.0.0.0
-Autor:          | Seba Bustos
-Fecha:          | 2014-02-26 09:08
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregaron los eventos onRowDataBounding y onRowDataBound
-   OnRowDataBounding: function (gridViewId, data, rowIndex) { }
-     Se ejecutará antes de crear e insertar una fila, recibe por parámetro el id de la 
-      grilla, un json con los datos que componente la fila (todas las columnas no sólo 
-      las que tengan  "includeInResult: true") y la posición de la fila dentro de la 
-      grilla (el índice)
-     Este evento puede, opcionalmente, devolver un json con los datos que usará el 
-      componente para dibujar la fila. Obviamente este json debe cumplir con la 
-      estructura del datasource, es decir del data recibido por parámetro.
-   OnRowDataBound: function (row, gridViewId, data, rowIndex) { }
-     Se ejecutará luego de haber agregado la fila a la grilla, recibe por parámetro 
-      el control TR correspondiente a la fila agregada, el id de la grilla, un json 
-      con los datos usados para dibujar la grilla y el índice de la fila agregada.
-     Usando el parámetro row es posible, por ejemplo, acceder a los controles que 
-      se hubieren configurado dentro de la fila, y operar sobre ellos, por ejemplo, 
-      deshabilitar un textbox.
-================================================================
-Código:         | GridView - 2013-11-05 20:00 - v2.1.1.0
-Autor:          | Seba Bustos
-Fecha:          | 2013-11-27 09:19
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se modificaron los ID del theader y tbody usados, para que 
-agreguen, como sufijo, el ID de la grilla; y se agregó un nuevo
-atributo a los mismos controles, para identificarlos ([gridview_element])
-================================================================
-Código:         | GridView - 2013-11-05 20:00 - v2.1.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de definir el evento 
-    "onPageIndexChanged" que se ejecutará luego de haberse hecho
-    el cambio de página en la grilla y ejecutado la búsqueda 
-    de esa página.
-- Se agregó la posibilidad de agregar filas manualmente (Gon Oviedo)
-    Se agregaron los métodos addRow e insertRow.
-
-- Se modificó el ID de la fila del encabezado para que se componga 
-   del gridViewId + el sufijo "_trRowHeader": 
-      
-        ID = gridViewId + "_trRowHeader"
-
-- Se modificó el ID de los controles configurados en el encabezado 
-   para que contengan, el prefijo de la fila del encabezado + 
-   "_headerControl_" + el ID del control, si lo tuviera más un 
-   prefijo del índice del control:
-   
-        ID = gridViewId + "_trRowHeader_headerControl_" ctrl.attr("id") + "_" + index
-
-- Se modificó el ID de los controles de celdas que se deben agregar al 
-   encabezado para que contengan, el prefijo de la fila del encabezado 
-   mas el índice de la columna + "_controlHeaderIncluded_" + el ID del 
-   control, si lo tuviera más un prefijo del índice del control:
-	
-        ID = idPrefix + "_column" + col + "_controlHeaderIncluded_" + ctrl.attr("id") + "_" + index
-
-- Se corrigió un error en un selector de la grilla hija, que no estaba
-trayendo la misma.
-
-- Se agregó la posibilidad de definir clases de estilo (css) a cada columna
-
-- Se agregó al control, en el que se dibuja la grilla, la propiedad "gridView_columnsAmmount" con la cantidad de columnas dibujadas.
-
-- Se agregaron nuevas propiedades gridview_cellType a algunas celdas, a saber:
-    * gridview_cellType='showRowNumber_header': Celda, del encabezado,  con el número de fila.
-    * gridview_cellType='refresh': celda del encabezado con el ícono de refresco.
-    * gridview_cellType='headerControl': a cada celda, del encabezado, que se dibuja para alojar los controles definidos en headerControls.
-    * gridview_cellType='headerCell': a cada celda, del encabezado, correspondiente a las celdas de datos.
-
-- Se corrigió el colSpan de la fila de mensaje, que se muestra cuando la grilla está vacía, y de la fila de ícono de "loading" para que cubra 
-la cantidad de columnas configuradas. Anteriormente estaba en duro.
-
-- Se agregó la posibilidad de definir nuevos tipos de controles como columnas de la grilla, los nuevos tipos son: 'checkbox', 'radio', 'textbox', 'select'
-
-- Se agregó la posibilidad de definir cualquier tipo de evento en los controles, mediante la nueva propiedad events, que es un array del tipo: [{ name: 'event1', handler: function (row, id, rowType, data, src) { } },
-                                                                                                                                                { name: 'event2', handler: function (row, id, rowType, data, src) { } }]
-
-- Se modificó el dibujo de las celdas para que, si se especifica una columna con DataFieldName y Controls, utiliza el valor extraído del DataFieldName (de los datos) como value del/los control/es a dibujar.
-  NOTA: el valor del DataFieldName reemplaza el label definido para el control.
-
-Nuevos Eventos:
- - onPageIndexChanged
-Nuevos métodos
- - addRow
- - insertRow
-================================================================
-Código:         | GridView - 2013-03-14 10:02 - v2.0.0.0
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió un efecto molesto cuando se pasa el mouse sobre una
-fila, que por la "negrita" se agrandaba y achicaba la grilla entera.
-- Se agregó la posibilidad de habilitar o deshabilitar, en los 
-controles de paginación, la navegación por grupos (<< y >>), 
-mediante la configuraición showFirstPageButton y showLastPageButton
-- Se agregó la lógica que, si la cantidad de grupos de páginas,
-no supera la configurada (en pagesShown), no muestre los controles 
-de navegación de grupo de páginas (< y >)
-- Se corrigió una falla que existía cuando se cambiaba de página
-y la misma estaba en un grupo nuevo, el pager no se movía al nuevo
-grupo de páginas.
-- Se agregaron eventos al cambiar el índice de la paginación.
-- Se modificaron los métodos de paginación para que, si no recibe 
-por parámetro el "gridViewId" lo tome de una variable temporal.
-================================================================
-
-Código:         | GridView - 2012-12-10 19:03 - v1.0.0.10
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la posibilidad de definir "headerControls" que son controles
-que sólo se mostrarán en el encabezado.
-- Se agregó a los "controls" la posibilidad de definir 2 nuevos atributos:
-    style: estilo que se anexará al control al momento de dibujarlo.
-    alt:para los controles del tipo "image" será el texto alternativo a usar.
-================================================================
-
-Código:         | GridView - 2012-09-28 12:47 - v1.0.0.9
-Autor:          | Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
- - Se agregó la posibilidad de configurar la propiedad que se 
-  utilizará para obtener los datos.
- - Se agregó a cada celda el atributo "dataFieldName" con el nombre
- del campo asociado.
- - Se modificó para que las palabras claves "refresh" y "search"
-  también ejecuten los métodos asociados.
-================================================================
-Código:         |GridView - 2012-08-15 13:55 - v1.0.0.8
-Autor:          |Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
- - Se agregó la posibilidad de configurar grillas anidadas.
-  Características:
-  * Las grillas hijas son tambien "gridViews" por lo cual toda
-  configuración y acción posible en estas es configurable en las 
-  hijas.
-  * La estructura de configuración es igual, y heredan la 
-  configuración de su grilla padre.
-  * El método "getFilterData", cuando se trata de una grilla hija
-  recibe por parámetro el objeto json de la fila que lo contiene
-  (el itemData)
-
-- Se agregó la posiblidad de configurar una función como 
-  datasource de un WS, esta función deberá devolver un string que 
-  será la URL del WS.
-  En el caso de que fuera una función, esta recibirá como 
-  parámetros: dataSource(gridViewId, dataFilter, parentGridRowData)
-  Donde parentGridRowData, serán los datos de la fila padre, cuando
-  se hubiera configurado una grilla hija, y undefined si no se 
-  hubiera configurado.
-- Se agregó el atributo gridViewType (valores posibles: gridView
-  y gridViewChild) al control usado para el dibujado de la grilla.
-- Se renombraron los métodos loadWSDataSource y loadJSonDataSource
-  por loadDataSourceWS y loadDataSourceJSon respectivamente.
-================================================================
-Código:       GridView - 2012-02-23 16:04 - v1.0.0.7
-Autor:        Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla con el evento OnError. Cuando se realiza 
-el control de si el evento estaba definido no se estaba consultando
-dentro de la variabl settings.
-- Se agregó el footer dentro de un div que lo contenga.
-- Se agregó la posibilidad de configurar para que se muestre el 
-número total de registros encontrados, junto con el label que se
-desea mostrar agregándole la etiqueta {0} para definir donde se
-mostrará el número.
-- Se agregó la posibilidad de incluir el número de fila
-================================================================
-Código:       GridView - 2012-02-22 1836 - v1.0.0.6
-Autor:        Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla con el parámetro showInHeader de un columna
-con control. El cual no estaba funcionando correctamente. El 
-error se debía a que se llamaba a la función GetControls en 
-el dibujado del encabezado pero con un parámetro NULL de más
-en la posición del parámtro "isHeader".
-================================================================
-Código:       GridView - 2012-02-10 1026 - v1.0.0.5
-Autor:        Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se corrigió una falla en los métodos loadWSDataSource y 
-loadJSonDataSource por la cual no funcionaba el plugin en Chrome 
-y Firefox. Se trataba de una variable (eventResult) que no estaba 
-declarada
-================================================================
-Código:       GridView - 2012-01-17 1051 - v1.0.0.4
-Autor:        Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó el disparo del evento OnError.
-- Se agregó el disparo del evento OnCleanSearch.
-================================================================
-Código:       GridView - 2011-12-30 1146 - v1.0.0.3
-Autor:        Seba Bustos
-----------------------------------------------------------------
-Cambios de la Versión:
-- Se agregó la funcionalidad de preview.
-================================================================
-*/
