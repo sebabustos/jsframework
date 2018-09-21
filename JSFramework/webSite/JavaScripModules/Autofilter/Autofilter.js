@@ -1,6 +1,4 @@
-﻿/////////////////////////////////////////////////////
-//        Template de un plugin de JQUERY          //
-/////////////////////////////////////////////////////
+﻿/*! Autofilter - 2018-09-20 1327 - 5.0.0.0*/
 (function ($) {
     "use strict";
     var $tempthis = null;
@@ -12,6 +10,8 @@
 
     //Configuración por defecto del plugin 
     var $default = {
+        //permite habilitar/deshabilitar el auto-ocultamiento de los controles
+        autoToggle: true,
         accentInsensitive: false,
         filterSelector: null,
         doFilter: null,
@@ -20,6 +20,13 @@
         filterTextStyle: eFilterTextStyle.Uppercase,
         watermark: null,
         watermarkClass: 'watermarked',
+        //Cuando se define, sobre-escribe el comportamiento original de filtrado.
+        //el plugin llamará a este método para que el mismo se encargue de realizar
+        //el filtro de los datos.
+        //Este método deberá devolver un json 2 propiedades:
+        //elemsNotFound: conjunto de elemento que NO cumplen con el criterio de búsqueda
+        //elemsFound: conjunto de elementos que SÍ cumplen con el criterio de búsqueda
+        filterDelegate: null, //function (srcId, srcElem, settings, filterText, filterExpression)
         //Se ejecuta antes de realizar el filtro de los datos y si devuelve un valor del tipo string
         //sobreescribe el texto a partir del cual se filtrará.
         onBeforeFilter: null, //function (srcId, filterText) { },
@@ -48,12 +55,12 @@
             var src;
             if ($tempthis !== null && $tempthis.length > 0) {
                 src = $tempthis;
-                srcId = src.attr("autofilterId");
+                srcId = src.attr("data-autofilterid");
             }
             else {
-                src = $("[autofilterId=" + srcId + "]");
+                src = $("[data-autofilterid=" + srcId + "]");
             }
-            var settings = $.extend({}, $default, src.data("autofilterConfig"));
+            var settings = $.extend({}, $default, src.data("autofilterconfig"));
 
             if (typeof settings.onBeforeFilter === "function") {
                 var response = settings.onBeforeFilter(srcId, filterText);
@@ -61,7 +68,7 @@
                     filterText = response;
             }
 
-            if (filterText === "" || filterText === null) {
+            if (typeof filterText === "undefined" || filterText === "" || filterText === null) {
                 var doClear = true;
                 if (typeof settings.onBeforeClearFilter === "function")
                     //sólo cancelará la operación si el evento devuelte false.
@@ -74,62 +81,81 @@
                     settings.onAfterClearFilter(srcId);
             }
             else {
-                var notFound, found;
-                //var notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
-                //var found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+                var elemsNotFound, elemsFound;
 
+                var filterExpression
                 if (settings.filterTextStyle === eFilterTextStyle.Uppercase)
-                    filterText = filterText.toUpperCase();
+                    filterExpression = filterText.toUpperCase();
                 else if (settings.filterTextStyle === eFilterTextStyle.Lowercase)
-                    filterText = filterText.toLowerCase();
+                    filterExpression = filterText.toLowerCase();
 
-                //Si se define el atributo de filtro, se utiliza ese
-                if (typeof settings.filterAttribute !== "undefined" && settings.filterAttribute !== null && settings.filterAttribute !== "") {
+                if (settings.accentInsensitive)
+                    filterExpression = methods.accentInsensitiveReplace(filterText);
 
-                    if (settings.accentInsensitive) {
-                        var replacedFilterText = methods.accentInsensitiveReplace(filterText);
-
-                        notFound = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
-                            var regExp = new RegExp(replacedFilterText, "gi");
-                            var val = $(this).attr(settings.filterAttribute);
-                            return !regExp.test(val);
-                        }).hide(200).length;
-                        found = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
-                            var regExp = new RegExp(replacedFilterText, "gi");
-                            var val = $(this).attr(settings.filterAttribute);
-                            return regExp.test(val);
-                        }).show(200).length;
+                if (typeof settings.filterDelegate === "function") {
+                    var result = settings.filterDelegate(srcId, src[0], settings, filterText, filterExpression);
+                    if (typeof result !== "undefined" && result != null) {
+                        if ("elemsNotFound" in result)
+                            elemsNotFound = result.elemsNotFound;
+                        else
+                            throw "autofilter - filterDelegate no devolvió el listado de elementos no encontrados.";
+                        if ("elemsFound" in result)
+                            elemsFound = result.elemsFound;
+                        else
+                            throw "autofilter - filterDelegate no devolvió el listado de elementos encontrados.";
                     }
-                    else {
-                        notFound = $(filterSelector).not("[" + settings.filterAttribute + '*="' + filterText + '"]').hide(200).length;
-                        found = $(filterSelector + "[" + settings.filterAttribute + '*="' + filterText + '"]').show(200).length;
-                    }
+                    else
+                        throw "autofilter - filterDelegate no devolvió un resultado válido.";
+
                 }
-                    //si no se define un atributo de filtro, se utiliza el contains.
                 else {
-                    if (settings.accentInsensitive) {
-                        var replacedFilterText = methods.accentInsensitiveReplace(filterText);
 
-                        notFound = $(filterSelector).filter(function () {
-                            var regExp = new RegExp(replacedFilterText, "gi");
-                            var val = $(this).text();
-                            return !regExp.test(val);
-                        }).hide(200).length;
-                        found = $(filterSelector).filter(function () {
-                            var regExp = new RegExp(replacedFilterText, "gi");
-                            var val = $(this).text();
-                            return regExp.test(val);
-                        }).show(200).length;
+                    //Si se define el atributo de filtro, se utiliza ese
+                    if (typeof settings.filterAttribute !== "undefined" && settings.filterAttribute !== null && settings.filterAttribute !== "") {
+                        if (settings.accentInsensitive) {
+                            elemsNotFound = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
+                                var regExp = new RegExp(filterExpression, "gi");
+                                var val = $(this).attr(settings.filterAttribute);
+                                return !regExp.test(val);
+                            });
+                            elemsFound = $(filterSelector + "[" + settings.filterAttribute + "]").filter(function () {
+                                var regExp = new RegExp(filterExpression, "gi");
+                                var val = $(this).attr(settings.filterAttribute);
+                                return regExp.test(val);
+                            });
+                        }
+                        else {
+                            elemsNotFound = $(filterSelector).not("[" + settings.filterAttribute + '*="' + filterExpression + '"]');
+                            elemsFound = $(filterSelector + "[" + settings.filterAttribute + '*="' + filterExpression + '"]');
+                        }
                     }
+                    //si no se define un atributo de filtro, se utiliza el contains.
                     else {
-                        notFound = $(filterSelector).not(":contains('" + filterText + "')").hide(200).length;
-                        found = $(filterSelector + ":contains('" + filterText + "')").show(200).length;
+                        if (settings.accentInsensitive) {
+                            elemsNotFound = $(filterSelector).filter(function () {
+                                var regExp = new RegExp(filterExpression, "gi");
+                                var val = $(this).text();
+                                return !regExp.test(val);
+                            });
+                            elemsFound = $(filterSelector).filter(function () {
+                                var regExp = new RegExp(filterExpression, "gi");
+                                var val = $(this).text();
+                                return regExp.test(val);
+                            });
+                        }
+                        else {
+                            elemsNotFound = $(filterSelector).not(":contains('" + filterExpression + "')");
+                            elemsFound = $(filterSelector + ":contains('" + filterExpression + "')");
+                        }
                     }
                 }
 
-
+                if (settings.autoToggle === true) {
+                    elemsNotFound.hide(200).length
+                    elemsFound.show(200).length
+                }
                 if (typeof settings.onAfterFilter === "function")
-                    settings.onAfterFilter(srcId, filterText, found, notFound);
+                    settings.onAfterFilter(srcId, filterText, elemsFound.length, elemsNotFound.length, elemsFound, elemsNotFound);
             }
         },
         filterTextbox_keyup: function () {
@@ -137,17 +163,21 @@
             if ($tempthis !== null && $tempthis.length > 0)
                 $this = $tempthis;
 
-            var settings = $.extend({}, $default, $this.data("autofilterConfig"));
+            var settings = $.extend({}, $default, $this.data("autofilterconfig"));
             var filterSelector;
             if (typeof settings.filterSelector !== "undefined" && settings.filterSelector !== null && settings.filterSelector !== "")
                 filterSelector = settings.filterSelector;
-            else
-                filterSelector = $this.attr("filterSelector");
+            else {
+                if (typeof $this.attr("data-autofilter-filterselector") !== "undefined" && $this.attr("data-autofilter-filterselector") !== "")
+                    filterSelector = $this.attr("data-autofilter-filterselector");
+                else if (typeof $this.attr("filterSelector") !== "undefined" && $this.attr("filterSelector") !== "")
+                    filterSelector = $this.attr("filterSelector");
+            }
 
             if (typeof settings.doFilter === "function")
-                settings.doFilter($this.attr("autofilterId"), $this.val(), filterSelector);
+                settings.doFilter($this.attr("data-autofilterid"), $this.val(), filterSelector);
             else
-                methods.doFilter($this.attr("autofilterId"), $this.val(), filterSelector);
+                methods.doFilter($this.attr("data-autofilterid"), $this.val(), filterSelector);
         },
         filterTextbox_focus: function () {
             var $this = $(this);
@@ -155,11 +185,13 @@
                 $this = $tempthis;
             var filter = $this.val();
 
-            var settings = $.extend({}, $default, $this.data("autofilterConfig"));
+            var settings = $.extend({}, $default, $this.data("autofilterconfig"));
             if (settings.useWatermark) {
                 var watermark;
                 if (typeof settings.watermark !== "undefined" && settings.watermark !== null && settings.watermark !== "")
                     watermark = settings.watermark;
+                else if (typeof $this.attr("data-autofilter-watermark") !== "undefined" && $this.attr("data-autofilter-watermark") !== "")
+                    watermark = $this.attr("data-autofilter-watermark");
                 else if (typeof $this.attr("watermark") !== "undefined" && $this.attr("watermark") !== "")
                     watermark = $this.attr("watermark");
 
@@ -176,11 +208,13 @@
                 $this = $tempthis;
             var filter = $this.val();
 
-            var settings = $.extend({}, $default, $this.data("autofilterConfig"));
+            var settings = $.extend({}, $default, $this.data("autofilterconfig"));
             if (settings.useWatermark) {
                 var watermark, watermarkClass = "";
                 if (typeof settings.watermark !== "undefined" && settings.watermark !== null && settings.watermark !== "")
                     watermark = settings.watermark;
+                else if (typeof $this.attr("data-autofilter-watermark") !== "undefined" && $this.attr("data-autofilter-watermark") !== "")
+                    watermark = $this.attr("data-autofilter-watermark");
                 else if (typeof $this.attr("watermark") !== "undefined" && $this.attr("watermark") !== "")
                     watermark = $this.attr("watermark");
 
@@ -204,13 +238,15 @@
             var filter = $this.val();
             var watermark = "", watermarkClass = "";
 
-            var settings = $.extend({}, $default, $this.data("autofilterConfig"));
+            var settings = $.extend({}, $default, $this.data("autofilterconfig"));
 
 
             if (settings.useWatermark) {
                 var watermark, watermarkClass = "";
                 if (typeof settings.watermark !== "undefined" && settings.watermark !== null && settings.watermark !== "")
                     watermark = settings.watermark;
+                else if (typeof $this.attr("data-autofilter-watermark") !== "undefined" && $this.attr("data-autofilter-watermark") !== "")
+                    watermark = $this.attr("data-autofilter-watermark");
                 else if (typeof $this.attr("watermark") !== "undefined" && $this.attr("watermark") !== "")
                     watermark = $this.attr("watermark");
 
@@ -237,12 +273,12 @@
                 if (typeof settings.filterSelector !== "undefined" && settings.filterSelector !== null && settings.filterSelector !== "")
                     filterSelector = settings.filterSelector;
                 else
-                    filterSelector = $this.attr("filterSelector");
+                    filterSelector = $this.attr("data-autofilter-filterselector");
 
                 if (typeof settings.doFilter === "function")
-                    settings.doFilter($this.attr("autofilterId"), filter, filterSelector);
+                    settings.doFilter($this.attr("data-autofilterid"), filter, filterSelector);
                 else
-                    methods.doFilter($this.attr("autofilterId"), filter, filterSelector);
+                    methods.doFilter($this.attr("data-autofilterid"), filter, filterSelector);
 
             }
             else if (watermarkClass !== "")
@@ -250,15 +286,15 @@
         },
         accentInsensitiveReplace: function (text) {
             return text.replace(/[aàáâãäå]/g, "[aàáâãäå]")
-                    .replace(/[AÀÁÂÃÄÅ]/g, "[AÀÁÂÃÄÅ]")
-                    .replace(/[eèéêë]/g, "[eèéêë]")
-                    .replace(/[EÈÉÊË]/g, "[EÈÉÊË]")
-                    .replace(/[iìíîï]/g, "[iìíîï]")
-                    .replace(/[IÌÍÎÏ]/g, "[IÌÍÎÏ]")
-                    .replace(/[oòóôõ]/g, "[oòóôõ]")
-                    .replace(/[OÒÓÔÕ]/g, "[OÒÓÔÕ]")
-                    .replace(/[uùúûü]/g, "[uùúûü]")
-                    .replace(/[UÙÚÛÜ]/g, "[UÙÚÛÜ]");
+                .replace(/[AÀÁÂÃÄÅ]/g, "[AÀÁÂÃÄÅ]")
+                .replace(/[eèéêë]/g, "[eèéêë]")
+                .replace(/[EÈÉÊË]/g, "[EÈÉÊË]")
+                .replace(/[iìíîï]/g, "[iìíîï]")
+                .replace(/[IÌÍÎÏ]/g, "[IÌÍÎÏ]")
+                .replace(/[oòóôõ]/g, "[oòóôõ]")
+                .replace(/[OÒÓÔÕ]/g, "[OÒÓÔÕ]")
+                .replace(/[uùúûü]/g, "[uùúûü]")
+                .replace(/[UÙÚÛÜ]/g, "[UÙÚÛÜ]");
         }
     };
 
@@ -272,7 +308,7 @@
         //Ej: $().gridView().method1   --> llama al plugin sin un selector, obteniendo la referencia a methods y por lo tanto puede ejecutar el método "method1".
         //si no está inicializado, es decir no posee el autofilterId) pasa por la iniciacilización y no por la devolución del objeto
         //methods
-        if (typeof options === "undefined" && typeof this.attr("autofilterId") !== "undefined" && this.attr("autofilterId") !== "") {
+        if (typeof options === "undefined" && typeof this.attr("data-autofilterid") !== "undefined" && this.attr("data-autofilterid") !== "") {
             $tempthis = this;
             return methods;
         }
@@ -289,9 +325,9 @@
             //el each se debe a que el selector puede devolver varios componentes.
             $.each(this, function (index, item) {
                 //usando el método "data" de jquery, se obtiene la configuración particular de ese componente (ver más adelante)
-                //var settings = $.extend({}, $default, $(item).data("autofilterConfig"));
+                //var settings = $.extend({}, $default, $(item).data("autofilterconfig"));
 
-                var itemId = $(item).attr("autofilterId");
+                var itemId = $(item).attr("data-autofilterid");
                 if(methods.hasOwnProperty(options))
                     //eval("$(\"[autofilterId=" + itemId + "]\").autofilter()." + options + "()");
                     
@@ -323,7 +359,7 @@
         function config(target) {
             //una forma de identificar cada objeto y verificar si fue inicializado es crear un nuevo atributo con un ID generado
             //Este ID puede ser el mismo ID del control, si este tuviera uno o bien un ID aleatorio (o incremental)
-            var newId = (typeof target[0].id != "undefined") ? target[0].id : guiid++;
+            var newId = (typeof target[0].id != "undefined" && target[0].id != "") ? target[0].id : guiid++;
             //se genera un array con las opciones recibidas en la llamada del plugin, lo conveniente es, a estas opciones particulares
             //almacenarlas en cada control (sólo las particulares no las default).
             var itemOptions = $.extend({}, options); //realiza una copia de las opciones originales.
@@ -332,6 +368,8 @@
                 var watermark;
                 if (typeof settings.watermark !== "undefined" && settings.watermark !== null && settings.watermark !== "")
                     watermark = settings.watermark;
+                else if (typeof target.attr("data-autofilter-watermark") !== "undefined" && target.attr("data-autofilter-watermark") !== "")
+                    watermark = target.attr("data-autofilter-watermark");
                 else if (typeof target.attr("watermark") !== "undefined" && target.attr("watermark") !== "")
                     watermark = target.attr("watermark");
 
@@ -348,9 +386,9 @@
             target.change(methods.filterTextbox_change);
 
             //se almacena la configuración del usuario en un atributo del control usando el método "data" de jquery.
-            target.data("autofilterConfig", itemOptions)
-                .attr("autofilterId", newId)//se graba el nuevo Id.
-                .attr("plugin", "autofilter");
+            target.data("autofilterconfig", itemOptions)
+                .attr("data-autofilterid", newId)//se graba el nuevo Id.
+                .attr("data-plugin", "autofilter");
 
         }
         //================
@@ -363,7 +401,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | Autofilter - 2015-09-25 1116 - 2.0.0.0
+Código:       | Autofilter - 2018-09-20 1327 - 5.0.0.0
 ----------------------------------------------------------------
 Nombre:       | Autofilter
 ----------------------------------------------------------------
@@ -378,14 +416,17 @@ Descripción:  | Configura un control para que al cambiar su valor
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v2.0.0.0
+Versión:      | v5.0.0.0
 ----------------------------------------------------------------
-Fecha:        | 2015-09-25 11:16
+Fecha:        | 2018-09-20 13:27
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregró la posibilidad de habilitar el accent-insensitive en la
- búsqueda, que permitirá encontrar una palabra más allá de si 
- esta está acentuada o no.
+ - Se modificaron los atributos que agrega el plugin, a los controles
+ para que agreguen prefijo "data-", y todo en minúscula.
+ - se corrigió un error que se daba cuando el control no tenía Id.
+ - Se agregó la posibilidad de deshabilitar el ocultamiento de los controles
+ - se agregó la posibilidad de definir un delegado para aplicar el filtro
+ sobre los controles.
 ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -406,17 +447,4 @@ cuando este contenga el watermark o cuando se le quite el mismo.
 ================================================================
                        POSIBLES MEJORAS
 ================================================================
- [Posibles mejoras pendientes para el componente/producto/funcionalidad]
- - Permitir definir un atributo sobre el cual se busque y no sólo 
- que se busque sobre el contenido.
- ================================================================
-                    HISTORIAL DE VERSIONES
-    [Registro histórico resumido de las distintas versiones]
-================================================================
-Código:       | Autofilter - 2014-07-24 1123 - 1.0.0.0
-Autor:        | Sebastián Bustos Argañaraz
-----------------------------------------------------------------
-Cambios de la Versión:
- - Primera versión del plugin
-================================================================
-*/
+ */
