@@ -1,10 +1,10 @@
-﻿/*! GridView - 2018-07-02 1229 - v7.2.0.0
+﻿/*! GridView - 2019-04-05 1103 - v8.0.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2018-07-02 1229 - v7.2.0.0
+Código:         | GridView - 2019-04-05 1103 - v8.0.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -19,53 +19,10 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de configurar como valores de columnas
-fields de propiedades que son objetos del data mapeado,
-con el formato "Prop.Field" y que la grilla resuelva automátivamente
-Ej: 
-{
-    Id :1,
-    Relacion: {
-        Descripcion:"Relación"
-    },
-    OtroObjeto:{
-        OtroObjetoMas:{
-            Nivel2:"Valor";
-        }
-    }
-}
-
-$().gridView({
-    ...
-    Columns:[{
-            description: "Tipo Relación",
-            dataFieldName: "Relacion.Descripcion"
-    },
-    {
-            description: "Nivel 2",
-            dataFieldName: "OtroObjeto.OtroObjetoMas.Nivel2",
-    }]
-    ...
-})
-- Se agregó la posibilidad de definir el tipo de dato de una columna (columnDataType).
-- Se agregó la conversión automática de las columnas de tipo fecha cuando
-estas son valores con el formato '/Date(xxx)/'. Este procesamiento es
-automático, cuando se define la columna como columnDataType:'date'
-Nota: a partir de ese momento, la columna es un objeto DATE, para darle
-formato se puede usar el evento dataEval de la columna.
-Ej:
-{
-    dataFieldName: "Fecha",
-    description: "Fecha",
-    columnDataType:'date',
-    dataEval: function (fieldValue) {
-        if (fieldValue != null)
-            fieldValue = fieldValue.getDate() + "/" + (fieldValue.getMonth() + 1) + "/" + fieldValue.getFullYear();
-
-        return fieldValue;
-    }
-}
-
+- Se corrigió un error existente en el bindeo, cuando el datafieldName se realiza
+sobre una columna objeto (Column.Field), cuando la columna es nula, el sistema generaba un
+error.
+- Se modificó la secuencia del evento onBeforeDraw, para que se ejecute después del evento searchResultPreProcessing
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -356,7 +313,7 @@ grilla agregada es una gridView en sí misma.
                 gridViewId = arguments[0];
                 pageIndex = arguments[1];
             }
-                //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
+            //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
             else if ($tempthis !== null && $tempthis.length > 0)
                 gridViewId = $tempthis.attr("gridViewId");
             else
@@ -499,7 +456,7 @@ grilla agregada es una gridView en sí misma.
                 if (paggingData.totalRecords > settings.pageSize) {
                     var pageNumbers = "";
                     var prod = paggingData.currPageGroupNum * settings.pagesShown;
-                    for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm) ; icount++) {
+                    for (var icount = prod; (icount < prod + settings.pagesShown) && (icount < paggingData.pageAmm); icount++) {
                         var css = "";
                         if (paggingData.currIndex === icount)
                             css = " selected";
@@ -608,7 +565,7 @@ grilla agregada es una gridView en sí misma.
                 gridViewId = arguments[0];
                 pageIndex = arguments[1];
             }
-                //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
+            //Si se recibe un sólo argumento es el pageIndex, pero el gridView debe haber sido precargado en la variable $tempthis.
             else if ($tempthis !== null && $tempthis.length > 0)
                 gridViewId = $tempthis.attr("gridViewId");
             else
@@ -727,17 +684,21 @@ grilla agregada es una gridView en sí misma.
     function resolveDataFieldValue(data, columnSetting) {
         var retVal = null;
 
-        if (!isNullOrWhiteSpace(columnSetting)) {
+        if (!isNullOrWhiteSpace(columnSetting) && !isNullOrWhiteSpace(data)) {
             var fieldName = columnSetting.dataFieldName;
             if (!isNullOrWhiteSpace(fieldName)) {
                 //resuelve los sub campos... los campos de propiedades json. Ej: Tipo.Descripcion
                 if (fieldName.indexOf(".") >= 0) {
                     retVal = data;
                     var arrProp = fieldName.split(/\./g);
-                    for (var prop in arrProp)
-                        retVal = retVal[arrProp[prop]];
+                    for (var prop in arrProp) {
+                        if (!isNullOrWhiteSpace(retVal))
+                            retVal = retVal[arrProp[prop]];
+                        else
+                            break;
+                    }
                 }
-                    //Si el campo no contiene punto, intenta obtenerlo directamente del set de resultados (data)
+                //Si el campo no contiene punto, intenta obtenerlo directamente del set de resultados (data)
                 else if (data.hasOwnProperty(fieldName)) {
                     retVal = data[fieldName];
                 }
@@ -857,7 +818,7 @@ grilla agregada es una gridView en sí misma.
                             cell.addClass("controls_container").append(item);
                         });
                     }
-                        //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
+                    //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
                     else if (columnSetting.hasOwnProperty("showPreview") && columnSetting.showPreview) {
                         var css = '';
                         if (columnSetting.hasOwnProperty("previewCellClass") && columnSetting.previewCellClass !== null && columnSetting.previewCellClass !== "")
@@ -865,7 +826,7 @@ grilla agregada es una gridView en sí misma.
 
                         cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
                     }
-                        //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
+                    //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
                     else
                         cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
 
@@ -913,8 +874,8 @@ grilla agregada es una gridView en sí misma.
                     if (!isHeader) {
                         result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId, cellValue));
                     }
-                        //si se tratara del encabezado, se verifica si la column tiene configurado mostrar el control
-                        //en el header
+                    //si se tratara del encabezado, se verifica si la column tiene configurado mostrar el control
+                    //en el header
                     else if (controls[index].showInHeader === true) {
                         var headerControl;
                         if (typeof controls[index].headerControlTemplate !== "undefined")
@@ -1058,7 +1019,7 @@ grilla agregada es una gridView en sí misma.
                     var childGrid = $("[gridViewId=" + gridViewId + "_ChildGrid" + rowIndex + "]", childGridRow);
                     settings = $.extend({}, getDefaults(), childGrid.data("gridviewconfig"));
                 }
-                    //si no existe se crea.
+                //si no existe se crea.
                 else {
                     //se obtiene la configuración de grilla hija.
                     settings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig").childGrid);
@@ -1273,7 +1234,7 @@ grilla agregada es una gridView en sí misma.
                     settings.onRowSelect($row, gridViewId, $row.data("itemData"));
                 });
             }
-                //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
+            //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
             else {
                 $("[gridview_cellType=data]:not(.controls_container)", $row).click(function (evt) {
                     var $row = $(this).parents("[gridview_rowType=row]");
@@ -1584,7 +1545,7 @@ grilla agregada es una gridView en sí misma.
                             settings.onRowSelect($parentRow, gridViewId, $parentRow.data("itemData"));
                         });
                     }
-                        //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
+                    //En selectionMode=='row' la fila sólo selecciona presionando sobre cualquier parte de la fila
                     else {
                         $("[gridview_rowType=row]>[gridview_cellType=data]:not(.controls_container)", $("[gridview_element=tbBody]", elem))
                             .click(function (evt) {
@@ -1696,7 +1657,7 @@ grilla agregada es una gridView en sí misma.
                     var $refreshIcon = null;
                     if (typeof settings.refreshIconTemplate !== "undefined" && settings.refreshIconTemplate !== null && settings.refreshIconTemplate !== "")
                         $refreshIcon = $(settings.refreshIconTemplate);
-                        //se configura una imagen de refrezco con la configurada o la imagen por defecto
+                    //se configura una imagen de refrezco con la configurada o la imagen por defecto
                     else if (typeof settings.refreshImage !== "undefined" && settings.refreshImage !== null && settings.refreshImage !== "")
                         $refreshIcon = $("<img src='" + settings.refreshImage + "' />");
                     else
@@ -1880,12 +1841,6 @@ grilla agregada es una gridView en sí misma.
                         if (data.hasOwnProperty("d"))
                             data = data.d;
 
-                        if (settings.onBeforeDraw instanceof Function) {
-                            eventResult = settings.onBeforeDraw(gridViewId, data);
-                            if (eventResult === false)
-                                return;
-                        }
-
                         if (settings.searchResultPreProcessing instanceof Function) {
                             eventResult = settings.searchResultPreProcessing(gridViewId, data);
                             if (typeof eventResult !== "undefined" && eventResult !== null)
@@ -1893,6 +1848,13 @@ grilla agregada es una gridView en sí misma.
                             else
                                 data = [];
                         }
+
+                        if (settings.onBeforeDraw instanceof Function) {
+                            eventResult = settings.onBeforeDraw(gridViewId, data);
+                            if (eventResult === false)
+                                return;
+                        }
+
                         var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                         if (settings.usePagging)
                             methods.pager.setPaggingData(paggingData, data, settings);
@@ -1975,15 +1937,15 @@ grilla agregada es una gridView en sí misma.
                     data = JSONConvert(dataString);
                 }
             }
-                //Los datos pasado puede ser un texto
+            //Los datos pasado puede ser un texto
             else if (typeof settings.dataSource === "string") {
                 data = JSONConvert(settings.dataSource);
             }
-                //Los datos pasado puede ser un objeto json
+            //Los datos pasado puede ser un objeto json
             else if (typeof settings.dataSource === "object") {
                 data = settings.dataSource;
             }
-                //Los datos pasado puede ser un objeto json
+            //Los datos pasado puede ser un objeto json
             else if (typeof settings.dataSource === "function") {
                 data = settings.dataSource(settings, paggingData, parentGridRowData);
             }
