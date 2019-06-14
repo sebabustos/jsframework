@@ -1,10 +1,10 @@
-﻿/*! GridView - 2019-04-05 1103 - v8.0.0.0
+﻿/*! GridView - - 2019-06-14 1111 - v8.1.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2019-04-05 1103 - v8.0.0.0
+Código:         | GridView - 2019-06-14 1111 - v8.1.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -19,10 +19,13 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se corrigió un error existente en el bindeo, cuando el datafieldName se realiza
-sobre una columna objeto (Column.Field), cuando la columna es nula, el sistema generaba un
-error.
-- Se modificó la secuencia del evento onBeforeDraw, para que se ejecute después del evento searchResultPreProcessing
+- Se agregó la posibilidad de no dibujar el encabezado de columnas, los títulos de las columnas
+- Se agregó la posibilidad de definir una clase de estilo para el componente de la grilla, que funcione como SCOPE (una clase que se colocará primero a todas)
+================================================================
+                        IDEAS
+================================================================
+- quitar el div "<div class="divCellData" />"
+- Permitir definir un template de fila, que permita usar la grilla como repeater, en lugar de grilla.
 ================================================================
                         FUNCIONALIDADES
 ================================================================
@@ -65,15 +68,6 @@ selección de una fila.
 grilla agregada es una gridView en sí misma.
 - Permite agregar filas manualmente en una grilla ya dibujada
 (método addRow e insertRow)
-
-================================================================
-                        POSIBLES MEJORAS
-================================================================
-- Permitir selección múltiple.
-- El value de un control es el dato del datasource
-- Multiples columnas: permitir que los resultados se muestren en columnas. Ej: 1 - Marcelo    4 - Pedro
-																			   2 - Juan		  5 - Raúl
-																			   3 - José
 */
 
 
@@ -87,6 +81,7 @@ grilla agregada es una gridView en sí misma.
     };
     var $tempthis = null;
     var $default = {
+        cssClass: null,
         childGrid: null/* Misma config de gridView, o un objeto gridView.*/
         /*{
         showAllExpanded:false
@@ -775,7 +770,7 @@ grilla agregada es una gridView en sí misma.
                     colIndex++;
                 }
 
-                if (settings.headerControls !== null) {
+                if (settings.showColumnsHeader !== false && settings.headerControls !== null) {
                     $.each(settings.headerControls, function (index, item) {
                         row.append($("<td id='" + idPrefix + "_emptyHeaderControl_" + index.toString() + "'  gridview_cellType='emptyHeaderControl' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " emptyHeaderControl'></td>"));
                         colIndex++;
@@ -1326,6 +1321,11 @@ grilla agregada es una gridView en sí misma.
             var gridViewId = (typeof target[0].id !== "undefined") ? target[0].id : guiid++;
             var itemOptions = $.extend({}, options);
 
+
+            if (!isNullOrWhiteSpace(itemOptions.cssClass))
+                target.attr('class', itemOptions.cssClass + ' ' + target.attr('class'));
+
+
             if (typeof itemOptions.useJQueryUI === "undefined" || itemOptions.useJQueryUI === null)
                 itemOptions.useJQueryUI = getDefaults().useJQueryUI;
             if (typeof target.attr("gridViewType") === "undefined")
@@ -1333,11 +1333,14 @@ grilla agregada es una gridView en sí misma.
 
 
             var $gridViewHeader = $("<div class='gridViewHeader' gridview_element='gridViewHeader'></div>");
-            var $gridViewBody = $("<div id='gridViewBody_" + gridViewId + "' gridview_element='gridViewBody' class='gridViewBody'></div>")
-                .append("<table id='tbGridView_" + gridViewId + "' gridview_element='tbGridView' class='" + (itemOptions.useJQueryUI ? "ui-widget " : "") + "tbGridView'>" +
-                    "<thead id='tbHeader_" + gridViewId + "' gridview_element='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "tbHeader'></thead>" + /*inserta el header*/
-                    "<tbody id='tbBody_" + gridViewId + "' gridview_element='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "tbBody'></tbody>" + /*inserta el body*/
-                    "</table>");
+
+            var $tbGridView = $("<table id='tbGridView_" + gridViewId + "' gridview_element='tbGridView' class='" + (itemOptions.useJQueryUI ? "ui-widget " : "") + "tbGridView'></table >");
+            if (itemOptions.showColumnsHeader !== false)
+                $tbGridView.append("<thead id='tbHeader_" + gridViewId + "' gridview_element='tbHeader' class='" + (itemOptions.useJQueryUI ? "ui-widget-header " : "") + "tbHeader'></thead>");//inserta el header
+            $tbGridView.append("<tbody id='tbBody_" + gridViewId + "' gridview_element='tbBody' class='" + (itemOptions.useJQueryUI ? "ui-widget-content " : "") + "tbBody'></tbody>");//inserta el body
+
+            var $gridViewBody = $("<div id='gridViewBody_" + gridViewId + "' gridview_element='gridViewBody' class='gridViewBody'></div>").append($tbGridView);
+
             var $gridViewFooter = $("<div class='gridViewFooter' gridview_element='gridViewFooter'></div>");
 
             //.addClass((itemOptions.useJQueryUI ? "ui-widget " : "") + "gridView")
@@ -1371,7 +1374,12 @@ grilla agregada es una gridView en sí misma.
                 .data("gridView:sortConfig", sortConfig)
                 .attr("gridViewId", gridViewId);
 
-            if (drawHeader(gridViewId) && executeSearch)
+
+            var searchOnInit = executeSearch;
+            if (itemOptions.showColumnsHeader !== false)
+                searchOnInit = drawHeader(gridViewId) && executeSearch;
+
+            if (searchOnInit)
                 doSearch(gridViewId, 0);
         }
 
