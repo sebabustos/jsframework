@@ -1,10 +1,10 @@
-﻿/*! GridView - - 2019-06-14 1111 - v8.1.0.0
+﻿/*! GridView - 2019-07-04 1142 - v8.2.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2019-06-14 1111 - v8.1.0.0
+Código:         | GridView - 2019-07-04 1142 - v8.2.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -19,8 +19,7 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de no dibujar el encabezado de columnas, los títulos de las columnas
-- Se agregó la posibilidad de definir una clase de estilo para el componente de la grilla, que funcione como SCOPE (una clase que se colocará primero a todas)
+- Se agregó la posibilidad de configurar la grilla para que iuncluya todo el dataSource, en lugar de cada columna, mediante la configuración 'includeOriginalDataSourceInResult'.
 ================================================================
                         IDEAS
 ================================================================
@@ -81,6 +80,10 @@ grilla agregada es una gridView en sí misma.
     };
     var $tempthis = null;
     var $default = {
+        includeOriginalDataSourceInResult: false,/*permite habilitar el registro completo del Origen de dato usado para dibujar la fila, 
+         * si se habilita no se utilizará la propiedad IncludeInResult ya que se registrará el objeto completo
+         * OJO! puede existir diferencia en los nombres de las estructura de datos.
+         */
         cssClass: null,
         childGrid: null/* Misma config de gridView, o un objeto gridView.*/
         /*{
@@ -777,7 +780,7 @@ grilla agregada es una gridView en sí misma.
                     });
                 }
 
-                var itemData = {};
+                var itemData = (settings.includeOriginalDataSourceInResult !== true) ? {} : data;
                 var iColCount = 0;
                 //Dibuja las columnas configuradas
                 for (var col in settings.columns) {
@@ -792,8 +795,11 @@ grilla agregada es una gridView en sí misma.
 
                     var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridCell gridViewCell " + cssClass + "' " + (dataField !== "" ? "dataFieldName='" + dataField + "" : "") + "'></td>");
                     var colValue = resolveDataFieldValue(data, columnSetting);
-                    if (!columnSetting.hasOwnProperty("includeInResult") || columnSetting.includeInResult === true)
-                        itemData[dataField] = colValue;
+                    //sólo considerará la propiedad IncludeInResult si no está habilitado el registro completo del origen de dato
+                    if (settings.includeOriginalDataSourceInResult !== true) {
+                        if (!columnSetting.hasOwnProperty("includeInResult") || columnSetting.includeInResult === true)
+                            itemData[dataField] = colValue;
+                    }
 
                     if (typeof columnSetting.dataEval === "function" && columnSetting.dataEval !== null)
                         colValue = columnSetting.dataEval(colValue);
@@ -836,6 +842,7 @@ grilla agregada es una gridView en sí misma.
                     iColCount++;
                     colIndex++;
                 }
+
                 row.data("itemData", itemData);
 
                 if (settings.useJQueryUI) {
