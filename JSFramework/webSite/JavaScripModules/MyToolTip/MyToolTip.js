@@ -1,4 +1,7 @@
-﻿(function ($) {
+﻿/*! MyToolTip - 2019-08-22 1327 - 1.2.0.0
+ * https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/MyToolTip
+ */
+(function ($) {
     "use strict";
     var $defaults = {
         followMouse: false,
@@ -10,7 +13,7 @@
         showUpeffectDuration: 200,
         hideEffect: 'swing',
         hideeffectDuration: 200,
-        textAttr: "MyToolTip",
+        textAttr: "data-mytooltip",
         textSource: null,
         zIndex: 1010,
         cssClass: null,
@@ -32,90 +35,88 @@
         hasMyToolTip: function (target) {
             if (typeof target === "undefined" || target === null)
                 target = $tempthis;
-            return (typeof target.attr("myToolTipId") !== "undefined");
+            return (typeof target.attr("data-mytooltip-id") !== "undefined");
         },
         removeToolTip: function (target) {
             if (typeof target === "undefined" || target === null)
                 target = $tempthis;
 
-            if (typeof target.attr("myToolTipId") !== "undefined") {
-                target.unbind("mouseenter.myToolTip");
-                target.unbind("mouseleave.myToolTip");
-                target.removeData("myToolTipconfig");
-                target.removeAttr("myToolTipId");
+            if (typeof target.attr("data-mytooltip-id") !== "undefined") {
+                target.off("mouseenter.myToolTip");
+                target.off("mouseleave.myToolTip");
+                target.removeData("mytooltip-config");
+                target.removeAttr("data-mytooltip-id");
             }
             return target;
         },
-        show: function (target)
-        {
+        show: function (target) {
             var $this = $(target);
-            var settings = $.extend({}, $defaults, $this.data("myToolTipconfig"));
+            var settings = $.extend({}, $defaults, $this.data("mytooltip-config"));
             if (settings.showUpDelay > 0) {
                 var timeoutId;
-                timeoutId = $this.attr("myToolTip_TOI");
+                timeoutId = $this.attr("data-mytooltip-toi");
                 if (typeof timeoutId === "undefined" || timeoutId === "") {
-                    $this.attr("myToolTip_state", eStates.showUpDelay);
-                    $this.attr("myToolTip_TOI",
-                            window.setTimeout(function () {
-                                internalMethods.createToolTip($this);
-                            }, settings.showUpDelay));
+                    $this.attr("data-mytooltip-state", eStates.showUpDelay);
+                    $this.attr("data-mytooltip-toi",
+                        window.setTimeout(function () {
+                            internalMethods.createToolTip($this);
+                        }, settings.showUpDelay));
                 }
             }
             else
                 internalMethods.createToolTip($this);
         },
-        hide: function (target)
-        {
+        hide: function (target) {
             var $this = $(target);
-            var settings = $.extend({}, $defaults, $this.data("myToolTipconfig"));
+            var settings = $.extend({}, $defaults, $this.data("mytooltip-config"));
             var duration = settings.showUpEffect ? settings.hideeffectDuration : 0;
             var effect = settings.showUpEffect ? settings.hideEffect : "swing";
-            $this.attr("myToolTip_state", eStates.hiding);
-            var myToolTipId = $this.attr("myToolTipId");
+            $this.attr("data-mytooltip-state", eStates.hiding);
+            var myToolTipId = $this.attr("data-mytooltip-id");
 
             var divToolTip = $("#divToolTip_" + myToolTipId);
             //si se encuentra el tooltip se realiza el ocultamiento.
             if (divToolTip.length > 0) {
                 divToolTip.hide(duration, effect,
                     function () {
-                        var timeoutId = $this.attr("myToolTip_TOI");
+                        var timeoutId = $this.attr("data-mytooltip-toi");
                         if (typeof timeoutId !== "undefined" && timeoutId !== "") {
                             window.clearTimeout(timeoutId);
-                            $this.attr("myToolTip_TOI", "");
+                            $this.attr("data-mytooltip-toi", "");
                         }
-                        $this.attr("myToolTip_state", eStates.notShown);
+                        $this.attr("data-mytooltip-state", eStates.notShown);
                         $(this).remove();
                     });
             }
-                //si el tooltip no existe, se quita el attributo myToolTip_TOI (el id del setTimeOut), 
-                //de lo contrario, nunca va a volver a mostrarse.
+            //si el tooltip no existe, se quita el attributo data-mytooltip-toi (el id del setTimeOut),
+            //de lo contrario, nunca va a volver a mostrarse.
             else {
-                $this.attr("myToolTip_state", eStates.notShown);
-                $this.attr("myToolTip_TOI", "");
+                $this.attr("data-mytooltip-state", eStates.notShown);
+                $this.attr("data-mytooltip-toi", "");
             }
         },
         hideInstanstly: function (target) {
             var $this = $(target);
-            var settings = $.extend({}, $defaults, $this.data("myToolTipconfig"));
-            $this.attr("myToolTip_state", eStates.notShown);
-            var myToolTipId = $this.attr("myToolTipId");
+            var settings = $.extend({}, $defaults, $this.data("mytooltip-config"));
+            $this.attr("data-mytooltip-state", eStates.notShown);
+            var myToolTipId = $this.attr("data-mytooltip-id");
             var divToolTip = $("#divToolTip_" + myToolTipId);
             //si se encuentra el tooltip se realiza el ocultamiento.
             if (divToolTip.length > 0)
                 divToolTip.remove();
-                //si el tooltip no existe, se quita el attributo myToolTip_TOI (el id del setTimeOut), 
-                //de lo contrario, nunca va a volver a mostrarse.
+            //si el tooltip no existe, se quita el attributo data-mytooltip-toi (el id del setTimeOut),
+            //de lo contrario, nunca va a volver a mostrarse.
             else
-                $this.attr("myToolTip_TOI", "");
+                $this.attr("data-mytooltip-toi", "");
         }
     };
 
     var internalMethods = {
         createToolTip: function (src) {
-            var myToolTipId = src.attr("myToolTipId");
-            var settings = $.extend({}, $defaults, src.data("myToolTipconfig"));
+            var myToolTipId = src.attr("data-mytooltip-id");
+            var settings = $.extend({}, $defaults, src.data("mytooltip-config"));
 
-            var state = src.attr("myToolTip_state")
+            var state = src.attr("data-mytooltip-state")
             if (state !== eStates.hiding) {
                 var divToolTip = $("#divToolTip_" + myToolTipId);
                 divToolTip.remove();
@@ -126,14 +127,22 @@
                     styleAttr = "style='" + defaultStyle + "'";
                 //por compatibilidad hacia atrás, lo primero que intenta leer es el attributo
                 var tooltipText = $(src).attr(settings.textAttr);
+                if (typeof tooltipText === "undefined" || tooltipText === null) {
+                    tooltipText = $(src).attr("MyToolTip");
+                    if (!(typeof tooltipText === "undefined" || tooltipText === null)) {
+                        if (console && console.warn)
+                            console.warn("JSFRAMEWORK.MyToolTipo: el atributo 'MyToolTip' está obsoleto, reemplácelo por 'data-mytooltip'");
+                    }
+                }
+
                 if (typeof settings.textSource === "function")
                     tooltipText = settings.textSource(src, settings, myToolTipId);
 
                 if (typeof tooltipText !== "undefined" && tooltipText !== null && tooltipText !== "") {
-                    var toolTip = $("<div " + styleAttr + " id='divToolTip_" + myToolTipId + "' plugin='MyToolTip'>" + tooltipText + "</div>").appendTo($("body")).css({ opacity: .85, position: 'absolute', display: 'none' });
+                    var toolTip = $("<div " + styleAttr + " id='divToolTip_" + myToolTipId + "' data-jsframework-plugin='MyToolTip'>" + tooltipText + "</div>").appendTo($("body")).css({ opacity: .85, position: 'absolute', display: 'none' });
 
                     if (!settings.followMouse) {
-                        $(src).unbind("mousemove.myToolTip");
+                        $(src).off("mousemove.myToolTip");
                         settings.positionOptions.of = src;
                         toolTip.position(settings.positionOptions);
                     }
@@ -141,7 +150,7 @@
                         var e = window.event;
                         toolTip.css({ top: (parseFloat(e.clientY) + parseFloat(settings.offsetTop)), left: (parseFloat(e.clientX) + parseFloat(settings.offsetLeft)) });
 
-                        $(src).bind("mousemove.myToolTip", function (e) {
+                        $(src).on("mousemove.myToolTip", function (e) {
                             $("#divToolTip_" + myToolTipId).css({ top: (parseFloat(e.clientY) + parseFloat(settings.offsetTop)), left: (parseFloat(e.clientX) + parseFloat(settings.offsetLeft)) });
                         });
                     }
@@ -151,7 +160,7 @@
                     else
                         toolTip.show(settings.showUpeffectDuration, settings.showUpEffect);
 
-                    src.attr("myToolTip_state", eStates.visible);
+                    src.attr("data-mytooltip-state", eStates.visible);
                 }
             }
         }
@@ -186,8 +195,7 @@
             return methods.hasMyToolTip(this);
         else if (options === "removeToolTip")
             return methods.removeToolTip(this);
-        else if (typeof options === "string" && options !== "")
-        {
+        else if (typeof options === "string" && options !== "") {
             var textParam = options;
             if (arguments.length > 1) {
                 switch (typeof arguments[1]) {
@@ -197,7 +205,7 @@
                         //si viene el 3er argumento se asumen booleano.
                         doShow = arguments.length > 2 ? arguments[2] === true : false;
                         break;
-                        //si el 2º argumento es un boolean, no se espera un 3er argumento
+                    //si el 2º argumento es un boolean, no se espera un 3er argumento
                     case "boolean":
                         doShow = options;
                         options = null;
@@ -215,7 +223,7 @@
 
                 //permite que el primer parámetro sea el texto y el 2º la configuración
                 //Ej: $...myToolTipo("hola Mundo", {followMouse:true});
-                var settings = $.extend({}, $defaults, options == null ? this.data("myToolTipconfig") : options);
+                var settings = $.extend({}, $defaults, options == null ? this.data("mytooltip-config") : options);
 
                 //se pisa el atributo del texto a mostrar en el tooltip, con el recibido por parámetro.
                 this.attr(settings.textAttr, textParam);
@@ -223,7 +231,7 @@
                 if (options !== null) {
                     //pisa la configuración del control, con la recibida por parámetro.
                     var itemOptions = $.extend({}, options);
-                    this.data("myToolTipconfig", itemOptions);
+                    this.data("mytooltip-config", itemOptions);
                 }
                 if (doShow) {
                     methods.hideInstanstly(this);
@@ -236,8 +244,7 @@
                 toolTipText = textParam;
             }
         }
-        else if (typeof options === "boolean")
-        {
+        else if (typeof options === "boolean") {
             doShow = options;
             options = {};
         }
@@ -246,17 +253,17 @@
         function configMyToolTop(target) {
             var myToolTipId = (typeof target[0].id != "undefined") ? target[0].id : guiid++;
             target
-                .bind("mouseenter.myToolTip", function (e) {
+                .on("mouseenter.myToolTip", function (e) {
                     methods.show(this);
-                
-            })
-                .bind("mouseleave.myToolTip", function () {
+
+                })
+                .on("mouseleave.myToolTip", function () {
                     methods.hide(this);
                 });
 
             var itemOptions = $.extend({}, options);
-            target.data("myToolTipconfig", itemOptions)
-                  .attr("myToolTipId", myToolTipId);
+            target.data("mytooltip-config", itemOptions)
+                .attr("data-mytooltip-id", myToolTipId);
 
             //Si se había recibido un texto por parámetro, se pisa el atributo del texto a mostrar.
             if (toolTipText !== null) {
@@ -288,7 +295,7 @@
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | MyToolTip - 2014-10-31 - 1.1.0.0
+Código:       | MyToolTip - 2019-08-22 1327 - 1.2.0.0
 ----------------------------------------------------------------
 Nombre:       | MyToolTip
 ----------------------------------------------------------------
@@ -301,42 +308,20 @@ Descripción:  | Muestra un pequeño popup, no intrusivo, que sigue
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v1.1.0.0
+Versión:      | v1.2.0.0
 ----------------------------------------------------------------
-Fecha:        | 2014-10-31 08:58
+Fecha:        | 2019-08-22 13:27
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la nueva propiedad "textSource" que permite definir 
-   una función que devuelva el texto a mostrar en el tooltip
- - Se agregaron los siguientes métodos públicos:
-  hasMyToolTip: permite identificar si un control tiene habilitado el 
-        plugin.
-        Ej: $("#MyDiv").myToolTip("hasMyToolTip")
-  show: permite hacer que el MyToolTip de un control ya inicializado, 
-        se muestre.
-        Ej: $("#MyDiv").myToolTip().show();
-  hide: permite hacer que el MyToolTip de un control ya inicializado, 
-        se muestre ejecutando el efecto configurado.
-        Ej: $("#MyDiv").myToolTip().hide();
-  hideInstanstly: permite hacer que el MyToolTip de un control ya 
-        inicializado, se muestre inmediatamente, sin efecto.
-        Ej: $("#MyDiv").myToolTip().hide();
-  - Se creó la variable internalMethods para contener los métodos
-    internos del plugin, y se colocó como parte de él el método
-    createToolTip.
-  - Se agregó la posibilidad de llamar al plugin con el texto
-  que se deberá mostrar, y con la posibilida de indicar que se muestre
-  inmediatamente
-    Ej:
-      se mostrará inmediatamente el texto "hola mundo" y se inicializa
-      el plugin con la configuración por defecto
-      $("#MyDiv").myToolTipo("hola Mundo", true); 
-      equivale a: 
-      $("#MyDiv").myToolTipo("hola Mundo", {}, true);
-      
-      se mostrará inmediatamente el texto "hola mundo" y se inicializa
-      el plugin con la configuración pasada por parámetro.
-      $("#MyDiv").myToolTipo("hola Mundo", {followMouse:true}, true);
+ - Se reemplazaron los bind y unbind, de jquery, por on y off,
+ respectivamente.
+ - Se cambiaron los siguientes atributos generados por el plugin
+ en el control:
+    + MyToolTip por data-mytooltip
+    + myToolTipId por data-mytooltip-id
+    + myToolTipconfig por mytooltip-config (este no es un atributo, es el $(...).data("mytooltip-config") que guarda la configuración del plugin)
+    + myToolTip_TOI por data-mytooltip-toi
+    + myToolTip_state por data-mytooltip-state
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -364,7 +349,6 @@ mediante el uso del objeto position de jquery.
  [Posibles mejoras pendientes para el componente/producto/funcionalidad]
  - Una función que me muestre el tooltip sin inicializar el control 
     (por ej: si yo quiero manejar el mouse enter y leave por fuera del tooltip)
- - Que reciba el texto por parámetro, y lo inicialice.
  - Tooltips enlazados, de manera que no se muestren juntos. Es decir,
  al mostrarse uno, se ocultan rapidamente los otros.
 ================================================================
@@ -377,4 +361,39 @@ Autor:        | Sebastián Bustos Argañaraz
 Cambios de la Versión:
  - Primera versión estable del producto.
 ================================================================
+Código:       | MyToolTip - 2014-10-31 - 1.1.0.0
+Autor:        | Sebastián Bustos Argañaraz
+
+Cambios de la Versión:
+ - Se agregó la nueva propiedad "textSource" que permite definir
+   una función que devuelva el texto a mostrar en el tooltip
+ - Se agregaron los siguientes métodos públicos:
+  hasMyToolTip: permite identificar si un control tiene habilitado el
+        plugin.
+        Ej: $("#MyDiv").myToolTip("hasMyToolTip")
+  show: permite hacer que el MyToolTip de un control ya inicializado,
+        se muestre.
+        Ej: $("#MyDiv").myToolTip().show();
+  hide: permite hacer que el MyToolTip de un control ya inicializado,
+        se muestre ejecutando el efecto configurado.
+        Ej: $("#MyDiv").myToolTip().hide();
+  hideInstanstly: permite hacer que el MyToolTip de un control ya
+        inicializado, se muestre inmediatamente, sin efecto.
+        Ej: $("#MyDiv").myToolTip().hide();
+  - Se creó la variable internalMethods para contener los métodos
+    internos del plugin, y se colocó como parte de él el método
+    createToolTip.
+  - Se agregó la posibilidad de llamar al plugin con el texto
+  que se deberá mostrar, y con la posibilida de indicar que se muestre
+  inmediatamente
+    Ej:
+      se mostrará inmediatamente el texto "hola mundo" y se inicializa
+      el plugin con la configuración por defecto
+      $("#MyDiv").myToolTipo("hola Mundo", true);
+      equivale a:
+      $("#MyDiv").myToolTipo("hola Mundo", {}, true);
+
+      se mostrará inmediatamente el texto "hola mundo" y se inicializa
+      el plugin con la configuración pasada por parámetro.
+      $("#MyDiv").myToolTipo("hola Mundo", {followMouse:true}, true);
 */
