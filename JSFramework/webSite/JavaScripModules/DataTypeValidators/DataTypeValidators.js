@@ -1,10 +1,10 @@
-﻿/*! DataTypeValidators - 2018-03-07 1211 - v5.1.0.0
+﻿/*! DataTypeValidators - 2019-09-09 1358 - v5.2.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/DataTypeValidators */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:       | DataTypeValidators - 2018-03-07 1211 - v5.1.0.0
+Código:       | DataTypeValidators - 2019-09-09 1358 - v5.2.0.0
 ----------------------------------------------------------------
 Nombre:       | DataTypeValidators
 ----------------------------------------------------------------
@@ -23,14 +23,13 @@ Descripción:  | Permite configurar los controles para que
 ----------------------------------------------------------------
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
-Versión:      | v5.1.0.0
+Versión:      | v5.2.0.0
 ----------------------------------------------------------------
-Fecha:        | 2018-03-07 12:11
+Fecha:        | 2019-09-09 13:58
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la posibilidad de configurar la omisión de los espacios
- al comienzo y final del texto a validar (trim). Quedando por defecto
- deshabilitado.
+ - Se corrigió un error que existía, cuando se registra el evento onValidationFailed
+ inline en el html, con un function(){...};
  ================================================================
                        FUNCIONALIDADES
 ================================================================
@@ -182,16 +181,16 @@ Cambios de la Versión:
                 if (!isValidDataRegexDefined) {
                     //se reemplazan los caracteres reservados de las expresiones regulares por sus respectivos caracteres de escape.
                     allowedChars = allowedChars
-                                        .replace(".", "\.")
-                                        .replace("[", "\[")
-                                        .replace("]", "\]")
-                                        .replace("(", "\(")
-                                        .replace(")", "\)")
-                                        .replace("*", "\*")
-                                        .replace("+", "\+")
-                                        .replace("$", "\$")
-                                        .replace("\\", "\\\\")
-                                        .replace("^", "\^");
+                        .replace(".", "\.")
+                        .replace("[", "\[")
+                        .replace("]", "\]")
+                        .replace("(", "\(")
+                        .replace(")", "\)")
+                        .replace("*", "\*")
+                        .replace("+", "\+")
+                        .replace("$", "\$")
+                        .replace("\\", "\\\\")
+                        .replace("^", "\^");
 
                     validDataRegex = "^[" + allowedChars + "]*$";
                     regConfig = "gi";
@@ -298,7 +297,7 @@ Cambios de la Versión:
                     commaSepChar.push(commaSep[commaChar]);
                 }
             }
-                //si no se configuró ningún separador particular, se usa el default
+            //si no se configuró ningún separador particular, se usa el default
             else {
                 var isCommaDecSep = !isNaN("1,0");
                 if (isCommaDecSep) {
@@ -323,7 +322,7 @@ Cambios de la Versión:
                     thouSepChar.push(thouSep[thouChar]);
                 }
             }
-                //si no se configuró ningún separador particular, se usa el default
+            //si no se configuró ningún separador particular, se usa el default
             else {
                 //si el separador de decimales es el . entonces la , es la de miles.
                 var isCommaThousandSep = isNaN("1,0");
@@ -518,16 +517,16 @@ Cambios de la Versión:
 
                 return isValid;
             })
-                 .on("keyup.datatypevalidator", function (evt) {
-                     if (settings.showInvalidMessage) {
-                         //si se presiona la tecla backspace o del sobre el control, y está configurado el mensaje de validación, se oculta el mensaje.
-                         if (evt.which === 8 || evt.which === 46) {
-                             var $this = $(this);
-                             $this.removeClass(settings.invalidDataCss);
-                             $("#InvalidMessage" + $this.data("validator-id")).remove();
-                         }
-                     }
-                 });
+                .on("keyup.datatypevalidator", function (evt) {
+                    if (settings.showInvalidMessage) {
+                        //si se presiona la tecla backspace o del sobre el control, y está configurado el mensaje de validación, se oculta el mensaje.
+                        if (evt.which === 8 || evt.which === 46) {
+                            var $this = $(this);
+                            $this.removeClass(settings.invalidDataCss);
+                            $("#InvalidMessage" + $this.data("validator-id")).remove();
+                        }
+                    }
+                });
             if (settings.enableValidateOnFocusOut)
                 $this.on("focusout.datatypevalidator", function () {
                     methods.validate($(this), settings, dataTypeObject);
@@ -703,7 +702,9 @@ Cambios de la Versión:
     ///jquery
     $.fn.DataTypeValidator = function (options) {
         function init($this) {
-            if (typeof options === "string")
+            if (typeof options === "undefined" || options === null)
+                options = getOptionsFromMarkup($this[0]);
+            else if (typeof options === "string")
                 options = { dataType: options };
 
             var settings = $.extend({}, $default, options);
@@ -748,6 +749,56 @@ Cambios de la Versión:
 
         return this;
     }
+
+    function getOptionsFromMarkup(src) {
+        var $this = $(src);
+        var dataType = $this.data("validator-datatype");
+        if (typeof dataType === "undefined")
+            dataType = $this.attr("DataType");
+        dataType = dataType.toLowerCase();
+
+        var options = {};
+        if (typeof DateTypeValidatorGetSettings === "function")
+            options = DateTypeValidatorGetSettings(dataType, this);
+
+        var validRegex = $this.attr("validDataRegex");
+        if (typeof validRegex !== "undefined" && validRegex !== null && validRegex !== "")
+            options = $.extend(options, { "validDataRegex": validRegex });
+
+        var allowedChars = $this.attr("allowedChars");
+        if (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars !== "")
+            options = $.extend(options, { "allowedChars": allowedChars });
+
+        options = $.extend(options, { "dataType": dataType });
+        //lee cualquier propiedad del control que estuviera configurada en él 
+        for (var index in $default) {
+            var dataAttr = $this.data("validator-" + index.toLocaleLowerCase());
+            if (typeof dataAttr !== "undefined" && dataAttr !== null) {
+                if (index == "onValidationFailed" || index == "onInvalidKeyPress") {
+                    if (dataAttr !== "") {
+                        if ((dataAttr.indexOf("function") == 0))
+                            eval("dataAttr = " + dataAttr);
+                        else {
+                            if (index == "onValidationFailed")
+                                dataAttr = window[dataAttr];
+                            else if (index == "onInvalidKeyPress")
+                                dataAttr = window[dataAttr];
+
+                        }
+                    }
+                }
+                options[index] = dataAttr;
+            }
+        }
+        if (typeof options["allowedChars"] !== "undefined") {
+            options["allowedChars"] = (options["allowedChars"].replace("0-9", "0123456789")
+                .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
+                .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
+        }
+
+        return options;
+    }
+
     ///Script que inicializa los validator de una página, para todos los controles que tengan definido el atributo "DataType". 
     ///Este script se ejecuta siempre que se agrega la referencia a este .js
     function Init() {
@@ -758,73 +809,37 @@ Cambios de la Versión:
                 $listControls = $("[DataType]");
 
             $listControls.each(function (index) {
-                var $this = $(this);
-                var dataType = $this.data("validator-datatype");
-                if (typeof dataType === "undefined")
-                    dataType = $this.attr("DataType");
-                dataType = dataType.toLowerCase();
-
-                var options = {};
-                if (typeof DateTypeValidatorGetSettings === "function")
-                    options = DateTypeValidatorGetSettings(dataType, this);
-
-                var validRegex = $this.attr("validDataRegex");
-                if (typeof validRegex !== "undefined" && validRegex !== null && validRegex !== "")
-                    options = $.extend(options, { "validDataRegex": validRegex });
-
-                var allowedChars = $this.attr("allowedChars");
-                if (typeof allowedChars !== "undefined" && allowedChars !== null && allowedChars !== "")
-                    options = $.extend(options, { "allowedChars": allowedChars });
-
-                options = $.extend(options, { "dataType": dataType });
-                //lee cualquier propiedad del control que estuviera configurada en él 
-                for (var index in $default) {
-                    var dataAttr = $this.data("validator-" + index.toLocaleLowerCase());
-                    if (typeof dataAttr !== "undefined" && dataAttr !== null) {
-                        if (index == "onValidationFailed" || index == "onInvalidKeyPress") {
-                            if (dataAttr !== "") {
-                                if ((dataAttr.indexOf("function") == 0))
-                                    dataAttr = eval("dataAttr");
-                                else {
-                                    if (index == "onValidationFailed")
-                                        dataAttr = window[dataAttr];
-                                    else if (index == "onInvalidKeyPress")
-                                        dataAttr = window[dataAttr];
-
-                                }
-                            }
-                        }
-                        options[index] = dataAttr;
-                    }
-                }
-                if (typeof options["allowedChars"] !== "undefined") {
-                    options["allowedChars"] = (options["allowedChars"].replace("0-9", "0123456789")
-                           .replace(/a-z/g, "abcdefghijklmnñopqrstuvwxyz")
-                           .replace(/A-Z/g, "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"));
-                }
-
-                $this.DataTypeValidator(options);
+                $(this).DataTypeValidator();
             });
         });
     }
     Init();
 })(jQuery);
 /*
+ *
 ================================================================
                     HISTORIAL DE VERSIONES
     [Registro histórico resumido de las distintas versiones]
+================================================================
+Código:       | DataTypeValidators - 2018-03-07 1211 - v5.1.0.0
+Autor:        | Sebastián Bustos Argañaraz
+----------------------------------------------------------------
+Cambios de la Versión:
+ - Se agregó la posibilidad de configurar la omisión de los espacios
+ al comienzo y final del texto a validar (trim). Quedando por defecto
+ deshabilitado.
 ================================================================
 Código:       | DataTypeValidators - 2018-02-28 1251 - v5.0.0.0
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
 Cambios de la Versión:
  - Se corrigió un error detectado por Francisco Gambino, por el cual
- si un input con tipo de dato fecha, se encuentra en estado inválido, 
+ si un input con tipo de dato fecha, se encuentra en estado inválido,
  y luego se selecciona una fecha válida, usando el calendar de jquery,
  no estaba quitando el mensaje, ni el estilo, de inválido.
  - Se agregó el nuevo evengo onchange, para detectar los cambios
- en el control y ejecutar las validaciones de tipo de dato, y la 
- posibilidad de deshabilitar el uso de este evento con 
+ en el control y ejecutar las validaciones de tipo de dato, y la
+ posibilidad de deshabilitar el uso de este evento con
  "enableValidateOnChange = false;"
 ================================================================
 Código:       | DataTypeValidators - 2017-02-16 1515 - v4.0.0.0
@@ -834,44 +849,44 @@ Cambios de la Versión:
  - Se modificaron los atributos que agrega y lee el plugin para que
  al control, para agregarles el prefijo "data-validator"
   Eh: <input type='text' dataType='date' ===> <input type='text' data-validator-datatype='date'
-  Nota: Se mantuvo la compatibilidad con las formas anteriores pero 
+  Nota: Se mantuvo la compatibilidad con las formas anteriores pero
   se recomienda su modificación
 - Se agregó la posibilidad de configurar, como atributo del html
 cualquier elemento de configuración del DataTypeValidator, respetando
-el siguiente format: data-validator-xxx => donde xxx es el atributo, 
+el siguiente format: data-validator-xxx => donde xxx es el atributo,
 todo en minúscula. Los atributos permitidos son todos los enumerados en "FUNCIONALIDADES"
 - Se agregó la posibilidad de deshabilitar la validación en el "onfocusout"
 - Se agregó la posiblidad de llamar al plugin, con un selector jquery
 vacío, que permita ejecutar métodos para todos los validators configurados:
-    Ej: $().DataTypeValidator().areValids() => valida todos los controles y 
-                                               devuelve true|false, según si 
-                                               son todos válidos o existe 
+    Ej: $().DataTypeValidator().areValids() => valida todos los controles y
+                                               devuelve true|false, según si
+                                               son todos válidos o existe
                                                alguno  inválido
-        $().DataTypeValidator().execute() => ejecuta las validaciones de 
+        $().DataTypeValidator().execute() => ejecuta las validaciones de
                                         todos los validators (como si se hiciera
                                         el focusout)
-- Se corrigió un error que se generaba, cuando se configuraba una 
+- Se corrigió un error que se generaba, cuando se configuraba una
  expresión regular con las barras (ej: /{expresión}/)
 ================================================================
 Código:       | DataTypeValidators - 2016-12-15 - v3.2.1.0
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se modificó la llamada al método DateTypeValidatorGetSettings, 
+ - Se modificó la llamada al método DateTypeValidatorGetSettings,
  para agregar el parámetro this.
 ================================================================
 Código:       | DataTypeValidators - 2015-09-29 - v3.2.0.0
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se agregó la nueva variable publicMethods, que contendrá el 
+ - Se agregó la nueva variable publicMethods, que contendrá el
  listado de métodos accesibles.
  - Se agregó la posibilidad de llamar al plugin, y ejecutar los
  métodos públicos.
- - Se agregó el nuevo método público "isValid", que permitirá 
- ejecutar las validaciones, configuradas en el contro, a demanda, 
- lo que aplicará las validaciones sobre el valor que tenga el control 
- e indicará si el dato contenido cumple con la configuración 
+ - Se agregó el nuevo método público "isValid", que permitirá
+ ejecutar las validaciones, configuradas en el contro, a demanda,
+ lo que aplicará las validaciones sobre el valor que tenga el control
+ e indicará si el dato contenido cumple con la configuración
  del tipo de dato.
   Ej: $("miControl").DataTypeValidator().isValid();
  - Se agregó el nuevo método público "remove" que permite la remoción
@@ -881,7 +896,7 @@ Código:       | DataTypeValidators - 2015-05-07 - v3.1.2.0
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
 Cambios de la Versión:
- - Se corrigió un error en la expresión regular del validador del tipo 
+ - Se corrigió un error en la expresión regular del validador del tipo
 numérico, cuando no se habilitaba el caracter de separador de miles.
 ================================================================
 Código:       | DataTypeValidators - 2015-05-07 - v3.1.1.0
@@ -894,7 +909,7 @@ Autor:        | Sebastián Bustos Argañaraz
 Código:       | DataTypeValidators - 2015-05-06 - v3.1.0.0
 Autor:        | Sebastián Bustos Argañaraz
 ----------------------------------------------------------------
- - Se agregó la possibilidad de habilitar, y configurar, el caracter de 
+ - Se agregó la possibilidad de habilitar, y configurar, el caracter de
  separador de miles.
  ================================================================
 Código:       | DataTypeValidators - 2015-01-22 - v3.0.0.0
@@ -903,26 +918,26 @@ Autor:        | Sebastián Bustos Argañaraz
 - Se quitó la configuración "invalidMessageCss", que no era utilizada
  - Se agregó la posibilidad de configurar los caracteres permitidos
  que serán usados para permitir o no determinadas teclas (en el keyUp)
- La configuración es posible mediante la propiedad "allowedChars" o 
+ La configuración es posible mediante la propiedad "allowedChars" o
  bien con un atributo "allowedChars" en el tag del control.
- Esta propiedad es una cadena con todos los caracteres permitidos, NO una 
+ Esta propiedad es una cadena con todos los caracteres permitidos, NO una
  expresión regular. Sin embargo se definieron algunos atajos que permitirán
- simplificar este listado, y que serán reemplazadas por su correspondiente 
+ simplificar este listado, y que serán reemplazadas por su correspondiente
  secuencia de caracteres:
     * a-z: permitirá los caracteres de la "a" a la "z" en minúscula
     * A-Z: permitirá los caracteres de la "a" a la "z" en mayúscula
     * 0-9: permitirá los números del 0 al 9.
  - Se agregó la posibilidad de configurar la expresión regular usada
- para validar el texto ingresado como un atributo del control, mediante el 
+ para validar el texto ingresado como un atributo del control, mediante el
  atributo "validDataRegex"
   Ej:<input type="text" dataType="regex" id="txtMail" validDataRegex="^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$" allowedChars="a-zA-Z0-9_.+-@"/>
- - Se modificó el valor por defecto de la propiedad "specialChars" 
+ - Se modificó el valor por defecto de la propiedad "specialChars"
  para que sea null, en lugar de false.
  - se agregó un nuevo DataTypeValidator, el "genericDataTypeValidator"
  que será usado para todos los tipos de datos no contemplados, y para el regex.
  Este validator sólo permitirá el ingreso de los caracteres que hayan sido definidos
- en la propiedad (o atributo del control) "allowedChars" (incluyendo la coma, punto, etc 
- si se habilitaran los mismos); y validará que el texto ingresado cumpla con la expresión 
+ en la propiedad (o atributo del control) "allowedChars" (incluyendo la coma, punto, etc
+ si se habilitaran los mismos); y validará que el texto ingresado cumpla con la expresión
  regular definida.
 ================================================================
 Código:       | DataTypeValidators - 2013-09-12 - v1.2.0.0
@@ -935,7 +950,7 @@ Cambios de la Versión:
   por el usuario.
  - Se corrigió una falla cuando la configuración de separadores de coma se especificaba
   como cadena (string) y no como array.
- - Se agregó la posibilidad de configurar la clase de estilo del mensaje de validación, y se 
+ - Se agregó la posibilidad de configurar la clase de estilo del mensaje de validación, y se
   modificó el comportamiento por defecto, para que, si no se sobreescribe, se agergue la configuración
   por código.
 ----------------------------------------------------------------
