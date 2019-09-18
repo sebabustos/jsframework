@@ -1,10 +1,10 @@
-﻿/*! GridView - 2019-07-04 1142 - v8.2.0.0
+﻿/*! GridView - 2019-07-18 1352 - v8.3.0.0
 https://github.com/sebabustos/jsframework/tree/master/JSFramework/webSite/JavaScripModules/GridView */
 /*
 ================================================================
                             VERSIÓN
 ================================================================
-Código:         | GridView - 2019-07-04 1142 - v8.2.0.0
+Código:         | GridView - 2019-07-18 1352 - v8.3.0.0
 ----------------------------------------------------------------
 Nombre:         | GridView
 ----------------------------------------------------------------
@@ -19,7 +19,8 @@ Descripción:    | Plugin de jQuery que provee la funcionalidad de
 Autor:          | Seba Bustos
 ----------------------------------------------------------------
 Cambios de la Versión:
-- Se agregó la posibilidad de configurar la grilla para que iuncluya todo el dataSource, en lugar de cada columna, mediante la configuración 'includeOriginalDataSourceInResult'.
+- Se modificó la función de conversión de json para que sólo utilice la clase JSON, nativa.
+- Se modificó la función 'parseAjaxDateTimeToDate' para que soporte también el formato UTC (yyyy-mm-ddTHH:mm:ss.fff) y yyyy-mm-dd HH:mm:ss.fff
 ================================================================
                         IDEAS
 ================================================================
@@ -215,25 +216,37 @@ grilla agregada es una gridView en sí misma.
     function isNullOrWhiteSpace(elem) {
         return (typeof elem === "undefined" || elem === null || $.trim(elem.toString()) === "");
     };
+
     /**
- * intenta convertir una cadena de fecha en el formato /Date(xxxx)/ - devuelto por un WebMethod, a un objeto fecha de javascript
- * @param {any} str
- */
+     * intenta convertir una cadena de fecha en el formato /Date(xxxx)/ o yyyy-mm-dd HH:mm:ss.fff- devuelto por un WebMethod, a un objeto fecha de javascript
+     * @param {any} str cadena con la fecha a convertir 
+     * @returns {Date} objeto fecha convertido
+     */
     function parseAjaxDateTimeToDate(str) {
         var retVal;
-        var ajaxTypeDateREGEX = /\/Date\((\d*)\)\//;
         try {
             var ajaxTypeDateREGEX = /\/Date\((\d*)\)\//;
-            if (!$.isNullOrWhiteSpace(str) && ajaxTypeDateREGEX.test(str))
-                retVal = (new Date(parseInt(str.replace(ajaxTypeDateREGEX, "$1"))));
-            else
+            var ajaxUTCTypeDateREGEX = /\d{4}-\d{1,2}-\d{1,2}([T| ]\d{1,2}:\d{1,2}(:\d{1,2}(\.\d{1,3}){0,1}){0,1}){0,1}/;
+
+            if ($.isNullOrWhiteSpace(str))
                 retVal = null;
+            else if (ajaxTypeDateREGEX.test(str))
+                retVal = (new Date(parseInt(str.replace(ajaxTypeDateREGEX, "$1"))));
+            else if (ajaxUTCTypeDateREGEX.test(str)) {
+                try {
+                    var dateInt = Date.parse(str);
+                    retVal = (new Date(dateInt));
+                }
+                catch (exc) {
+                    throw "Se produjo un error al intentar parsear la fecha: '" + str + "'";
+                }
+            }
         }
         catch (excep) {
             retVal = null;
         }
         return retVal;
-    }
+    };
 
     var defaultPager = {
         movePrevPage: function () {
@@ -639,7 +652,7 @@ grilla agregada es una gridView en sí misma.
                     var paggingData = $.extend({}, $gridView.data("gridView:pagging"));
                     var settings = $.extend({}, getDefaults(), $gridView.data("gridviewconfig"));
 
-                    if (evt.keyCode !== 7 && (pageNro >= 0) && (pageNro != paggingData.currIndex)) {
+                    if (evt.keyCode !== 7 && (pageNro >= 0) && (pageNro !== paggingData.currIndex)) {
                         var methods = new Methods(privateMethods.getPageHandler(settings), gridViewId);
                         methods.pager.moveToPage($gridView.attr("gridViewId"), pageNro);
                     }
@@ -715,393 +728,393 @@ grilla agregada es una gridView en sí misma.
         return retVal;
     }
     var privateMethods =
-        {
-            getEvenOddColumnClass: function (colIndex, prefix) {
-                if (typeof prefix === "undefined" || prefix === null)
-                    prefix = "";
-                return prefix + ((colIndex % 2) > 0 ? "evenColumn" : "oddColumn");
-            },
-            newRow: function (data, gridViewId, rowIndex, settings) {
-                var idPrefix = gridViewId + "_Row_" + rowIndex;
-                var row = $("<tr class='gridRow' id='" + idPrefix + "' gridView_rowIndex='" + rowIndex + "' gridview_rowType='row'></tr>");
-                if ((rowIndex % 2) > 0)
-                    row.addClass("gridViewRowAlternate");
+    {
+        getEvenOddColumnClass: function (colIndex, prefix) {
+            if (typeof prefix === "undefined" || prefix === null)
+                prefix = "";
+            return prefix + ((colIndex % 2) > 0 ? "evenColumn" : "oddColumn");
+        },
+        newRow: function (data, gridViewId, rowIndex, settings) {
+            var idPrefix = gridViewId + "_Row_" + rowIndex;
+            var row = $("<tr class='gridRow' id='" + idPrefix + "' gridView_rowIndex='" + rowIndex + "' gridview_rowType='row'></tr>");
+            if ((rowIndex % 2) > 0)
+                row.addClass("gridViewRowAlternate");
+            else
+                row.addClass("gridViewRow");
+
+            var colIndex = 0;
+
+            if (settings.childGrid !== null) {
+                var childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " childColapsed'></td>");
+
+                if (settings.useJQueryUI)
+                    childGridExpandCell.append("<div id='divExpandButton' class='ui-icon ui-icon-plus'>&nbsp;</div>");
                 else
-                    row.addClass("gridViewRow");
-
-                var colIndex = 0;
-
-                if (settings.childGrid !== null) {
-                    var childGridExpandCell = $("<td id='" + idPrefix + "_expandChild' gridview_cellType='childExpand' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " childColapsed'></td>");
-
-                    if (settings.useJQueryUI)
-                        childGridExpandCell.append("<div id='divExpandButton' class='ui-icon ui-icon-plus'>&nbsp;</div>");
-                    else
-                        childGridExpandCell.html("&#x271A;");
+                    childGridExpandCell.html("&#x271A;");
 
 
-                    childGridExpandCell.click(function (evt) {
-                        var index = $(this).parent().attr("gridView_rowIndex");
-                        var $row = $(this).parents("[gridview_rowType=row]:first");
-                        privateMethods.drawChildGrid($row, gridViewId, index);
-                    });
-
-                    row.append(childGridExpandCell);
-                    colIndex++;
-                }
-
-                //Celda de números
-                if (settings.showRowNumber) {
-                    row.append($("<td id='" + idPrefix + "_rowNumber' gridview_cellType='rowNumber' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " rowNumber' >" + (rowIndex + 1) + "</td>"));
-                    colIndex++;
-                }
-                var selectionColumn = $("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " selectionCell' style='cursor:pointer;'></td >");
-                //Celda de selección
-                if (settings.allowSelection && settings.selectionMode !== "row") {
-                    if (settings.useJQueryUI)
-                        selectionColumn.append("<div class='ui-icon ui-icon-carat-1-e'>&nbsp;</div>");
-                    else
-                        selectionColumn.html("&#x2023;");//x22B2
-                }
-                else if (settings.showRefresh === true)
-                    selectionColumn.html("&nbsp;");
-                else
-                    selectionColumn = null;
-
-                if (selectionColumn != null) {
-                    row.append(selectionColumn);
-                    colIndex++;
-                }
-
-                if (settings.showColumnsHeader !== false && settings.headerControls !== null) {
-                    $.each(settings.headerControls, function (index, item) {
-                        row.append($("<td id='" + idPrefix + "_emptyHeaderControl_" + index.toString() + "'  gridview_cellType='emptyHeaderControl' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " emptyHeaderControl'></td>"));
-                        colIndex++;
-                    });
-                }
-
-                var itemData = (settings.includeOriginalDataSourceInResult !== true) ? {} : data;
-                var iColCount = 0;
-                //Dibuja las columnas configuradas
-                for (var col in settings.columns) {
-                    var columnSetting = settings.columns[col];
-                    var dataField = columnSetting.dataFieldName;
-                    if (typeof dataField === "undefined")
-                        dataField = "";
-
-                    var cssClass = columnSetting.cssClass;
-                    if (typeof cssClass === "undefined" || cssClass === null)
-                        cssClass = "";
-
-                    var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridCell gridViewCell " + cssClass + "' " + (dataField !== "" ? "dataFieldName='" + dataField + "" : "") + "'></td>");
-                    var colValue = resolveDataFieldValue(data, columnSetting);
-                    //sólo considerará la propiedad IncludeInResult si no está habilitado el registro completo del origen de dato
-                    if (settings.includeOriginalDataSourceInResult !== true) {
-                        if (!columnSetting.hasOwnProperty("includeInResult") || columnSetting.includeInResult === true)
-                            itemData[dataField] = colValue;
-                    }
-
-                    if (typeof columnSetting.dataEval === "function" && columnSetting.dataEval !== null)
-                        colValue = columnSetting.dataEval(colValue);
-
-                    var isVisible = true;
-                    if (columnSetting.hasOwnProperty("visible") && !columnSetting.visible) {
-                        isVisible = false;
-                        cell.hide();
-                    }
-
-                    //Si la columna tiene definida controles, dibuja los mismos pasando el value correspondiente al dataFieldName (el dataBind)
-                    if (columnSetting.hasOwnProperty("Controls") && columnSetting.Controls instanceof Array && columnSetting.Controls.length > 0) {
-                        var ctrls = this.GetControls(columnSetting.Controls, gridViewId, false, idPrefix, colValue);
-                        $.each(ctrls, function (index, item) {
-                            item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
-                            item.attr("griview_isHeader", "false");
-                            cell.addClass("controls_container").append(item);
-                        });
-                    }
-                    //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
-                    else if (columnSetting.hasOwnProperty("showPreview") && columnSetting.showPreview) {
-                        var css = '';
-                        if (columnSetting.hasOwnProperty("previewCellClass") && columnSetting.previewCellClass !== null && columnSetting.previewCellClass !== "")
-                            css = ' ' + columnSetting.previewCellClass;
-
-                        cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
-                    }
-                    //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
-                    else
-                        cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
-
-                    if (typeof settings.rowDataFieldId !== "undefined" && settings.rowDataFieldId !== null && settings.rowDataFieldId !== ""
-                        && settings.rowDataFieldId.toLowerCase() === dataField.toLowerCase())
-                        row.attr(dataField, colValue);
-
-                    if (isVisible)
-                        cell.addClass(privateMethods.getEvenOddColumnClass(colIndex));
-
-                    row.append(cell);
-                    iColCount++;
-                    colIndex++;
-                }
-
-                row.data("itemData", itemData);
-
-                if (settings.useJQueryUI) {
-                    row.mouseover(function () {
-                        $(this).addClass("ui-state-hover");
-                        //fix, este fix soluciona un problema que se da con el mouse over sobre una celda, que 
-                        //al colocar negrita (por "ui-state-hover") se agranda y achica la fila haciendo un efecto molesto
-                        $(this).children("TD").each(function () {
-                            var origFont = $(this).css("font-size");
-                            $(this)
-                                .attr("origFont", origFont)
-                                .css("font-size", (parseFloat($(this).css("font-size")) * 0.94));
-                        });
-
-                    }).mouseout(function () {
-                        $(this).removeClass("ui-state-hover");
-                        //fix, este fix soluciona un problema que se da con el mouse over sobre una celda, que 
-                        //al colocar negrita (por "ui-state-hover") se agranda y achica la fila haciendo un efecto molesto
-                        $(this).children("TD").each(function () {
-                            var origFont = $(this).attr("origFont");
-                            $(this).css("font-size", origFont);
-                        });
-                    });
-                }
-                return row;
-            },
-            GetControls: function (controls, gridViewId, isHeader, rowId, cellValue) {
-                var result = [];
-                $.each(controls, function (index) {
-                    //si es una celda común agrega el control al listado.
-                    if (!isHeader) {
-                        result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId, cellValue));
-                    }
-                    //si se tratara del encabezado, se verifica si la column tiene configurado mostrar el control
-                    //en el header
-                    else if (controls[index].showInHeader === true) {
-                        var headerControl;
-                        if (typeof controls[index].headerControlTemplate !== "undefined")
-                            headerControl = controls[index].headerControlTemplate;
-                        else
-                            headerControl = controls[index];
-
-                        result.push(privateMethods.CreateControl(headerControl, gridViewId, rowId, cellValue));
-                    }
+                childGridExpandCell.click(function (evt) {
+                    var index = $(this).parent().attr("gridView_rowIndex");
+                    var $row = $(this).parents("[gridview_rowType=row]:first");
+                    privateMethods.drawChildGrid($row, gridViewId, index);
                 });
-                return result;
-            },
-            CreateControl: function (control, gridViewId, rowId, cellValue) {
-                var ctrlType = 'button';
-                var value = "";
-                var name = "";
-                var ctrl = null;
-                var ctrlsTemplate = null;
-                var css = "";
-                if (control.hasOwnProperty("type") && control.type !== null)
-                    ctrlType = control.type.toLowerCase();
-                if (control.hasOwnProperty("label") && control.label !== null)
-                    value = control.label;
-                if (control.hasOwnProperty("name") && control.name !== null)
-                    name = control.name;
-                if (control.hasOwnProperty("template") && control.template !== null && (ctrlsTemplate = $(control.template)).length > 0)
-                    ctrlType = "template";
-                if (control.hasOwnProperty("cssClass") && control.cssClass !== null)
-                    css = "class='" + control.cssClass + "'";
-                //si se recibe un cellValue, se pisa el value.
-                if (typeof cellValue !== "undefined" && cellValue !== null)
-                    value = cellValue
 
-                var controlTypes = {
-                    template: 'template',
-                    image: 'image',
-                    button: 'button',
-                    checkbox: 'checkbox',
-                    radio: 'radio',
-                    textbox: 'textbox',
-                    select: 'select'
-                };
-
-                //TODO: ¿eventos onBeforeCreatingControl o algo así?
-                switch (ctrlType) {
-                    case controlTypes.template:
-                        ctrl = ctrlsTemplate.clone();
-                        break;
-                    case controlTypes.image:
-                        var alt = "";
-                        if (control.hasOwnProperty("alt") && control.alt !== null)
-                            alt = control.alt;
-
-                        ctrl = $("<img src='" + value + "' alt='" + alt + "' " + css + "/>");
-                        break;
-                    case controlTypes.button:
-                        ctrl = $("<input type='button' value='" + value + "' " + css + " />");
-                        break;
-                    case controlTypes.checkbox:
-                        ctrl = $("<input type='checkbox' value='" + value + "' " + css + " />");
-                        break;
-                    case controlTypes.radio:
-                        ctrl = $("<input type='radio' value='" + value + "' " + css + " />");
-                        break;
-                    case controlTypes.textbox:
-                        ctrl = $("<input type='text'  value='" + value + "' " + css + " />");
-                        break;
-                    case controlTypes.select:
-                        ctrl = $("<select " + css + " />");
-                        //si el value es un string se asume que es separado por comas y que contiene el listado de los options del select
-                        if (value instanceof String) {
-                            var arrValue = value.split(",");
-                            value = [];
-                            //se genera la estructura {value:..., id:...}
-                            $.each(arrValue, function (index, item) {
-                                value.push({ value: item, text: item });
-                            })
-
-                        }
-
-                        if (value instanceof Array)
-                            //se recorre el array y se agregan los options.
-                            $.each(value, function (index, item) {
-                                ctrl.append($("<option value='" + item.value + "'>" + item.text + "</option>"));
-                            });
-                        break;
-                }
-
-                if (name !== null) {
-                    //Si es un radio button, se usa el mismo ID para todos los radio, ya que es lo que agrupa los mismos.
-                    if (ctrlType !== controlTypes.radio)
-                        //se actualiza el name, para que no todos los controles, de todas las filas, tengan el mismo name.
-                        //Se le agrega el prefijo del id de la fila.
-                        name = rowId + "_" + name;
-
-                    ctrl.attr("name", name);
-                }
-
-                if (typeof control.onClick === "function") {
-                    ctrl.click(function () {
-                        //el control se encuentra agregado dentro de una celda, por lo que para obtener la referencia a la fila
-                        //se debe tomar el padre del padre.
-                        var tr = $(this).parent().parent();
-                        control.onClick(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
-                    });
-                }
-
-                if (control.events instanceof Array) {
-                    $.each(control.events, function (index, item) {
-                        ctrl.bind(item.name, function () {
-                            var tr = $(this).parent().parent();
-                            item.handler(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
-                        });
-                    });
-
-                }
-
-                if (control.hasOwnProperty("style") && control.style !== null) {
-                    var style = "";
-                    if (ctrl.attr("style") !== "undefined" && ctrl.attr("style") !== "")
-                        style = ctrl.attr("style");
-
-                    style += control.style;
-
-                    ctrl.attr("style", style);
-                }
-
-                return ctrl;
-            },
-            drawChildGrid: function (sourceRow, gridViewId, rowIndex, forcedState) {
-                var settings;
-                var parentSettings;
-                //se obtiene la referencia a la grilla hija
-                var parentGrid = $("[gridViewId=" + gridViewId + "]");
-                parentSettings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig"));
-
-                //se busca si ya existe la grilla hija.
-                var childGridRow = sourceRow.next();
-
-                if (childGridRow.length > 0 && childGridRow.attr("gridview_rowType") === "childGrid" && childGridRow.attr("gridView_rowIndex") === rowIndex.toString()) {
-                    var childGrid = $("[gridViewId=" + gridViewId + "_ChildGrid" + rowIndex + "]", childGridRow);
-                    settings = $.extend({}, getDefaults(), childGrid.data("gridviewconfig"));
-                }
-                //si no existe se crea.
-                else {
-                    //se obtiene la configuración de grilla hija.
-                    settings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig").childGrid);
-                    //TODO_SEBA: en el DataSource de la grilla hija se debe poder parsear info. Ej: mandar el itemData de la fila.
-
-                    var cellsCount = sourceRow.children("[gridview_cellType]").length - 1;
-                    //Se crea la fila que va a contener la grilla hija.
-                    childGridRow = $("<tr id='" + gridViewId + "_Row_" + rowIndex + "_ChildGrid' gridView_rowIndex='" + rowIndex + "' class='gridRow childGridRowContainer' gridview_rowType='childGrid'>" +
-                        "<td class='gridCell childGridEmptyCell' gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
-                        "<td class='gridCell childGridCellContainer' gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
-                        "</tr>").hide();
-
-
-                    //se crea la tabla que será la grilla hija.
-                    var elem = $("<div id='" + gridViewId + "_ChildGrid" + rowIndex + "' gridViewType='childGridView'></div>");
-                    $("[gridview_cellType='childGridCell']", childGridRow).append(elem);
-                    //Se agrega la fila a la tabla para poder inicializar la grilla a través del plugin (siguiendo el camino normal de cualquier grilla).
-                    //esto es necesario, ya que de lo contrario el plugin no va a funcionar, ya que dentro realiza obtención de elementos que asume en el DOM.
-                    sourceRow.after(childGridRow);
-
-                    //Se inicializa la grilla hija. Siempre que se crea por primera vez se ejecuta la búsqueda.
-                    elem.gridView(settings, true);
-                }
-                var childExpandCell;
-                //Se cambia el estado, la visibilidad, en función del estado actual (se hace un toggle)
-                if (typeof forcedState === "undefined" || forcedState === null) {
-                    //se cambia la clase de la celda
-                    childExpandCell = $("[gridview_cellType='childExpand']", sourceRow).toggleClass("childExpanded childColapsed");
-
-                    if (parentSettings.useJQueryUI) {
-                        var expandButton = $("#divExpandButton", childExpandCell);
-                        expandButton.toggleClass("ui-icon-plus ui-icon-minus");
-                    }
-                    else {
-                        if (childExpandCell.hasClass("childColapsed"))
-                            childExpandCell.html("&#x271A;");
-                        else
-                            childExpandCell.html("&#x2796;");
-                    }
-                    //Si ya existe oculta y muestra la fila de la grilla.
-                    childGridRow.toggle();
-                }
-                else {
-                    //se cambia la clase de la celda
-                    childExpandCell = $("[gridview_cellType='childExpand']", sourceRow);
-                    if (forcedState === "show") {
-
-                        childExpandCell.removeClass("childColapsed").addClass("childExpanded");
-
-                        if (parentSettings.useJQueryUI)
-                            $("#divExpandButton", childExpandCell).removeClass("ui-icon-plus").addClass("ui-icon-minus");
-                        else
-                            childExpandCell.html("&#x2796;");
-
-                        childGridRow.show();
-                    }
-                    else if (forcedState === "hide") {
-
-                        childExpandCell.removeClass("childExpanded").addClass("childColapsed");
-
-                        if (parentSettings.useJQueryUI)
-                            $("#divExpandButton", childExpandCell).removeClass("ui-icon-minus").addClass("ui-icon-plus");
-                        else
-                            childExpandCell.html("&#x271A;");
-
-                        childGridRow.hide();
-                    }
-                }
-            },
-            getPageHandler: function (settings) {
-                var retVal;
-                if (settings.usePagging)
-                    if (settings.paggingNavigationMode == 'backforward')
-                        retVal = backForwardPager;
-                    else
-                        retVal = defaultPager;
-
-                return retVal;
+                row.append(childGridExpandCell);
+                colIndex++;
             }
-        };
+
+            //Celda de números
+            if (settings.showRowNumber) {
+                row.append($("<td id='" + idPrefix + "_rowNumber' gridview_cellType='rowNumber' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " rowNumber' >" + (rowIndex + 1) + "</td>"));
+                colIndex++;
+            }
+            var selectionColumn = $("<td id='" + idPrefix + "_selectionCell' gridview_cellType='selection' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " selectionCell' style='cursor:pointer;'></td >");
+            //Celda de selección
+            if (settings.allowSelection && settings.selectionMode !== "row") {
+                if (settings.useJQueryUI)
+                    selectionColumn.append("<div class='ui-icon ui-icon-carat-1-e'>&nbsp;</div>");
+                else
+                    selectionColumn.html("&#x2023;");//x22B2
+            }
+            else if (settings.showRefresh === true)
+                selectionColumn.html("&nbsp;");
+            else
+                selectionColumn = null;
+
+            if (selectionColumn !== null) {
+                row.append(selectionColumn);
+                colIndex++;
+            }
+
+            if (settings.showColumnsHeader !== false && settings.headerControls !== null) {
+                $.each(settings.headerControls, function (index, item) {
+                    row.append($("<td id='" + idPrefix + "_emptyHeaderControl_" + index.toString() + "'  gridview_cellType='emptyHeaderControl' class='gridCell " + privateMethods.getEvenOddColumnClass(colIndex) + " emptyHeaderControl'></td>"));
+                    colIndex++;
+                });
+            }
+
+            var itemData = (settings.includeOriginalDataSourceInResult !== true) ? {} : data;
+            var iColCount = 0;
+            //Dibuja las columnas configuradas
+            for (var col in settings.columns) {
+                var columnSetting = settings.columns[col];
+                var dataField = columnSetting.dataFieldName;
+                if (typeof dataField === "undefined")
+                    dataField = "";
+
+                var cssClass = columnSetting.cssClass;
+                if (typeof cssClass === "undefined" || cssClass === null)
+                    cssClass = "";
+
+                var cell = $("<td id='" + idPrefix + "_column" + iColCount + "' gridview_cellType='data' class='gridCell gridViewCell " + cssClass + "' " + (dataField !== "" ? "dataFieldName='" + dataField + "" : "") + "'></td>");
+                var colValue = resolveDataFieldValue(data, columnSetting);
+                //sólo considerará la propiedad IncludeInResult si no está habilitado el registro completo del origen de dato
+                if (settings.includeOriginalDataSourceInResult !== true) {
+                    if (!columnSetting.hasOwnProperty("includeInResult") || columnSetting.includeInResult === true)
+                        itemData[dataField] = colValue;
+                }
+
+                if (typeof columnSetting.dataEval === "function" && columnSetting.dataEval !== null)
+                    colValue = columnSetting.dataEval(colValue);
+
+                var isVisible = true;
+                if (columnSetting.hasOwnProperty("visible") && !columnSetting.visible) {
+                    isVisible = false;
+                    cell.hide();
+                }
+
+                //Si la columna tiene definida controles, dibuja los mismos pasando el value correspondiente al dataFieldName (el dataBind)
+                if (columnSetting.hasOwnProperty("Controls") && columnSetting.Controls instanceof Array && columnSetting.Controls.length > 0) {
+                    var ctrls = this.GetControls(columnSetting.Controls, gridViewId, false, idPrefix, colValue);
+                    $.each(ctrls, function (index, item) {
+                        item.attr("id", idPrefix + "_column" + iColCount + "_control_" + (typeof item.attr("id") !== "undefined" ? item.attr("id") : "") + "" + index);
+                        item.attr("griview_isHeader", "false");
+                        cell.addClass("controls_container").append(item);
+                    });
+                }
+                //Si no tiene controles, pero tiene definido el ShowPreview, dibuja la celda con esta funcionalidad
+                else if (columnSetting.hasOwnProperty("showPreview") && columnSetting.showPreview) {
+                    var css = '';
+                    if (columnSetting.hasOwnProperty("previewCellClass") && columnSetting.previewCellClass !== null && columnSetting.previewCellClass !== "")
+                        css = ' ' + columnSetting.previewCellClass;
+
+                    cell.attr("preview", "preview").append($("<div class='divPreview'" + css + ">" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>"));
+                }
+                //Finalmente, si no tiene ninguna de las dos anteriores, dibuja la celda con el value como contenido.
+                else
+                    cell.html("<div class='divCellData'>" + ((colValue !== null) ? colValue : "&nbsp;") + "</div>");
+
+                if (typeof settings.rowDataFieldId !== "undefined" && settings.rowDataFieldId !== null && settings.rowDataFieldId !== ""
+                    && settings.rowDataFieldId.toLowerCase() === dataField.toLowerCase())
+                    row.attr(dataField, colValue);
+
+                if (isVisible)
+                    cell.addClass(privateMethods.getEvenOddColumnClass(colIndex));
+
+                row.append(cell);
+                iColCount++;
+                colIndex++;
+            }
+
+            row.data("itemData", itemData);
+
+            if (settings.useJQueryUI) {
+                row.mouseover(function () {
+                    $(this).addClass("ui-state-hover");
+                    //fix, este fix soluciona un problema que se da con el mouse over sobre una celda, que 
+                    //al colocar negrita (por "ui-state-hover") se agranda y achica la fila haciendo un efecto molesto
+                    $(this).children("TD").each(function () {
+                        var origFont = $(this).css("font-size");
+                        $(this)
+                            .attr("origFont", origFont)
+                            .css("font-size", (parseFloat($(this).css("font-size")) * 0.94));
+                    });
+
+                }).mouseout(function () {
+                    $(this).removeClass("ui-state-hover");
+                    //fix, este fix soluciona un problema que se da con el mouse over sobre una celda, que 
+                    //al colocar negrita (por "ui-state-hover") se agranda y achica la fila haciendo un efecto molesto
+                    $(this).children("TD").each(function () {
+                        var origFont = $(this).attr("origFont");
+                        $(this).css("font-size", origFont);
+                    });
+                });
+            }
+            return row;
+        },
+        GetControls: function (controls, gridViewId, isHeader, rowId, cellValue) {
+            var result = [];
+            $.each(controls, function (index) {
+                //si es una celda común agrega el control al listado.
+                if (!isHeader) {
+                    result.push(privateMethods.CreateControl(controls[index], gridViewId, rowId, cellValue));
+                }
+                //si se tratara del encabezado, se verifica si la column tiene configurado mostrar el control
+                //en el header
+                else if (controls[index].showInHeader === true) {
+                    var headerControl;
+                    if (typeof controls[index].headerControlTemplate !== "undefined")
+                        headerControl = controls[index].headerControlTemplate;
+                    else
+                        headerControl = controls[index];
+
+                    result.push(privateMethods.CreateControl(headerControl, gridViewId, rowId, cellValue));
+                }
+            });
+            return result;
+        },
+        CreateControl: function (control, gridViewId, rowId, cellValue) {
+            var ctrlType = 'button';
+            var value = "";
+            var name = "";
+            var ctrl = null;
+            var ctrlsTemplate = null;
+            var css = "";
+            if (control.hasOwnProperty("type") && control.type !== null)
+                ctrlType = control.type.toLowerCase();
+            if (control.hasOwnProperty("label") && control.label !== null)
+                value = control.label;
+            if (control.hasOwnProperty("name") && control.name !== null)
+                name = control.name;
+            if (control.hasOwnProperty("template") && control.template !== null && (ctrlsTemplate = $(control.template)).length > 0)
+                ctrlType = "template";
+            if (control.hasOwnProperty("cssClass") && control.cssClass !== null)
+                css = "class='" + control.cssClass + "'";
+            //si se recibe un cellValue, se pisa el value.
+            if (typeof cellValue !== "undefined" && cellValue !== null)
+                value = cellValue
+
+            var controlTypes = {
+                template: 'template',
+                image: 'image',
+                button: 'button',
+                checkbox: 'checkbox',
+                radio: 'radio',
+                textbox: 'textbox',
+                select: 'select'
+            };
+
+            //TODO: ¿eventos onBeforeCreatingControl o algo así?
+            switch (ctrlType) {
+                case controlTypes.template:
+                    ctrl = ctrlsTemplate.clone();
+                    break;
+                case controlTypes.image:
+                    var alt = "";
+                    if (control.hasOwnProperty("alt") && control.alt !== null)
+                        alt = control.alt;
+
+                    ctrl = $("<img src='" + value + "' alt='" + alt + "' " + css + "/>");
+                    break;
+                case controlTypes.button:
+                    ctrl = $("<input type='button' value='" + value + "' " + css + " />");
+                    break;
+                case controlTypes.checkbox:
+                    ctrl = $("<input type='checkbox' value='" + value + "' " + css + " />");
+                    break;
+                case controlTypes.radio:
+                    ctrl = $("<input type='radio' value='" + value + "' " + css + " />");
+                    break;
+                case controlTypes.textbox:
+                    ctrl = $("<input type='text'  value='" + value + "' " + css + " />");
+                    break;
+                case controlTypes.select:
+                    ctrl = $("<select " + css + " />");
+                    //si el value es un string se asume que es separado por comas y que contiene el listado de los options del select
+                    if (value instanceof String) {
+                        var arrValue = value.split(",");
+                        value = [];
+                        //se genera la estructura {value:..., id:...}
+                        $.each(arrValue, function (index, item) {
+                            value.push({ value: item, text: item });
+                        })
+
+                    }
+
+                    if (value instanceof Array)
+                        //se recorre el array y se agregan los options.
+                        $.each(value, function (index, item) {
+                            ctrl.append($("<option value='" + item.value + "'>" + item.text + "</option>"));
+                        });
+                    break;
+            }
+
+            if (name !== null) {
+                //Si es un radio button, se usa el mismo ID para todos los radio, ya que es lo que agrupa los mismos.
+                if (ctrlType !== controlTypes.radio)
+                    //se actualiza el name, para que no todos los controles, de todas las filas, tengan el mismo name.
+                    //Se le agrega el prefijo del id de la fila.
+                    name = rowId + "_" + name;
+
+                ctrl.attr("name", name);
+            }
+
+            if (typeof control.onClick === "function") {
+                ctrl.click(function () {
+                    //el control se encuentra agregado dentro de una celda, por lo que para obtener la referencia a la fila
+                    //se debe tomar el padre del padre.
+                    var tr = $(this).parent().parent();
+                    control.onClick(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
+                });
+            }
+
+            if (control.events instanceof Array) {
+                $.each(control.events, function (index, item) {
+                    ctrl.bind(item.name, function () {
+                        var tr = $(this).parent().parent();
+                        item.handler(tr, gridViewId, tr.attr("gridview_rowType"), tr.data("itemData"), this);
+                    });
+                });
+
+            }
+
+            if (control.hasOwnProperty("style") && control.style !== null) {
+                var style = "";
+                if (ctrl.attr("style") !== "undefined" && ctrl.attr("style") !== "")
+                    style = ctrl.attr("style");
+
+                style += control.style;
+
+                ctrl.attr("style", style);
+            }
+
+            return ctrl;
+        },
+        drawChildGrid: function (sourceRow, gridViewId, rowIndex, forcedState) {
+            var settings;
+            var parentSettings;
+            //se obtiene la referencia a la grilla hija
+            var parentGrid = $("[gridViewId=" + gridViewId + "]");
+            parentSettings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig"));
+
+            //se busca si ya existe la grilla hija.
+            var childGridRow = sourceRow.next();
+
+            if (childGridRow.length > 0 && childGridRow.attr("gridview_rowType") === "childGrid" && childGridRow.attr("gridView_rowIndex") === rowIndex.toString()) {
+                var childGrid = $("[gridViewId=" + gridViewId + "_ChildGrid" + rowIndex + "]", childGridRow);
+                settings = $.extend({}, getDefaults(), childGrid.data("gridviewconfig"));
+            }
+            //si no existe se crea.
+            else {
+                //se obtiene la configuración de grilla hija.
+                settings = $.extend({}, getDefaults(), parentGrid.data("gridviewconfig").childGrid);
+                //TODO_SEBA: en el DataSource de la grilla hija se debe poder parsear info. Ej: mandar el itemData de la fila.
+
+                var cellsCount = sourceRow.children("[gridview_cellType]").length - 1;
+                //Se crea la fila que va a contener la grilla hija.
+                childGridRow = $("<tr id='" + gridViewId + "_Row_" + rowIndex + "_ChildGrid' gridView_rowIndex='" + rowIndex + "' class='gridRow childGridRowContainer' gridview_rowType='childGrid'>" +
+                    "<td class='gridCell childGridEmptyCell' gridview_cellType='childGridEmptyCell'>&nbsp;</td>" +
+                    "<td class='gridCell childGridCellContainer' gridview_cellType='childGridCell' colspan='" + cellsCount + "'></td>" +
+                    "</tr>").hide();
+
+
+                //se crea la tabla que será la grilla hija.
+                var elem = $("<div id='" + gridViewId + "_ChildGrid" + rowIndex + "' gridViewType='childGridView'></div>");
+                $("[gridview_cellType='childGridCell']", childGridRow).append(elem);
+                //Se agrega la fila a la tabla para poder inicializar la grilla a través del plugin (siguiendo el camino normal de cualquier grilla).
+                //esto es necesario, ya que de lo contrario el plugin no va a funcionar, ya que dentro realiza obtención de elementos que asume en el DOM.
+                sourceRow.after(childGridRow);
+
+                //Se inicializa la grilla hija. Siempre que se crea por primera vez se ejecuta la búsqueda.
+                elem.gridView(settings, true);
+            }
+            var childExpandCell;
+            //Se cambia el estado, la visibilidad, en función del estado actual (se hace un toggle)
+            if (typeof forcedState === "undefined" || forcedState === null) {
+                //se cambia la clase de la celda
+                childExpandCell = $("[gridview_cellType='childExpand']", sourceRow).toggleClass("childExpanded childColapsed");
+
+                if (parentSettings.useJQueryUI) {
+                    var expandButton = $("#divExpandButton", childExpandCell);
+                    expandButton.toggleClass("ui-icon-plus ui-icon-minus");
+                }
+                else {
+                    if (childExpandCell.hasClass("childColapsed"))
+                        childExpandCell.html("&#x271A;");
+                    else
+                        childExpandCell.html("&#x2796;");
+                }
+                //Si ya existe oculta y muestra la fila de la grilla.
+                childGridRow.toggle();
+            }
+            else {
+                //se cambia la clase de la celda
+                childExpandCell = $("[gridview_cellType='childExpand']", sourceRow);
+                if (forcedState === "show") {
+
+                    childExpandCell.removeClass("childColapsed").addClass("childExpanded");
+
+                    if (parentSettings.useJQueryUI)
+                        $("#divExpandButton", childExpandCell).removeClass("ui-icon-plus").addClass("ui-icon-minus");
+                    else
+                        childExpandCell.html("&#x2796;");
+
+                    childGridRow.show();
+                }
+                else if (forcedState === "hide") {
+
+                    childExpandCell.removeClass("childExpanded").addClass("childColapsed");
+
+                    if (parentSettings.useJQueryUI)
+                        $("#divExpandButton", childExpandCell).removeClass("ui-icon-minus").addClass("ui-icon-plus");
+                    else
+                        childExpandCell.html("&#x271A;");
+
+                    childGridRow.hide();
+                }
+            }
+        },
+        getPageHandler: function (settings) {
+            var retVal;
+            if (settings.usePagging)
+                if (settings.paggingNavigationMode === 'backforward')
+                    retVal = backForwardPager;
+                else
+                    retVal = defaultPager;
+
+            return retVal;
+        }
+    };
     //#region Methods Object
     function Methods(pagerHandler, gridViewId) {
         var $gridView;
@@ -1160,7 +1173,7 @@ grilla agregada es una gridView en sí misma.
     Methods.prototype.cleanSearch = function () {
         var gridViewId;
         var elems;
-        if (arguments.length === 0 && $tempthis !== null && $tempthis.length == 1) {
+        if (arguments.length === 0 && $tempthis !== null && $tempthis.length === 1) {
             gridViewId = $tempthis.attr("gridViewId");
             elems = $("[gridViewId=" + gridViewId + "]");
         }
@@ -1421,7 +1434,7 @@ grilla agregada es una gridView en sí misma.
 
                 //obtiene la información de la fila padre.
                 var parentRowData;
-                if (elem.attr("gridViewType") == "childGridView") {
+                if (elem.attr("gridViewType") === "childGridView") {
                     var gridTR = methods.childGridView.getRowContainer(gridViewId);
                     var rowIndex = gridTR.attr("gridView_rowIndex");
                     //obtiene la ROW hija de la grilla padre que contiene a este childGrid
@@ -1459,7 +1472,7 @@ grilla agregada es una gridView en sí misma.
                 }
             } catch (error) {
                 var msg = "Se produjo un error al intentar realizar la b&uacutesqueda. El error: " + error.message;
-                if (error.number == -2146827274 || error.message == "Invalid character") {
+                if (error.number === -2146827274 || error.message === "Invalid character") {
                     msg = "El formato del JSON es inválido. Verifique que el mismo tenga los nombres de sus atributos entre comillas dobles.";
                 }
 
@@ -1920,20 +1933,12 @@ grilla agregada es una gridView en sí misma.
         /*data puede ser el string a deserealizar o el json a serializar.*/
         function JSONConvert(data) {
             var retVal;
-            if ('JSON' in window && 'parse' in JSON && 'stringify' in JSON) {
-                //intenta realizar la operación con el objeto JSON nantivo.
-                if (typeof data == "String")
-                    retVal = JSON.parse(data);
-                else
-                    retVal = JSON.stringify(data);
-            }
-            else {
-                //si esto falla intenta hacerlo 
-                if (typeof data == "String")
-                    retVal = JSONConvert(data);
-                else
-                    retVal = $.toJSON(data);
-            }
+            //intenta realizar la operación con el objeto JSON nantivo.
+            if (typeof data !== "undefined" && data instanceof String)
+                retVal = JSON.parse(data);
+            else
+                retVal = JSON.stringify(data);
+
             return retVal;
         }
         function loadDataSourceJSon(gridViewId, settings, paggingData, parentGridRowData) {
